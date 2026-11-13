@@ -206,7 +206,7 @@ def test_store_detail_has_resolved_form(api: TestClient, tmp_path: Path) -> None
     assert fields["DB_PASSWORD"]["generated"] is True
     assert fields["DB_PASSWORD"]["default"] == ""
     jelly = {f["key"]: f for f in api.get("/api/store/apps/builtin/jellyfin").json()["fields"]}
-    assert jelly["MEDIA_PATH"]["default"].endswith("apps/jellyfin/data/media")
+    assert Path(jelly["MEDIA_PATH"]["default"]).parts[-4:] == ("apps", "jellyfin", "data", "media")
     assert api.get("/api/store/apps/builtin/nope").status_code == 404
 
 
