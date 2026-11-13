@@ -1,0 +1,15 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Added in milestone M0, once the directories exist:
+  # - package-ecosystem: npm   (directory: /, pnpm workspace)
+  # - package-ecosystem: uv    (directory: /apps/server)

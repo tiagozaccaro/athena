@@ -1,0 +1,30 @@
+name: Feature request
+description: Suggest an idea or improvement for Athena
+labels: [enhancement, triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what gets in the way today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How you'd like it to work.
+    validations:
+      required: true
+  - type: checkboxes
+    id: platforms
+    attributes:
+      label: Which operating systems does this matter for?
+      options:
+        - label: Linux
+        - label: macOS
+        - label: Windows
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

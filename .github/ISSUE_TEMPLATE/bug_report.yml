@@ -1,0 +1,64 @@
+name: Bug report
+description: Something in Athena doesn't work as expected
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! For security problems, don't open an issue: use
+        [private vulnerability reporting](https://github.com/tiagozaccaro/athena/security/advisories/new).
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to …
+        2. Click …
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Athena version
+      placeholder: "0.1.0, or a commit SHA"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Linux
+        - macOS
+        - Windows
+    validations:
+      required: true
+  - type: input
+    id: os-details
+    attributes:
+      label: OS version and architecture
+      placeholder: "Ubuntu 24.04 x86_64 / macOS 26 arm64 / Windows 11 24H2"
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Container runtime
+      options:
+        - Docker Engine
+        - Colima
+        - Docker Engine in WSL2
+        - Podman
+        - Rancher Desktop
+        - None / not relevant
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant server logs or browser console output. Remove any secrets.
+      render: shell

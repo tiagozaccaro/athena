@@ -1,0 +1,20 @@
+{
+  "enabledMcpjsonServers": ["shadcn", "next-devtools"],
+  "permissions": {
+    "allow": [
+      "mcp__shadcn",
+      "mcp__next-devtools",
+      "Bash(pnpm dlx shadcn@latest *)",
+      "Bash(pnpm install*)",
+      "Bash(pnpm dev*)",
+      "Bash(pnpm build*)",
+      "Bash(pnpm lint*)",
+      "Bash(pnpm typecheck*)",
+      "Bash(pnpm test*)",
+      "Bash(uv sync*)",
+      "Bash(uv run pytest*)",
+      "Bash(uv run ruff*)",
+      "Bash(uv run pyright*)"
+    ]
+  }
+}

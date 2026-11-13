@@ -1,0 +1,165 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  merge_group:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  repo:
+    name: repo checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: lts/*
+
+      - name: Agent MCP config is in sync (.mcp.json -> opencode.json)
+        run: node scripts/agents-sync.mjs --check
+
+      - name: Claude skills link points at the shared skills
+        run: test "$(readlink .claude/skills)" = "../.agents/skills"
+
+      - name: Lint workflows (actionlint)
+        uses: docker://rhysd/actionlint:1.7.12
+        with:
+          args: -color
+
+      - name: Lint shell scripts (shellcheck)
+        run: shellcheck scripts/*.sh
+
+  install-scripts:
+    name: install script (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Dry run (Linux / macOS)
+        if: runner.os != 'Windows'
+        run: bash scripts/install.sh --dry-run --version 0.0.0
+
+      - name: Lint (PSScriptAnalyzer)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          $issues = Invoke-ScriptAnalyzer -Path scripts/install.ps1 -Severity Warning,Error
+          $issues | Format-Table -AutoSize
+          if ($issues) { exit 1 }
+
+      - name: Dry run (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/install.ps1 -DryRun -Version 0.0.0
+
+  web:
+    name: web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The steps below switch on once the monorepo exists (milestone M0).
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        if: hashFiles('pnpm-lock.yaml') != ''
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: hashFiles('pnpm-lock.yaml') != ''
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - name: Install
+        if: hashFiles('pnpm-lock.yaml') != ''
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        if: hashFiles('pnpm-lock.yaml') != ''
+        run: pnpm run --if-present lint
+
+      - name: Typecheck
+        if: hashFiles('pnpm-lock.yaml') != ''
+        run: pnpm run --if-present typecheck
+
+      - name: Build
+        if: hashFiles('pnpm-lock.yaml') != ''
+        run: pnpm run --if-present build
+
+      - name: Skipped
+        if: hashFiles('pnpm-lock.yaml') == ''
+        run: echo "No pnpm workspace yet; web checks start with milestone M0."
+
+  server:
+    name: server (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: apps/server
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The steps below switch on once apps/server exists (milestone M0).
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        if: hashFiles('apps/server/pyproject.toml') != ''
+        with:
+          enable-cache: true
+
+      - name: Install
+        if: hashFiles('apps/server/pyproject.toml') != ''
+        run: uv sync --locked
+
+      - name: Lint
+        if: hashFiles('apps/server/pyproject.toml') != ''
+        run: |
+          uv run ruff check
+          uv run ruff format --check
+
+      - name: Test
+        if: hashFiles('apps/server/pyproject.toml') != ''
+        run: uv run pytest
+
+      - name: Skipped
+        if: hashFiles('apps/server/pyproject.toml') == ''
+        working-directory: .
+        run: echo "No server package yet; server checks start with milestone M0."
+
+  # The single required status check for branch protection. Add new jobs to `needs`.
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [repo, install-scripts, web, server]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All CI jobs passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $RESULTS"
+          for r in $RESULTS; do
+            if [ "$r" != "success" ] && [ "$r" != "skipped" ]; then exit 1; fi
+          done

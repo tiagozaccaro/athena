@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "skills": {
+    "building-pydantic-ai-agents": {
+      "source": "pydantic/skills",
+      "sourceType": "github",
+      "skillPath": "skills/building-pydantic-ai-agents/SKILL.md",
+      "computedHash": "433337a7d3227af428621c007a01bceca0caf621ab1a770adc39754ad6cba06e"
+    },
+    "pydantic": {
+      "source": "pydantic/skills",
+      "sourceType": "github",
+      "skillPath": "skills/pydantic/SKILL.md",
+      "computedHash": "434540e43897b5ad8db567d7a77bd71ec0522e10134aaa23941050ca7ff7e1e7"
+    },
+    "pydantic-ai-harness": {
+      "source": "pydantic/skills",
+      "sourceType": "github",
+      "skillPath": "skills/pydantic-ai-harness/SKILL.md",
+      "computedHash": "24a3fe2c4d061dfb3d4211f506df542c8ce607a66f02e0f8d09e21c64f610bb0"
+    },
+    "shadcn": {
+      "source": "shadcn-ui/ui",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "388962d16c7a4f13aaeee0d8f128e50a87df8553d42ef7988c39c0e1c74a40e8"
+    }
+  }
+}
