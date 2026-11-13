@@ -33,9 +33,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/athena"]
-# The web UI is built by the release workflow and copied into src/athena/web
-# (gitignored), so it has to be force-included as an artifact.
-artifacts = ["src/athena/web/**"]
+# The release workflow copies the built web UI to src/athena/web and the repo's
+# catalog/ to src/athena/catalog_builtin (both gitignored), so they're artifacts.
+artifacts = ["src/athena/web/**", "src/athena/catalog_builtin/**"]
 
 [tool.ruff]
 line-length = 100

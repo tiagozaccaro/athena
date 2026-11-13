@@ -1,0 +1,22 @@
+x-athena:
+  title: Stirling-PDF
+  description: Merge, split, convert, sign and edit PDFs in your browser.
+  category: utilities
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/stirling-pdf.svg
+  homepage: https://www.stirlingpdf.com
+  web_port: WEB_PORT
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "8085"
+
+services:
+  stirling-pdf:
+    image: stirlingtools/stirling-pdf:3.3.0
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT}:8080"
+    volumes:
+      - ${ATHENA_APP_DATA}/configs:/configs
+      - ${ATHENA_APP_DATA}/tessdata:/usr/share/tessdata

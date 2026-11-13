@@ -1,0 +1,19 @@
+x-athena:
+  title: IT Tools
+  description: Handy online tools for developers, like encoders, converters and generators.
+  category: utilities
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/it-tools.svg
+  homepage: https://it-tools.tech
+  web_port: WEB_PORT
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "8086"
+
+services:
+  it-tools:
+    image: corentinth/it-tools:latest
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT}:80"

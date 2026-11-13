@@ -1,0 +1,27 @@
+x-athena:
+  title: Navidrome
+  description: A music server and streamer compatible with Subsonic clients.
+  category: media
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/navidrome.svg
+  homepage: https://www.navidrome.org
+  web_port: WEB_PORT
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "4533"
+    - key: MUSIC_PATH
+      label: Music folder
+      type: path
+      description: The folder with your music library.
+      default: "@app_data/music"
+
+services:
+  navidrome:
+    image: deluan/navidrome:0.64.2
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT}:4533"
+    volumes:
+      - ${ATHENA_APP_DATA}/data:/data
+      - ${MUSIC_PATH}:/music:ro

@@ -1,0 +1,21 @@
+x-athena:
+  title: Memos
+  description: A lightweight, privacy-first note-taking service.
+  category: productivity
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/memos.svg
+  homepage: https://www.usememos.com
+  web_port: WEB_PORT
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "5230"
+
+services:
+  memos:
+    image: neosmemo/memos:stable
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT}:5230"
+    volumes:
+      - ${ATHENA_APP_DATA}/data:/var/opt/memos

@@ -1,0 +1,34 @@
+x-athena:
+  title: Jellyfin
+  description: Stream your movies, shows and music to any device.
+  category: media
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/jellyfin.svg
+  homepage: https://jellyfin.org
+  web_port: WEB_PORT
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "8096"
+    - key: MEDIA_PATH
+      label: Media folder
+      type: path
+      description: The folder with your movies, shows and music.
+      default: "@app_data/media"
+    - key: TZ
+      label: Timezone
+      default: "@timezone"
+      advanced: true
+
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:10.10
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT}:8096"
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ${ATHENA_APP_DATA}/config:/config
+      - ${ATHENA_APP_DATA}/cache:/cache
+      - ${MEDIA_PATH}:/media:ro

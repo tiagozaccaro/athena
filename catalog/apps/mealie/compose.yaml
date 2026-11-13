@@ -1,0 +1,32 @@
+x-athena:
+  title: Mealie
+  description: Recipe manager and meal planner for the whole household.
+  category: productivity
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/mealie.svg
+  homepage: https://mealie.io
+  web_port: WEB_PORT
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "9925"
+    - key: ALLOW_SIGNUP
+      label: Allow sign-ups
+      type: boolean
+      default: "false"
+    - key: TZ
+      label: Timezone
+      default: "@timezone"
+      advanced: true
+
+services:
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:v3.31.0
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT}:9000"
+    environment:
+      ALLOW_SIGNUP: ${ALLOW_SIGNUP}
+      TZ: ${TZ}
+    volumes:
+      - ${ATHENA_APP_DATA}/data:/app/data

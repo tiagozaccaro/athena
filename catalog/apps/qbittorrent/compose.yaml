@@ -1,0 +1,54 @@
+x-athena:
+  title: qBittorrent
+  description: A BitTorrent client with a full web interface.
+  category: downloads
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/qbittorrent.svg
+  homepage: https://www.qbittorrent.org
+  web_port: WEB_PORT
+  notes: >-
+    The temporary admin password is printed in the container's logs on first start.
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "8087"
+    - key: TORRENT_PORT
+      label: Listening port
+      type: port
+      default: "6881"
+      advanced: true
+    - key: DOWNLOADS_PATH
+      label: Downloads folder
+      type: path
+      description: Where finished downloads go.
+      default: "@app_data/downloads"
+    - key: PUID
+      label: User ID
+      default: "@uid"
+      advanced: true
+    - key: PGID
+      label: Group ID
+      default: "@gid"
+      advanced: true
+    - key: TZ
+      label: Timezone
+      default: "@timezone"
+      advanced: true
+
+services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:5.1.2
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT}:${WEB_PORT}"
+      - "${TORRENT_PORT}:${TORRENT_PORT}"
+      - "${TORRENT_PORT}:${TORRENT_PORT}/udp"
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+      WEBUI_PORT: ${WEB_PORT}
+      TORRENTING_PORT: ${TORRENT_PORT}
+    volumes:
+      - ${ATHENA_APP_DATA}/config:/config
+      - ${DOWNLOADS_PATH}:/downloads

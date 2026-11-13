@@ -1,0 +1,24 @@
+x-athena:
+  title: Home Assistant
+  description: Open-source home automation that puts local control first.
+  category: home
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/home-assistant.svg
+  homepage: https://www.home-assistant.io
+  web_port: 8123
+  notes: >-
+    Uses host networking so it can discover devices on your network. The web UI is on port 8123. On macOS (Colima) and Windows, device discovery is limited because containers run in a VM.
+  env:
+    - key: TZ
+      label: Timezone
+      default: "@timezone"
+      advanced: true
+
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ${ATHENA_APP_DATA}/config:/config

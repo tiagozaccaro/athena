@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M2 (containers + apps), in review: part A in PR #15 (`feat/m2-containers`), part B (apps) in PR `feat/m2-apps`. M3 (app store) is next.
+**Current milestone:** M3 (app store), in progress. Part A (built-in catalog + store) is in PR `feat/m3-store`; part B (remote catalogs + CasaOS importer) is next.
 
 ## Done
 
@@ -69,17 +69,28 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - 116 server tests (real app lifecycle opt-in, on in Linux CI). Verified on Colima in the browser: convert, validate, deploy (live pull), served on :18080, stop, edit port and redeploy (on :18081, `compose.prev.yaml` kept), remove, and remove with data (`--volumes`, folder deleted, audit "with data").
   - Fixed during verification: actions and delete now pass `ATHENA_APP_DATA`; the job dialog stays visible after removing the last app; `runtime_from` looks up `docker` at call time (macOS CI has no docker CLI).
 
+- M2 merged: containers (#15) and apps (#16).
+- **M3 part A, store** (branch `feat/m3-store`):
+  - Catalog format: compose plus `x-athena`, with install values in `.env` via `${KEY}`, default tokens, and generated secrets.
+  - `catalog/` holds 20 curated apps (Jellyfin, Vaultwarden, Home Assistant, Uptime Kuma, AdGuard Home, Nextcloud, Syncthing, FreshRSS, Forgejo, Navidrome, Audiobookshelf, Paperless-ngx, File Browser, code-server, Node-RED, Mealie, Stirling-PDF, IT Tools, Memos, qBittorrent). Every image tag was checked against its registry, and every app passes `docker compose config`.
+  - `athena/catalog/`: model, loader (resolves and validates install values), registry.
+  - `/api/store`: categories, apps (search and filter, showing installed copies), app detail (form fields with resolved defaults, suggested name), and install (422 with per-field errors, then a deploy job).
+  - The `apps.catalog_id` column (migration 0004), and apps report a `web_port` for "Open".
+  - Web: a Store page (search, category toggles, icon cards with fallbacks), a store app page (details, notes, read-only compose, install form with typed fields and an Advanced section), and a Store nav item.
+  - The wheel bundles `catalog/` (release workflow plus an artifact check).
+  - 138 server tests. Verified on Colima: browse, a bad-port error, a Forgejo install from the store (running, single Open link :3002, `.env` mode 600), and removal. An IT Tools install failed on Docker Hub's anonymous pull rate limit, and the failure is reported clearly in the job dialog.
+
 ## In progress
 
-- M2 review and merge (#15, then the apps PR).
+- M3 part A review and merge. Next: part B (remote catalogs, CasaOS importer).
 - Not yet verified: a real `athena service install` on any OS (only dry runs), and real capability detection on Linux and Windows hosts (only CI and fakes).
 
 ## Next
 
-M3, app store (see `docs/mvp-design.md` §4.1):
-1. A `catalog/` folder in the repo with about 20 curated apps (compose + `x-athena` metadata: title, icon, category, description, `port_web`, `env_schema`, volume hints).
-2. Remote catalogs (Git or HTTP), plus a CasaOS AppStore importer (`x-casaos` to `x-athena`).
-3. Store pages: browse and search by category, app page, an install form rendered from `env_schema`, then deploy through the existing apps API (`source: "catalog"`).
+M3 part B:
+1. Remote catalogs: add a Git repo or an HTTP archive URL containing `apps/<id>/compose.yaml`; refresh as a job; store them under `<data-dir>/catalogs/<id>/`; a catalogs table; Settings → Catalogs UI.
+2. CasaOS AppStore importer: map `x-casaos` (title, tagline, category, icon, port_map, envs) to `x-athena`, and its `$PUID`/`$TZ`/`/DATA/AppData/$AppID` conventions to Athena's.
+3. Editing a catalog app's `.env` from the app page.
 
 Later: container stats, importing existing compose projects not created by Athena, and Windows path translation for WSL bind mounts.
 

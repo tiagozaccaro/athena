@@ -38,8 +38,12 @@ export function AppStatusBadge({ app }: { app: AppOut }) {
   }
 }
 
-/** Host ports from "8080→80/tcp" entries, deduplicated, TCP only. */
+/**
+ * Ports to offer as "Open" links: the catalog's declared web port when known,
+ * otherwise every published TCP port (deduplicated).
+ */
 export function webPorts(app: AppOut): string[] {
+  if (app.web_port) return [String(app.web_port)]
   const ports = app.ports
     .filter((p) => p.endsWith("/tcp"))
     .map((p) => p.split("→")[0] ?? "")

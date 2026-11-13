@@ -398,6 +398,7 @@ GET/PUT /api/settings/{appearance|ai|system}
 | SQLModel, SQLAlchemy, Alembic, argon2-cffi | MIT |
 | python-on-whales, PyYAML | MIT |
 | CodeMirror 6, @uiw/react-codemirror | MIT |
+| dashboard-icons (catalog icons, loaded by URL) | Apache-2.0 |
 | httpx2 (test client) | BSD-3-Clause |
 | FastAPI, SQLModel, Pydantic, pydantic-ai, pydantic-ai-harness, uvicorn | MIT / BSD |
 | Docker Engine (Moby), Docker CLI, Compose v2 | Apache-2.0 |
@@ -446,6 +447,7 @@ M2–M4 can proceed in parallel once M1 lands, and so can M5 and M6. M7 depends 
 | Auth (M1) | One admin, created on first run at `/setup`. Passwords use argon2id. The session cookie `athena_session` is a random token (only its SHA-256 is stored), HttpOnly, SameSite=Strict, Secure on HTTPS, with a 30-day TTL. A per-session CSRF token goes in the `X-CSRF-Token` header on writes. Failed logins are limited to 5 per client per 5 minutes. Public routes: `/api/health`, `/api/auth/*`, and the static UI |
 | Container access (M2) | One CLI-based path for every runtime via `python-on-whales` (see §2 Decisions). The `containers` capability carries the engine `endpoint`. Container refs are validated against `^[A-Za-z0-9][A-Za-z0-9_.-]*$` before reaching the CLI |
 | Apps (M2) | An app is a compose project in `<data-dir>/apps/<name>/compose.yaml` (previous version kept as `compose.prev.yaml`) plus an `apps` row. Compose runs with `ATHENA_APP_DATA=<data-dir>/apps/<name>/data`, so files can use `${ATHENA_APP_DATA}`. Validation is a structural check plus `docker compose config --quiet`. Lifecycle (deploy, edit, start, stop, restart, update = pull + up, remove with optional `--volumes` and data folder) runs as jobs, one per app at a time. `docker run` import is a shlex + flag-map converter with warnings for unsupported flags. On macOS, Colima only mounts `$HOME`, which the default data dir is under |
+| App store format (M3) | Catalog apps are plain compose files with `x-athena` metadata (`title`, `description`, `category`, `icon`, `homepage`, `web_port`, `notes`, `env` fields). Install values use standard `${KEY}` interpolation and are written to `.env` (mode 600) next to `compose.yaml`; no custom template syntax. Default tokens: `@timezone`, `@uid`/`@gid`, `@app_data[/sub]`; `generate: secret` fills passwords. Every `${…}` must be declared or `ATHENA_APP_DATA`. The built-in catalog is `catalog/` at the repo root (20 apps, see `catalog/README.md`), bundled into the wheel as `athena/catalog_builtin`. Icons come from dashboard-icons (Apache-2.0) via jsDelivr |
 | Jobs (M2) | In-memory job runner (`athena.jobs`) with output lines streamed over SSE (`/api/jobs/{id}/events`); the last 100 finished jobs are kept. The durable record of privileged actions is the `audit_log` table |
 | Database (M1) | SQLite at `<data-dir>/athena.db` (WAL, foreign keys on), SQLModel models, Alembic migrations run on every start from code. A test fails if models and migrations drift |
 

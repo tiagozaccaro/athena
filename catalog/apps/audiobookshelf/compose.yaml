@@ -1,0 +1,40 @@
+x-athena:
+  title: Audiobookshelf
+  description: An audiobook and podcast server with apps for every device.
+  category: media
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/audiobookshelf.svg
+  homepage: https://www.audiobookshelf.org
+  web_port: WEB_PORT
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "13378"
+    - key: AUDIOBOOKS_PATH
+      label: Audiobooks folder
+      type: path
+      description: Your audiobook library.
+      default: "@app_data/audiobooks"
+    - key: PODCASTS_PATH
+      label: Podcasts folder
+      type: path
+      description: Where podcasts are downloaded.
+      default: "@app_data/podcasts"
+    - key: TZ
+      label: Timezone
+      default: "@timezone"
+      advanced: true
+
+services:
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:2.37.2
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT}:80"
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ${AUDIOBOOKS_PATH}:/audiobooks
+      - ${PODCASTS_PATH}:/podcasts
+      - ${ATHENA_APP_DATA}/config:/config
+      - ${ATHENA_APP_DATA}/metadata:/metadata
