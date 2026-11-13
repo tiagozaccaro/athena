@@ -75,6 +75,70 @@ def _service(args: argparse.Namespace) -> int:
     return execute(plan, dry_run=getattr(args, "dry_run", False))
 
 
+def _read_new_password(args: argparse.Namespace) -> str | None:
+    if args.password_stdin:
+        return sys.stdin.readline().rstrip("\r\n")
+    import getpass
+
+    first = getpass.getpass("New password: ")
+    if first != getpass.getpass("Repeat password: "):
+        print("error: passwords don't match", file=sys.stderr)
+        return None
+    return first
+
+
+def _reset_password(args: argparse.Namespace) -> int:
+    """Recovery for a forgotten admin password. Runs on the server, as the service's user."""
+    from sqlalchemy.exc import OperationalError
+    from sqlmodel import Session, select
+
+    from athena.auth.service import MIN_PW_LENGTH, set_password
+    from athena.db import Database, User
+
+    db_path = Path(args.data_dir) / "athena.db"
+    if not db_path.is_file():
+        print(
+            f"error: no Athena database at {db_path}. Pass --data-dir, or finish setup "
+            "in the web UI first.",
+            file=sys.stderr,
+        )
+        return 1
+    database = Database(db_path)
+    try:
+        database.migrate()
+        with Session(database.engine) as db:
+            users = db.exec(select(User)).all()
+            if args.username:
+                user = next((u for u in users if u.username == args.username), None)
+            elif len(users) == 1:
+                user = users[0]
+            else:
+                names = ", ".join(u.username for u in users) or "none"
+                print(f"error: pass --username (accounts: {names})", file=sys.stderr)
+                return 1
+            if user is None:
+                print(f"error: no account named {args.username!r}", file=sys.stderr)
+                return 1
+            password = _read_new_password(args)
+            if password is None:
+                return 1
+            if len(password) < MIN_PW_LENGTH:
+                print(
+                    f"error: password must be at least {MIN_PW_LENGTH} characters",
+                    file=sys.stderr,
+                )
+                return 1
+            set_password(db, user, password)
+            print(f"Password for {user.username!r} reset. All of its sessions were signed out.")
+            return 0
+    except (OperationalError, PermissionError) as exc:
+        hint = " (run it with sudo, as the service runs as root)" if os.name == "posix" else ""
+        print(f"error: can't open {db_path}: {exc}{hint}", file=sys.stderr)
+        return 1
+    finally:
+        database.engine.dispose()
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="athena", description="Athena home server")
     parser.add_argument("--version", action="version", version=f"athena {__version__}")
@@ -101,6 +165,19 @@ def build_parser() -> argparse.ArgumentParser:
     uninstall.add_argument("--dry-run", action="store_true")
     service_sub.add_parser("status", help="show service status")
     service.set_defaults(func=_service)
+
+    admin = sub.add_parser("admin", help="account recovery")
+    admin_sub = admin.add_subparsers(dest="admin_command", required=True)
+    reset = admin_sub.add_parser(
+        "reset-password",
+        help="set a new password for an account (signs it out everywhere)",
+    )
+    reset.add_argument("--data-dir", type=Path, default=default_data_dir())
+    reset.add_argument("--username", help="needed only when there's more than one account")
+    reset.add_argument(
+        "--password-stdin", action="store_true", help="read the new password from stdin"
+    )
+    reset.set_defaults(func=_reset_password)
 
     return parser
 

@@ -33,7 +33,13 @@ curl -fsSL https://github.com/tiagozaccaro/athena/releases/latest/download/insta
 irm https://github.com/tiagozaccaro/athena/releases/latest/download/install.ps1 | iex
 ```
 
-Then open `http://<your-server-ip>:8420`. Run the script with `--help` (or `-Help` on Windows) to see options such as a specific version, a dry run, or uninstall.
+Then open `http://<your-server-ip>:8420`. The first visit asks you to create the administrator account. Run the script with `--help` (or `-Help` on Windows) to see options such as a specific version, a dry run, or uninstall.
+
+**Forgot the admin password?** Run this on the server (with `sudo` on Linux), then sign in with the new password. All existing sessions are signed out.
+
+```bash
+athena admin reset-password
+```
 
 ## Development
 

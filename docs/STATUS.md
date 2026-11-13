@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M1 (platform + capabilities), in review: part 1 in PR #11 (`feat/m1-capabilities`), part 2 in PR `feat/m1-auth`. M2 (containers + apps) is next.
+**Current milestone:** M1 done (#11, #12). Admin password recovery is in PR `feat/admin-password-reset`. M2 (containers + apps) is next.
 
 ## Done
 
@@ -45,9 +45,14 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - Web: `AuthProvider` gate (redirects to `/setup/` or `/login/`), the setup and login pages (`CredentialsForm`), `NavUser` in the sidebar footer with Log out, and the API client adds CSRF and handles 401.
   - 56 server tests. Verified in the browser against the built UI: setup (including the mismatch error), the dashboard, logout, a wrong password, login, and a CSRF-protected Re-detect.
 
+- **Admin password recovery** (branch `feat/admin-password-reset`):
+  - `athena admin reset-password [--data-dir] [--username] [--password-stdin]` sets a new argon2 hash and deletes all of that account's sessions.
+  - It fails clearly with no database, an unknown user, a short password, mismatched prompts, or a permission error (with a sudo hint).
+  - The login page and README point to it. 62 server tests.
+
 ## In progress
 
-- M1 PR review and merge (#11, then the auth PR).
+- Review and merge of the password-reset PR.
 - Not yet verified: a real `athena service install` on any OS (only dry runs), and real capability detection on Linux and Windows hosts (only CI and fakes).
 
 ## Next
