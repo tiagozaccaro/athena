@@ -74,11 +74,12 @@ def detect_containers_linux(probe: Probe) -> Capability:
 
 
 def detect_containers_darwin(probe: Probe) -> Capability:
-    colima_sock = probe.home() / ".colima" / "default" / "docker.sock"
+    # Unix socket paths are always POSIX, even when tests build this plan on Windows.
+    colima_sock = (probe.home() / ".colima" / "default" / "docker.sock").as_posix()
     if probe.which("colima"):
         version = probe.docker_version(f"unix://{colima_sock}")
         if version:
-            return _engine("colima", version, str(colima_sock))
+            return _engine("colima", version, colima_sock)
         return Capability(
             id=CONTAINERS,
             label=CONTAINERS_LABEL,
