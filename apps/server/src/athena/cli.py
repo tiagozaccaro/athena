@@ -31,9 +31,17 @@ def _serve(args: argparse.Namespace) -> int:
 
 
 def _openapi(args: argparse.Namespace) -> int:
+    import tempfile
+
+    from athena.config import Settings
     from athena.main import create_app
 
-    schema = json.dumps(create_app().openapi(), indent=2) + "\n"
+    # Exporting the schema must not touch the real data dir (e.g. /var/lib/athena,
+    # which needs root), so build the app against a throwaway one.
+    with tempfile.TemporaryDirectory() as tmp:
+        app = create_app(Settings(data_dir=Path(tmp)))
+        schema = json.dumps(app.openapi(), indent=2) + "\n"
+        app.state.db.engine.dispose()  # release the SQLite file so Windows can delete it
     if args.output:
         Path(args.output).write_text(schema, encoding="utf-8")
     else:
