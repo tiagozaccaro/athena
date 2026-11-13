@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M2 (containers + apps), in progress. Part A (runtime, jobs, containers) is in PR `feat/m2-containers`; part B (apps: compose deploy, `docker run` import) is next.
+**Current milestone:** M2 (containers + apps), in review: part A in PR #15 (`feat/m2-containers`), part B (apps) in PR `feat/m2-apps`. M3 (app store) is next.
 
 ## Done
 
@@ -60,20 +60,28 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - 87 server tests (real-engine lifecycle opt-in: `ATHENA_DOCKER_TESTS=1`, on in Linux CI).
   - Verified on macOS with Colima: list (grouped), live logs (the `logs -f` process is killed on close), stop, remove with toast, audit rows, the stopped-runtime view, and the Start job dialog (with a fake `colima` to avoid touching the real VM).
 
+- **M2 part B, apps** (branch `feat/m2-apps`):
+  - `apps` table (migration 0003).
+  - `athena/apps/store.py`: layout `<data-dir>/apps/<name>/compose.yaml` plus `compose.prev.yaml` plus `data/`; compose structural checks; `ATHENA_APP_DATA` env.
+  - `athena/apps/docker_run.py`: a `docker run` to compose converter with ~45 flags, combined short flags, line continuations and warnings.
+  - API `/api/apps`: list (status from container labels), get (compose plus containers), convert, validate (`compose config`), create (202 job: config, pull, up), PUT (edit and redeploy), `/{start|stop|restart|update}`, DELETE (`?delete_data=`). One job per app; all audited.
+  - Web: Apps grid (status, Open links per published port, actions), New app (name, CodeMirror compose editor, upload, docker run tab with Convert and warnings, Validate, Deploy with live job), app detail `/apps/view/?name=` (actions, containers with logs, compose editor with Save and redeploy), `RequireContainers` gate, Apps nav item.
+  - 116 server tests (real app lifecycle opt-in, on in Linux CI). Verified on Colima in the browser: convert, validate, deploy (live pull), served on :18080, stop, edit port and redeploy (on :18081, `compose.prev.yaml` kept), remove, and remove with data (`--volumes`, folder deleted, audit "with data").
+  - Fixed during verification: actions and delete now pass `ATHENA_APP_DATA`; the job dialog stays visible after removing the last app; `runtime_from` looks up `docker` at call time (macOS CI has no docker CLI).
+
 ## In progress
 
-- M2 part A review and merge. Next: part B (apps).
+- M2 review and merge (#15, then the apps PR).
 - Not yet verified: a real `athena service install` on any OS (only dry runs), and real capability detection on Linux and Windows hosts (only CI and fakes).
 
 ## Next
 
-M2 part B, apps (see `docs/mvp-design.md` §4.1):
-1. Athena-managed apps in `<data-dir>/apps/<name>/compose.yaml`, recorded in SQLite.
-2. Deploy a pasted or uploaded compose file (validated, with a CodeMirror editor), and import a `docker run` command (shlex + flag map).
-3. App lifecycle as jobs: up, down, pull + recreate (update), remove (optionally with volumes).
-4. Apps page and app detail page (`/apps/view?name=`), with services, logs and the compose editor.
+M3, app store (see `docs/mvp-design.md` §4.1):
+1. A `catalog/` folder in the repo with about 20 curated apps (compose + `x-athena` metadata: title, icon, category, description, `port_web`, `env_schema`, volume hints).
+2. Remote catalogs (Git or HTTP), plus a CasaOS AppStore importer (`x-casaos` to `x-athena`).
+3. Store pages: browse and search by category, app page, an install form rendered from `env_schema`, then deploy through the existing apps API (`source: "catalog"`).
 
-Later: container stats, Windows path translation for WSL bind mounts.
+Later: container stats, importing existing compose projects not created by Athena, and Windows path translation for WSL bind mounts.
 
 ## Open questions
 

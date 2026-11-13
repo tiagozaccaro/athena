@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from athena import __version__
-from athena.api import auth, capabilities, containers, jobs, system
+from athena.api import apps, auth, capabilities, containers, jobs, system
 from athena.auth.deps import require_user
 from athena.auth.service import LoginThrottle
 from athena.config import Settings
@@ -50,6 +50,7 @@ def create_app(
     app.state.db = db
     app.state.login_throttle = LoginThrottle()
     app.state.jobs = JobManager()
+    app.state.app_jobs = {}
     # Public: /api/health and /api/auth/*. Everything else needs a signed-in session.
     app.include_router(system.router, prefix="/api")
     app.include_router(auth.router, prefix="/api")
@@ -58,6 +59,7 @@ def create_app(
     # The runtime router first, so /containers/runtime/start isn't read as a container ref.
     app.include_router(containers.runtime_router, prefix="/api", dependencies=[require_user])
     app.include_router(containers.router, prefix="/api", dependencies=[require_user])
+    app.include_router(apps.router, prefix="/api", dependencies=[require_user])
 
     # Mounted last so /api routes win. In development the UI is served by `next dev`
     # instead, and this directory doesn't exist.

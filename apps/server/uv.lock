@@ -118,6 +118,7 @@ dependencies = [
     { name = "platformdirs" },
     { name = "pydantic-settings" },
     { name = "python-on-whales" },
+    { name = "pyyaml" },
     { name = "sqlmodel" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -137,6 +138,7 @@ requires-dist = [
     { name = "platformdirs", specifier = ">=4.14" },
     { name = "pydantic-settings", specifier = ">=2.16" },
     { name = "python-on-whales", specifier = ">=0.81" },
+    { name = "pyyaml", specifier = ">=6.0" },
     { name = "sqlmodel", specifier = ">=0.0.50" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54" },
 ]

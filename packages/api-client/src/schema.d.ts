@@ -332,10 +332,174 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/apps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Apps */
+        get: operations["listApps"];
+        put?: never;
+        /**
+         * Create App
+         * @description Save the compose file and deploy it. Follow progress at /api/jobs/{id}/events.
+         */
+        post: operations["createApp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/apps/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get App */
+        get: operations["getApp"];
+        /**
+         * Update Compose
+         * @description Replace the compose file (the old one is kept as compose.prev.yaml) and redeploy.
+         */
+        put: operations["updateAppCompose"];
+        post?: never;
+        /**
+         * Delete App
+         * @description `compose down` and forget the app. With delete_data, also remove its volumes and
+         *     the app directory (including data/).
+         */
+        delete: operations["deleteApp"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/apps/convert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Convert Docker Run
+         * @description Turn a `docker run …` command into a compose file to review before deploying.
+         */
+        post: operations["convertDockerRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/apps/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Validate Compose */
+        post: operations["validateCompose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/apps/{name}/{action}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * App Action
+         * @description start (up -d), stop, restart, or update (pull + up -d).
+         */
+        post: operations["appAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AppDetail */
+        AppDetail: {
+            /** Name */
+            name: string;
+            /** Source */
+            source: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "running" | "partial" | "stopped" | "not_deployed";
+            /** Running */
+            running: number;
+            /** Total */
+            total: number;
+            /** Ports */
+            ports: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Compose */
+            compose: string;
+            /** Containers */
+            containers: components["schemas"]["ContainerOut"][];
+        };
+        /** AppOut */
+        AppOut: {
+            /** Name */
+            name: string;
+            /** Source */
+            source: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "running" | "partial" | "stopped" | "not_deployed";
+            /** Running */
+            running: number;
+            /** Total */
+            total: number;
+            /** Ports */
+            ports: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
         /** AuthStatus */
         AuthStatus: {
             /** Setup Required */
@@ -388,6 +552,11 @@ export interface components {
             /** Capabilities */
             capabilities: components["schemas"]["Capability"][];
         };
+        /** ComposeIn */
+        ComposeIn: {
+            /** Compose */
+            compose: string;
+        };
         /** ContainerOut */
         ContainerOut: {
             /** Id */
@@ -410,6 +579,20 @@ export interface components {
             project: string | null;
             /** Service */
             service: string | null;
+        };
+        /** ConvertIn */
+        ConvertIn: {
+            /** Command */
+            command: string;
+        };
+        /** ConvertOut */
+        ConvertOut: {
+            /** Compose */
+            compose: string;
+            /** Service */
+            service: string;
+            /** Warnings */
+            warnings: string[];
         };
         /** Credentials */
         Credentials: {
@@ -461,6 +644,19 @@ export interface components {
             /** Lines */
             lines: string[];
         };
+        /** NewApp */
+        NewApp: {
+            /** Compose */
+            compose: string;
+            /** Name */
+            name: string;
+            /**
+             * Source
+             * @default compose
+             * @enum {string}
+             */
+            source: "compose" | "docker-run";
+        };
         /** SetupRequest */
         SetupRequest: {
             /** Username */
@@ -494,6 +690,13 @@ export interface components {
             username: string;
             /** Is Admin */
             is_admin: boolean;
+        };
+        /** ValidateOut */
+        ValidateOut: {
+            /** Ok */
+            ok: boolean;
+            /** Errors */
+            errors: string[];
         };
         /** ValidationError */
         ValidationError: {
@@ -1011,6 +1214,258 @@ export interface operations {
                 };
                 content: {
                     "text/event-stream": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listApps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppOut"][];
+                };
+            };
+        };
+    };
+    createApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewApp"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    updateAppCompose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComposeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deleteApp: {
+        parameters: {
+            query?: {
+                delete_data?: boolean;
+            };
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    convertDockerRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConvertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConvertOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    validateCompose: {
+        parameters: {
+            query?: {
+                name?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComposeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    appAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+                action: "start" | "stop" | "restart" | "update";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
                 };
             };
             /** @description Validation Error */
