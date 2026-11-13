@@ -32,3 +32,17 @@ class AuthSession(SQLModel, table=True):
     csrf_token: str = Field(max_length=64)
     created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
     expires_at: datetime = Field(sa_type=DateTime(timezone=True))
+
+
+class AuditEntry(SQLModel, table=True):
+    """Who did what to the host (docs/mvp-design.md §7). Never edited, only appended."""
+
+    __tablename__ = "audit_log"
+
+    id: int | None = Field(default=None, primary_key=True)
+    at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True), index=True)
+    username: str = Field(max_length=64)
+    action: str = Field(max_length=64, index=True)
+    """Dotted verb, e.g. "container.stop", "runtime.start"."""
+    target: str | None = Field(default=None, max_length=255)
+    detail: str | None = None

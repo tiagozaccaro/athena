@@ -90,13 +90,19 @@ export function useCapability(id: string): Capability | undefined {
   return useCapabilities().manifest?.capabilities.find((c) => c.id === id)
 }
 
-/** True when the item's capability is available. Items without a capability always show. */
+/**
+ * Whether a nav item shows on this host. Items without a capability always show.
+ * `showWhenUnavailable` items also show when stopped/missing, but never when the
+ * capability isn't reported at all or is unsupported here.
+ */
 export function isAllowed(
   manifest: CapabilityManifest | null,
-  capability?: string
+  capability?: string,
+  showWhenUnavailable = false
 ): boolean {
   if (!capability) return true
-  return Boolean(
-    manifest?.capabilities.find((c) => c.id === capability)?.available
-  )
+  const cap = manifest?.capabilities.find((c) => c.id === capability)
+  if (!cap) return false
+  if (cap.available) return true
+  return showWhenUnavailable && cap.status !== "unsupported"
 }

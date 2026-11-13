@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 import { isAllowed, useCapabilities } from "@/components/capabilities-provider"
-import type { NavItem } from "@/components/nav"
+import { isActive, type NavItem } from "@/components/nav"
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -22,12 +22,11 @@ export function NavMain({ items }: { items: NavItem[] }) {
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           {items
-            .filter((item) => isAllowed(manifest, item.capability))
+            .filter((item) =>
+              isAllowed(manifest, item.capability, item.showWhenUnavailable)
+            )
             .map((item) => {
-              const active =
-                item.url === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(item.url)
+              const active = isActive(item, pathname)
               return (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton

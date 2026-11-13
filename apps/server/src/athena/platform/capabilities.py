@@ -28,6 +28,8 @@ class Capability(BaseModel):
     """Which implementation backs it, e.g. "colima", "docker-engine", "winget"."""
     detail: str | None = None
     """Human-readable version or reason."""
+    endpoint: str | None = None
+    """How to reach it, e.g. a Docker API socket (unix:///…, npipe:////./pipe/…)."""
     actions: list[Action] = []
 
     @computed_field

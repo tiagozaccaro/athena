@@ -60,7 +60,7 @@ Hard rules that shape every decision below:
 - **Typed contract.** FastAPI generates OpenAPI. `openapi-typescript` and `openapi-fetch` generate the TS client in `packages/api-client`, so the frontend never hand-writes request types.
 - **Realtime.** Server-Sent Events carry stats, logs, job progress and the AI chat stream. WebSockets are used only where input is two-way, which means the terminal.
 - **Long operations are jobs.** Image pulls, package installs and rclone syncs return a `job_id` right away and stream progress over SSE. A small in-process job runner backed by SQLite is enough. No Celery or Redis.
-- **Talk to container engines through the Docker API**, not the CLI. Docker Engine, Colima and Podman all expose a Docker-compatible socket, so one client (`docker` SDK for Python) covers them. Compose goes through `docker compose` (v2 plugin) via `python-on-whales`. On Podman it goes through `podman compose`, which delegates to `docker-compose`.
+- **Talk to container engines through a Docker-compatible CLI** (`docker --host <endpoint>`, `podman --url <endpoint>`, or `wsl.exe -e docker`), using `python-on-whales` for structured reads and direct subprocesses for streamed operations (logs, compose up, pulls). Revised in M2 from "Docker API via the docker SDK": Docker inside WSL2 has no socket reachable from Windows, and the CLI is the one path that covers it, Docker Engine, Colima, Podman and Rancher Desktop alike. Detection still pings the Docker API socket directly (no CLI needed for that).
 
 ---
 
@@ -396,9 +396,10 @@ GET/PUT /api/settings/{appearance|ai|system}
 | Base UI (`@base-ui/react`), `cn`, Turborepo, openapi-fetch, lucide-react, sonner, zod | MIT / ISC |
 | pydantic-settings, platformdirs, hatchling | MIT |
 | SQLModel, SQLAlchemy, Alembic, argon2-cffi | MIT |
+| python-on-whales | MIT |
 | httpx2 (test client) | BSD-3-Clause |
 | FastAPI, SQLModel, Pydantic, pydantic-ai, pydantic-ai-harness, uvicorn | MIT / BSD |
-| docker (Python SDK), Docker Engine (Moby), Compose v2 | Apache-2.0 |
+| Docker Engine (Moby), Docker CLI, Compose v2 | Apache-2.0 |
 | python-on-whales, psutil, platformdirs, ptyprocess, pywinpty, send2trash | MIT / BSD / ISC |
 | wsgidav | MIT |
 | Colima, Lima | MIT / Apache-2.0 |
@@ -442,6 +443,8 @@ M2–M4 can proceed in parallel once M1 lands, and so can M5 and M6. M7 depends 
 | Versioning (M0) | release-please `simple` type with `extra-files` that bump `pyproject.toml` and both `package.json` files; first release is 0.1.0 |
 | Capability detection (M1) | All host access goes through `athena.platform.probe.Probe` (never raises); the Docker-compatible API is pinged directly over a unix socket or Windows named pipe, with no Docker SDK; the manifest lists only capabilities relevant to the host's OS |
 | Auth (M1) | One admin, created on first run at `/setup`. Passwords use argon2id. The session cookie `athena_session` is a random token (only its SHA-256 is stored), HttpOnly, SameSite=Strict, Secure on HTTPS, with a 30-day TTL. A per-session CSRF token goes in the `X-CSRF-Token` header on writes. Failed logins are limited to 5 per client per 5 minutes. Public routes: `/api/health`, `/api/auth/*`, and the static UI |
+| Container access (M2) | One CLI-based path for every runtime via `python-on-whales` (see §2 Decisions). The `containers` capability carries the engine `endpoint`. Container refs are validated against `^[A-Za-z0-9][A-Za-z0-9_.-]*$` before reaching the CLI |
+| Jobs (M2) | In-memory job runner (`athena.jobs`) with output lines streamed over SSE (`/api/jobs/{id}/events`); the last 100 finished jobs are kept. The durable record of privileged actions is the `audit_log` table |
 | Database (M1) | SQLite at `<data-dir>/athena.db` (WAL, foreign keys on), SQLModel models, Alembic migrations run on every start from code. A test fails if models and migrations drift |
 
 ## 12. Open questions
