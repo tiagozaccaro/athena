@@ -2,10 +2,11 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { SearchIcon } from "lucide-react"
+import { LibraryIcon, SearchIcon } from "lucide-react"
 
 import { api, errorMessage, type Schemas } from "@workspace/api-client"
 import { Badge } from "@workspace/ui/components/badge"
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardDescription,
@@ -85,17 +86,27 @@ export function StoreBrowser() {
 
   return (
     <div className="flex flex-col gap-4">
-      <InputGroup className="max-w-md">
-        <InputGroupAddon>
-          <SearchIcon />
-        </InputGroupAddon>
-        <InputGroupInput
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search apps"
-          aria-label="Search apps"
-        />
-      </InputGroup>
+      <div className="flex flex-wrap items-center gap-2">
+        <InputGroup className="max-w-md">
+          <InputGroupAddon>
+            <SearchIcon />
+          </InputGroupAddon>
+          <InputGroupInput
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search apps"
+            aria-label="Search apps"
+          />
+        </InputGroup>
+        <Button
+          variant="outline"
+          className="ml-auto"
+          render={<Link href="/store/catalogs/" />}
+        >
+          <LibraryIcon data-icon="inline-start" />
+          Catalogs
+        </Button>
+      </div>
 
       <ToggleGroup
         value={[category]}
@@ -150,10 +161,13 @@ export function StoreBrowser() {
                   <CardDescription className="line-clamp-2">
                     {app.description}
                   </CardDescription>
-                  <div className="col-start-2 pt-1">
+                  <div className="col-start-2 flex flex-wrap gap-1 pt-1">
                     <Badge variant="outline">
                       {labels[app.category] ?? app.category}
                     </Badge>
+                    {app.catalog !== "builtin" ? (
+                      <Badge variant="outline">{app.catalog_name}</Badge>
+                    ) : null}
                   </div>
                 </CardHeader>
               </Card>

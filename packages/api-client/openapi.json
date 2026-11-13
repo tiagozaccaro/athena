@@ -980,6 +980,61 @@
         }
       }
     },
+    "/api/apps/{name}/env": {
+      "put": {
+        "tags": [
+          "apps"
+        ],
+        "summary": "Update Env",
+        "description": "Replace the app's .env (e.g. change a store app's port or folder) and redeploy.",
+        "operationId": "updateAppEnv",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 63,
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,62}$",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnvIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/apps/{name}/{action}": {
       "post": {
         "tags": [
@@ -1239,6 +1294,151 @@
           }
         }
       }
+    },
+    "/api/store/catalogs": {
+      "get": {
+        "tags": [
+          "store"
+        ],
+        "summary": "List Catalogs",
+        "operationId": "listCatalogs",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listcatalogs"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "store"
+        ],
+        "summary": "Add Catalog",
+        "description": "Add a remote catalog and download it (a job). GitHub, Codeberg and GitLab repository\nURLs work, as do direct .tar.gz/.zip links. Format: Athena or CasaOS AppStore.",
+        "operationId": "addCatalog",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewCatalog"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/catalogs/{catalog_id}/refresh": {
+      "post": {
+        "tags": [
+          "store"
+        ],
+        "summary": "Refresh Catalog",
+        "operationId": "refreshCatalog",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/catalogs/{catalog_id}": {
+      "delete": {
+        "tags": [
+          "store"
+        ],
+        "summary": "Remove Catalog",
+        "description": "Forget a catalog. Apps already installed from it keep running.",
+        "operationId": "removeCatalog",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1314,6 +1514,17 @@
             "type": "string",
             "title": "Compose"
           },
+          "env": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Env"
+          },
           "containers": {
             "items": {
               "$ref": "#/components/schemas/ContainerOut"
@@ -1333,6 +1544,7 @@
           "created_at",
           "updated_at",
           "compose",
+          "env",
           "containers"
         ],
         "title": "AppDetail"
@@ -1577,6 +1789,76 @@
         ],
         "title": "CapabilityManifest"
       },
+      "CatalogOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "builtin": {
+            "type": "boolean",
+            "title": "Builtin"
+          },
+          "app_count": {
+            "type": "integer",
+            "title": "App Count"
+          },
+          "refreshed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refreshed At"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "url",
+          "kind",
+          "builtin",
+          "app_count",
+          "refreshed_at",
+          "error"
+        ],
+        "title": "CatalogOut"
+      },
       "Category": {
         "properties": {
           "id": {
@@ -1770,6 +2052,20 @@
           "password"
         ],
         "title": "Credentials"
+      },
+      "EnvIn": {
+        "properties": {
+          "env": {
+            "type": "string",
+            "maxLength": 65536,
+            "title": "Env"
+          }
+        },
+        "type": "object",
+        "required": [
+          "env"
+        ],
+        "title": "EnvIn"
       },
       "FormField": {
         "properties": {
@@ -2014,6 +2310,38 @@
         ],
         "title": "NewApp"
       },
+      "NewCatalog": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 8,
+            "title": "Url"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "athena",
+              "casaos"
+            ],
+            "title": "Kind",
+            "default": "auto"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "url"
+        ],
+        "title": "NewCatalog"
+      },
       "SetupRequest": {
         "properties": {
           "username": {
@@ -2039,6 +2367,10 @@
           "catalog": {
             "type": "string",
             "title": "Catalog"
+          },
+          "catalog_name": {
+            "type": "string",
+            "title": "Catalog Name"
           },
           "id": {
             "type": "string",
@@ -2078,6 +2410,7 @@
         "type": "object",
         "required": [
           "catalog",
+          "catalog_name",
           "id",
           "title",
           "description",
@@ -2092,6 +2425,10 @@
           "catalog": {
             "type": "string",
             "title": "Catalog"
+          },
+          "catalog_name": {
+            "type": "string",
+            "title": "Catalog Name"
           },
           "id": {
             "type": "string",
@@ -2196,6 +2533,7 @@
         "type": "object",
         "required": [
           "catalog",
+          "catalog_name",
           "id",
           "title",
           "description",

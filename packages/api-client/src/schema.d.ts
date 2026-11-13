@@ -416,6 +416,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/apps/{name}/env": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update Env
+         * @description Replace the app's .env (e.g. change a store app's port or folder) and redeploy.
+         */
+        put: operations["updateAppEnv"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/apps/{name}/{action}": {
         parameters: {
             query?: never;
@@ -507,6 +527,65 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/store/catalogs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Catalogs */
+        get: operations["listCatalogs"];
+        put?: never;
+        /**
+         * Add Catalog
+         * @description Add a remote catalog and download it (a job). GitHub, Codeberg and GitLab repository
+         *     URLs work, as do direct .tar.gz/.zip links. Format: Athena or CasaOS AppStore.
+         */
+        post: operations["addCatalog"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/store/catalogs/{catalog_id}/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refresh Catalog */
+        post: operations["refreshCatalog"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/store/catalogs/{catalog_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove Catalog
+         * @description Forget a catalog. Apps already installed from it keep running.
+         */
+        delete: operations["removeCatalog"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -544,6 +623,8 @@ export interface components {
             updated_at: string;
             /** Compose */
             compose: string;
+            /** Env */
+            env: string | null;
             /** Containers */
             containers: components["schemas"]["ContainerOut"][];
         };
@@ -631,6 +712,25 @@ export interface components {
             /** Capabilities */
             capabilities: components["schemas"]["Capability"][];
         };
+        /** CatalogOut */
+        CatalogOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Url */
+            url: string | null;
+            /** Kind */
+            kind: string;
+            /** Builtin */
+            builtin: boolean;
+            /** App Count */
+            app_count: number;
+            /** Refreshed At */
+            refreshed_at: string | null;
+            /** Error */
+            error: string | null;
+        };
         /** Category */
         Category: {
             /** Id */
@@ -688,6 +788,11 @@ export interface components {
             username: string;
             /** Password */
             password: string;
+        };
+        /** EnvIn */
+        EnvIn: {
+            /** Env */
+            env: string;
         };
         /** FormField */
         FormField: {
@@ -778,6 +883,19 @@ export interface components {
              */
             source: "compose" | "docker-run";
         };
+        /** NewCatalog */
+        NewCatalog: {
+            /** Name */
+            name: string;
+            /** Url */
+            url: string;
+            /**
+             * Kind
+             * @default auto
+             * @enum {string}
+             */
+            kind: "auto" | "athena" | "casaos";
+        };
         /** SetupRequest */
         SetupRequest: {
             /** Username */
@@ -789,6 +907,8 @@ export interface components {
         StoreApp: {
             /** Catalog */
             catalog: string;
+            /** Catalog Name */
+            catalog_name: string;
             /** Id */
             id: string;
             /** Title */
@@ -806,6 +926,8 @@ export interface components {
         StoreAppDetail: {
             /** Catalog */
             catalog: string;
+            /** Catalog Name */
+            catalog_name: string;
             /** Id */
             id: string;
             /** Title */
@@ -1618,6 +1740,41 @@ export interface operations {
             };
         };
     };
+    updateAppEnv: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnvIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     appAction: {
         parameters: {
             query?: never;
@@ -1765,6 +1922,119 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    listCatalogs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogOut"][];
+                };
+            };
+        };
+    };
+    addCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewCatalog"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refreshCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                catalog_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    removeCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                catalog_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };

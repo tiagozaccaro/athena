@@ -55,6 +55,7 @@ export function AppDetail({ name }: { name: string }) {
   const [app, setApp] = React.useState<AppDetailOut | null>(null)
   const [error, setError] = React.useState<string | null>(null)
   const [draft, setDraft] = React.useState<string | null>(null)
+  const [envDraft, setEnvDraft] = React.useState<string | null>(null)
   const [logsFor, setLogsFor] = React.useState<Container | null>(null)
   const [removing, setRemoving] = React.useState(false)
   const removed = React.useRef(false)
@@ -79,6 +80,7 @@ export function AppDetail({ name }: { name: string }) {
     if (removed.current && ok) router.push("/apps/")
     else {
       setDraft(null)
+      setEnvDraft(null)
       void load()
     }
   })
@@ -96,6 +98,18 @@ export function AppDetail({ name }: { name: string }) {
   if (!app) return <Skeleton className="h-64 w-full" />
 
   const dirty = draft !== null && draft !== app.compose
+  const envDirty = envDraft !== null && envDraft !== app.env
+
+  async function saveEnv() {
+    if (envDraft === null) return
+    jobs.show(
+      await api.PUT("/api/apps/{name}/env", {
+        params: { path: { name } },
+        body: { env: envDraft },
+      }),
+      `save ${name} settings`
+    )
+  }
 
   async function save() {
     if (draft === null) return
@@ -165,6 +179,9 @@ export function AppDetail({ name }: { name: string }) {
             Containers <Badge variant="secondary">{app.total}</Badge>
           </TabsTrigger>
           <TabsTrigger value="compose">Compose</TabsTrigger>
+          {app.env !== null ? (
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          ) : null}
         </TabsList>
 
         <TabsContent value="containers" className="pt-2">
@@ -239,6 +256,35 @@ export function AppDetail({ name }: { name: string }) {
             </Button>
           </div>
         </TabsContent>
+
+        {app.env !== null ? (
+          <TabsContent value="settings" className="flex flex-col gap-3 pt-2">
+            <CodeEditor
+              value={envDraft ?? app.env ?? ""}
+              onChange={setEnvDraft}
+              language="text"
+              aria-label={`${app.name} .env`}
+              minHeight="12rem"
+            />
+            <FieldDescription>
+              The values from the install form (.env). Change a port or folder
+              here, then save to redeploy. It may contain generated passwords.
+            </FieldDescription>
+            <div className="flex gap-2">
+              <Button onClick={saveEnv} disabled={!envDirty}>
+                <SaveIcon data-icon="inline-start" />
+                Save and redeploy
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setEnvDraft(null)}
+                disabled={!envDirty}
+              >
+                Discard changes
+              </Button>
+            </div>
+          </TabsContent>
+        ) : null}
       </Tabs>
 
       <LogsSheet container={logsFor} onClose={() => setLogsFor(null)} />

@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M3 (app store), in progress. Part A (built-in catalog + store) is in PR `feat/m3-store`; part B (remote catalogs + CasaOS importer) is next.
+**Current milestone:** M3 (app store), in review: part A in PR #17, part B (remote catalogs + CasaOS + `.env` editing) in PR `feat/m3-catalogs`. M4 (dashboard + appearance) is next.
 
 ## Done
 
@@ -80,17 +80,28 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - The wheel bundles `catalog/` (release workflow plus an artifact check).
   - 138 server tests. Verified on Colima: browse, a bad-port error, a Forgejo install from the store (running, single Open link :3002, `.env` mode 600), and removal. An IT Tools install failed on Docker Hub's anonymous pull rate limit, and the failure is reported clearly in the job dialog.
 
+- **M3 part B, remote catalogs** (branch `feat/m3-catalogs`):
+  - `athena/catalog/remote.py`: repo URL to archive URL, safe tar/zip extraction, finds `apps/` or `Apps/` when nested, normalizes the catalog, atomic swap.
+  - `athena/catalog/casaos.py`: the CasaOS to Athena converter (YAML 1.2 booleans).
+  - `catalogs` table (migration 0005); the registry reloads built-in plus downloaded catalogs.
+  - `/api/store/catalogs`: list, add (job), refresh (job), remove. `StoreApp.catalog_name`.
+  - `PUT /api/apps/{name}/env`: edit `.env` and redeploy. `AppDetail.env`.
+  - Web: `/store/catalogs` (list, refresh, remove, one-click CasaOS AppStore, add form), a Catalogs button and source badges in the Store, and an app Settings tab (`.env` editor).
+  - 163 server tests (CasaOS fixtures from 3 real apps). Verified: the official CasaOS release zip imports 182 apps, all passing `compose config`. In the browser: one-click add, search across catalogs, an imported app's form, and the Forgejo Settings tab changing the port 3002 to 3003 (redeployed, Open link updated).
+
 ## In progress
 
-- M3 part A review and merge. Next: part B (remote catalogs, CasaOS importer).
+- M3 review and merge (#17, then the catalogs PR).
 - Not yet verified: a real `athena service install` on any OS (only dry runs), and real capability detection on Linux and Windows hosts (only CI and fakes).
 
 ## Next
 
-M3 part B:
-1. Remote catalogs: add a Git repo or an HTTP archive URL containing `apps/<id>/compose.yaml`; refresh as a job; store them under `<data-dir>/catalogs/<id>/`; a catalogs table; Settings → Catalogs UI.
-2. CasaOS AppStore importer: map `x-casaos` (title, tagline, category, icon, port_map, envs) to `x-athena`, and its `$PUID`/`$TZ`/`/DATA/AppData/$AppID` conventions to Athena's.
-3. Editing a catalog app's `.env` from the app page.
+M4, dashboard + appearance (see `docs/mvp-design.md` §4.6, §5.4):
+1. Live host stats (psutil: CPU, memory, disks, network, uptime, temperatures where available) sampled server-side with a ~1 h ring buffer, streamed over SSE; dashboard cards and shadcn charts.
+2. An app grid on the dashboard (status, Open links).
+3. A Settings page: Appearance (light/dark/system, base color, theme, chart color, body and heading font, radius, switched live via data attributes plus generated CSS; preset code import/export), plus Account (change password).
+
+Later: auto-refreshing catalogs on a schedule, stripping missing host devices from imported apps, and Docker Hub login for pulls (rate limits).
 
 Later: container stats, importing existing compose projects not created by Athena, and Windows path translation for WSL bind mounts.
 
