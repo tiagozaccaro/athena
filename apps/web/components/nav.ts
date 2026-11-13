@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react"
-import { CircleHelpIcon, LayoutDashboardIcon } from "lucide-react"
+import { BoxIcon, CircleHelpIcon, LayoutDashboardIcon } from "lucide-react"
 
 export type NavItem = {
   title: string
@@ -10,6 +10,11 @@ export type NavItem = {
    * missing on this host are hidden. Undefined means always shown.
    */
   capability?: string
+  /**
+   * Also show the item when the capability is stopped or not installed (but relevant
+   * to this OS), so the page can offer Start or setup instructions.
+   */
+  showWhenUnavailable?: boolean
   external?: boolean
 }
 
@@ -17,7 +22,20 @@ export type NavItem = {
 // Cloud, Terminal, Assistant, Settings), so the sidebar never links to a missing page.
 export const navMain: NavItem[] = [
   { title: "Dashboard", url: "/", icon: LayoutDashboardIcon },
+  {
+    title: "Containers",
+    url: "/containers/",
+    icon: BoxIcon,
+    capability: "containers",
+    showWhenUnavailable: true,
+  },
 ]
+
+/** True when `pathname` is the item's page or below it ("/" only matches itself). */
+export function isActive(item: NavItem, pathname: string): boolean {
+  if (item.url === "/") return pathname === "/"
+  return pathname.startsWith(item.url.replace(/\/$/, ""))
+}
 
 export const navSecondary: NavItem[] = [
   {
@@ -30,8 +48,6 @@ export const navSecondary: NavItem[] = [
 
 /** Title for the header, from the nav item matching the current path. */
 export function titleForPath(pathname: string): string {
-  const match = navMain.find((item) =>
-    item.url === "/" ? pathname === "/" : pathname.startsWith(item.url)
-  )
+  const match = navMain.find((item) => isActive(item, pathname))
   return match?.title ?? "Athena"
 }

@@ -26,13 +26,14 @@ CONTAINERS_LABEL = "Containers"
 # ---------------------------------------------------------------- containers
 
 
-def _engine(provider: str, version: str, where: str) -> Capability:
+def _engine(provider: str, version: str, where: str, endpoint: str | None) -> Capability:
     return Capability(
         id=CONTAINERS,
         label=CONTAINERS_LABEL,
         status="ready",
         provider=provider,
         detail=f"Engine {version} at {where}",
+        endpoint=endpoint,
     )
 
 
@@ -50,7 +51,7 @@ def detect_containers_linux(probe: Probe) -> Capability:
     for provider, sock in candidates:
         version = probe.docker_version(f"unix://{sock}")
         if version:
-            return _engine(provider, version, sock)
+            return _engine(provider, version, sock, f"unix://{sock}")
     if probe.which("dockerd") or probe.exists("/var/run/docker.sock"):
         return Capability(
             id=CONTAINERS,
@@ -79,7 +80,7 @@ def detect_containers_darwin(probe: Probe) -> Capability:
     if probe.which("colima"):
         version = probe.docker_version(f"unix://{colima_sock}")
         if version:
-            return _engine("colima", version, colima_sock)
+            return _engine("colima", version, colima_sock, f"unix://{colima_sock}")
         return Capability(
             id=CONTAINERS,
             label=CONTAINERS_LABEL,
@@ -94,7 +95,7 @@ def detect_containers_darwin(probe: Probe) -> Capability:
         )
         sock = result.first_line
         if result.ok and sock and (version := probe.docker_version(f"unix://{sock}")):
-            return _engine("podman", version, sock)
+            return _engine("podman", version, sock, f"unix://{sock}")
         return Capability(
             id=CONTAINERS,
             label=CONTAINERS_LABEL,
@@ -116,14 +117,22 @@ def detect_containers_windows(probe: Probe) -> Capability:
             timeout=10,
         )
         if result.ok and result.first_line:
-            return _engine("wsl-docker", result.first_line, "the default WSL distro")
+            # No socket reachable from Windows: commands go through `wsl.exe -e docker`.
+            return _engine("wsl-docker", result.first_line, "the default WSL distro", None)
     version = probe.docker_version("npipe:////./pipe/podman-machine-default")
     if version:
-        return _engine("podman", version, r"\\.\pipe\podman-machine-default")
+        return _engine(
+            "podman",
+            version,
+            r"\\.\pipe\podman-machine-default",
+            "npipe:////./pipe/podman-machine-default",
+        )
     version = probe.docker_version("npipe:////./pipe/docker_engine")
     if version:
         provider = "rancher-desktop" if probe.which("rdctl") else "docker-engine"
-        return _engine(provider, version, r"\\.\pipe\docker_engine")
+        return _engine(
+            provider, version, r"\\.\pipe\docker_engine", "npipe:////./pipe/docker_engine"
+        )
     if probe.which("podman") or probe.which("rdctl"):
         return Capability(
             id=CONTAINERS,

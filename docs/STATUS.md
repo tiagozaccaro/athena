@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M1 done (#11, #12). Admin password recovery is in PR `feat/admin-password-reset`. M2 (containers + apps) is next.
+**Current milestone:** M2 (containers + apps), in progress. Part A (runtime, jobs, containers) is in PR `feat/m2-containers`; part B (apps: compose deploy, `docker run` import) is next.
 
 ## Done
 
@@ -50,19 +50,30 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - It fails clearly with no database, an unknown user, a short password, mismatched prompts, or a permission error (with a sudo hint).
   - The login page and README point to it. 62 server tests.
 
+- Admin password recovery merged (#13); code scanning fix (#14).
+- **M2 part A, containers** (branch `feat/m2-containers`):
+  - `athena/containers/`: a runtime from the `containers` capability (Docker CLI with `--host <endpoint>`, Podman CLI, or `wsl.exe -e docker`), and a service for list, inspect, start, stop, restart, remove and logs.
+  - `athena/jobs.py`: an in-memory job runner with SSE.
+  - `audit_log` table (migration 0002), written on container actions and runtime start.
+  - API: `/api/containers` (list, get, start, stop, restart, delete, logs, SSE `logs/stream`), `POST /api/containers/runtime/start` (job), `/api/jobs/{id}` and `/events`.
+  - Web: a Containers page (table grouped by compose project, actions menu, live logs sheet, remove confirmation), a runtime empty state (Start button with live job progress, or per-OS setup steps), and a Base UI toast. The Containers nav item stays visible when the runtime is stopped or missing.
+  - 87 server tests (real-engine lifecycle opt-in: `ATHENA_DOCKER_TESTS=1`, on in Linux CI).
+  - Verified on macOS with Colima: list (grouped), live logs (the `logs -f` process is killed on close), stop, remove with toast, audit rows, the stopped-runtime view, and the Start job dialog (with a fake `colima` to avoid touching the real VM).
+
 ## In progress
 
-- Review and merge of the password-reset PR.
+- M2 part A review and merge. Next: part B (apps).
 - Not yet verified: a real `athena service install` on any OS (only dry runs), and real capability detection on Linux and Windows hosts (only CI and fakes).
 
 ## Next
 
-M2, containers + apps (see `docs/mvp-design.md` §4.1 and §10):
-1. A container provider over the Docker API, for each runtime found in the `containers` capability, plus a "Start" action for stopped runtimes (e.g. `colima start`) and setup instructions on Windows.
-2. App lifecycle (list, start, stop, restart, logs, stats, remove, update image) via `python-on-whales` for Compose.
-3. Custom apps: paste or upload a compose file, and import a `docker run` command.
-4. Long-running operations as jobs with progress over SSE.
-5. Audit log table for privileged actions (§7).
+M2 part B, apps (see `docs/mvp-design.md` §4.1):
+1. Athena-managed apps in `<data-dir>/apps/<name>/compose.yaml`, recorded in SQLite.
+2. Deploy a pasted or uploaded compose file (validated, with a CodeMirror editor), and import a `docker run` command (shlex + flag map).
+3. App lifecycle as jobs: up, down, pull + recreate (update), remove (optionally with volumes).
+4. Apps page and app detail page (`/apps/view?name=`), with services, logs and the compose editor.
+
+Later: container stats, Windows path translation for WSL bind mounts.
 
 ## Open questions
 
