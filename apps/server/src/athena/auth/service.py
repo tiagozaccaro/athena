@@ -62,6 +62,16 @@ def create_user(db: Session, username: str, password: str) -> User:
     return user
 
 
+def set_password(db: Session, user: User, password: str) -> None:
+    """Replace the password and sign the user out everywhere."""
+    if len(password) < MIN_PASSWORD_LENGTH:
+        raise ValueError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
+    user.password_hash = hash_password(password)
+    db.add(user)
+    db.exec(delete(AuthSession).where(AuthSession.user_id == user.id))
+    db.commit()
+
+
 def create_session(db: Session, user: User) -> tuple[str, AuthSession]:
     """Returns the raw cookie token (never stored) and the session row."""
     token = secrets.token_urlsafe(32)

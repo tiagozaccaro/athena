@@ -22,5 +22,6 @@ Run the web app at the same time with `pnpm dev` from the repo root. It proxies 
 | `athena service install --data-dir DIR --port N [--dry-run]` | Register Athena to start automatically: systemd (Linux, root), launchd agent (macOS), Scheduled Task at logon (Windows) |
 | `athena service uninstall [--dry-run]` | Remove that registration |
 | `athena service status` | Show whether the service is registered and running |
+| `athena admin reset-password [--data-dir DIR] [--username NAME] [--password-stdin]` | Recover a forgotten password: prompts twice (or reads stdin), then signs that account out everywhere. Run it as the service's user (`sudo` on Linux) |
 
 The install scripts in `scripts/` call `athena service install` after installing the wheel.
