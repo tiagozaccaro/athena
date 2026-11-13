@@ -204,8 +204,12 @@ services:
 
 ### 4.6 Dashboard
 
-- `psutil` for CPU, memory, disks, network and temperatures where available, sampled every 2 s and pushed over SSE. The server keeps a ring buffer for about 1 h of sparkline history.
-- Cards: system, storage, network, container runtime status (with Start/Setup action), app grid with open/start/stop.
+- `athena/monitor.py`: `psutil` for CPU, memory, swap, disks, network, disk I/O, load and temperatures, sampled every 2 s by a background task started in the app lifespan. A ring buffer keeps 1 h of samples (1800) for sparklines.
+  - `GET /api/system/stats` returns the current stats plus the history; `GET /api/system/stats/stream` (SSE) sends a `stats` event after each sample. After a dropped stream the UI reloads the snapshot to fill the gap.
+  - No capability: psutil covers all three OSes. Metrics a host can't report are `null` and hidden (temperatures exist only on Linux; disk I/O counters can be missing on Windows and in containers).
+  - Memory "used" is total − available. Network totals skip loopback and container bridges (`veth*`, `docker*`, `br-*`, `vEthernet*`), which would double count.
+  - Disks: physical partitions only, minus pseudo/snap/image filesystems, macOS `dontbrowse` volumes and read-only mounts other than `/`; partitions with identical total and free space (APFS volumes in one container, bind mounts) collapse to the shortest mount point; used = total − free. Refreshed every 30 s.
+- Cards: system stats (CPU, memory, network, disk activity, each with a 5 min / 1 h sparkline), storage, temperatures (when reported), server info with uptime, capabilities; later the app grid with open/start/stop.
 
 ---
 
@@ -341,7 +345,7 @@ API surface:
 
 ```
 GET  /api/system/capabilities        POST /api/system/capabilities/refresh
-GET  /api/system/stats (SSE)         POST /api/runtime/{start|stop|setup}
+GET  /api/system/stats   GET /api/system/stats/stream (SSE)   POST /api/runtime/{start|stop|setup}
 GET  /api/apps                       POST /api/apps            (compose or catalog ref)
 POST /api/apps/{id}/{start|stop|restart|update}   DELETE /api/apps/{id}
 GET  /api/apps/{id}/logs (SSE)       POST /api/apps/import/docker-run
@@ -450,6 +454,8 @@ M2–M4 can proceed in parallel once M1 lands, and so can M5 and M6. M7 depends 
 | App store format (M3) | Catalog apps are plain compose files with `x-athena` metadata (`title`, `description`, `category`, `icon`, `homepage`, `web_port`, `notes`, `env` fields). Install values use standard `${KEY}` interpolation and are written to `.env` (mode 600) next to `compose.yaml`; no custom template syntax. Default tokens: `@timezone`, `@uid`/`@gid`, `@app_data[/sub]`; `generate: secret` fills passwords. Every `${…}` must be declared or `ATHENA_APP_DATA`. The built-in catalog is `catalog/` at the repo root (20 apps, see `catalog/README.md`), bundled into the wheel as `athena/catalog_builtin`. Icons come from dashboard-icons (Apache-2.0) via jsDelivr |
 | Remote catalogs (M3) | Downloaded as an archive over HTTPS (no git): GitHub/Codeberg/GitLab repo URLs are turned into archive URLs; direct .tar.gz/.zip links work. Safe extraction (no traversal or links, 200 MB download, 50k files, 1 GB extracted). The folder holding `apps/` (Athena) or `Apps/` (CasaOS) is found up to 8 levels deep, normalized into `<data-dir>/catalogs/<id>/apps/*/compose.yaml`, and swapped in atomically; a failed refresh keeps the previous copy and records the error. Refresh runs as a job |
 | CasaOS import (M3) | `x-casaos` converted to `x-athena`: `/DATA/AppData/$AppID` becomes `${ATHENA_APP_DATA}`, `/DATA/<X>` becomes a path field, `port_map` becomes `WEB_PORT`, `$PUID/$PGID/$TZ` become default-token fields, and other variables become fields (secrets generated). Parsed with YAML 1.2 booleans like compose. The one-click source is the official CasaOS-AppStore release `main.zip` (182 apps, all pass `compose config`); the full repo is too large and the pruned `_appstore` mirror is unlicensed. Imported files keep upstream specifics (e.g. Raspberry Pi device mappings) |
+| Host stats (M4) | psutil sampled every 2 s into a 1 h ring buffer; JSON snapshot with history plus an SSE stream of `stats` events. No capability (psutil runs on all OSes); unavailable metrics are `null`. Disks are filtered and de-duplicated by (total, free) so APFS volumes show once |
+| Server shutdown (M4) | `athena serve` sets uvicorn `timeout_graceful_shutdown` to 5 s. SSE streams never end on their own, so without it an open dashboard kept the server (and a service stop or restart) waiting forever |
 | Jobs (M2) | In-memory job runner (`athena.jobs`) with output lines streamed over SSE (`/api/jobs/{id}/events`); the last 100 finished jobs are kept. The durable record of privileged actions is the `audit_log` table |
 | Database (M1) | SQLite at `<data-dir>/athena.db` (WAL, foreign keys on), SQLModel models, Alembic migrations run on every start from code. A test fails if models and migrations drift |
 

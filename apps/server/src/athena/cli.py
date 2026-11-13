@@ -9,6 +9,8 @@ from pathlib import Path
 from athena import __version__
 from athena.config import DEFAULT_PORT, default_data_dir
 
+SHUTDOWN_GRACE_SECONDS = 5
+
 
 def _serve(args: argparse.Namespace) -> int:
     import uvicorn
@@ -26,6 +28,9 @@ def _serve(args: argparse.Namespace) -> int:
         port=args.port,
         reload=args.reload,
         log_config=None,  # athena.logging_setup configures logging in create_app
+        # SSE streams (live stats, logs) never end on their own; without a timeout an
+        # open dashboard keeps the server from stopping (and a service restart hangs).
+        timeout_graceful_shutdown=SHUTDOWN_GRACE_SECONDS,
     )
     return 0
 
