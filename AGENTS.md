@@ -28,6 +28,8 @@ Full details are in `CONTRIBUTING.md`.
   - `next.config.ts` exports statically for `next build` and proxies `/api` to `http://localhost:8420` only in `next dev`, because rewrites aren't allowed with static export.
   - All data loads client-side through `@workspace/api-client`. It adds the CSRF header and redirects to `/login/` on 401. There are no server actions and no dynamic routes; use query params for detail pages.
   - Signed-in pages live under `app/(app)/`, inside `AuthProvider` and then `CapabilitiesProvider`. Use `useAuth()` and `useCapability(id)`. `/setup` and `/login` live under `app/(auth)/`.
+  - Code editing: `CodeEditor` from `@workspace/ui/components/athena/code-editor` (CodeMirror 6, themed from CSS variables).
+  - Pages that need containers wrap their content in `<RequireContainers>`, which shows Start or setup when the runtime isn't ready.
   - Live output: `useEventStream(url)` (SSE), `<LogView>`, and `<JobDialog job>` for job progress. Notifications use `toast.add({ type, title, description })` from `@workspace/ui/components/toast` (Base UI), not sonner.
   - Next.js 16 differs from older versions. Read `apps/web/AGENTS.md` and the docs in `apps/web/node_modules/next/dist/docs/` before writing Next code.
   - Sidebar entries live in `apps/web/components/nav.ts`. Add a section only when its page exists.
@@ -38,6 +40,7 @@ Full details are in `CONTRIBUTING.md`.
   - Database changes need a new Alembic migration in `athena/db/migrations/versions/`. `tests/test_db.py` fails if the models and migrations differ.
   - Host detection lives in `athena/platform/`. Test new detectors with `tests/fake_probe.py`.
   - Containers: `athena/containers/` (`runtime_from(capability)` gives the CLI prefix and client; `service.py` holds the operations). Validate container refs with `check_ref`. Real-engine tests only run with `ATHENA_DOCKER_TESTS=1` (on in Linux CI). Locally they would touch the developer's runtime, so they're opt-in.
+  - Apps: `athena/apps/` (`store.py` for the on-disk layout and compose checks, `docker_run.py` for the converter) and `athena/api/apps.py`. Compose commands go through `store.compose(...)` with `env=store.env(name)` so `${ATHENA_APP_DATA}` resolves.
   - Long operations run as jobs (`request.app.state.jobs.start(title, body)`) and stream over SSE. Record privileged actions with `athena.audit.record(...)`.
   - Tests use `conftest.make_app()` and `signed_in(client)`.
 - `catalog/`: built-in app store (compose + `x-athena` metadata).

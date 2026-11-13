@@ -46,3 +46,17 @@ class AuditEntry(SQLModel, table=True):
     """Dotted verb, e.g. "container.stop", "runtime.start"."""
     target: str | None = Field(default=None, max_length=255)
     detail: str | None = None
+
+
+class App(SQLModel, table=True):
+    """An Athena-managed app: a compose project in <data-dir>/apps/<name>/compose.yaml."""
+
+    __tablename__ = "apps"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(unique=True, index=True, max_length=63)
+    """Compose project name: lowercase letters, digits, dash and underscore."""
+    source: str = Field(default="compose", max_length=16)
+    """How it was created: "compose", "docker-run" (later: "catalog")."""
+    created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
+    updated_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))

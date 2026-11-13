@@ -149,7 +149,9 @@ class CommandFailedError(RuntimeError):
     pass
 
 
-async def run_or_fail(job: Job, argv: list[str], what: str) -> None:
-    code = await job.run_command(argv)
+async def run_or_fail(
+    job: Job, argv: list[str], what: str, env: Mapping[str, str] | None = None
+) -> None:
+    code = await job.run_command(argv, env=env)
     if code != 0:
         raise CommandFailedError(f"{what} failed (exit code {code})")

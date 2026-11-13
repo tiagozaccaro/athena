@@ -1,5 +1,10 @@
 import type { LucideIcon } from "lucide-react"
-import { BoxIcon, CircleHelpIcon, LayoutDashboardIcon } from "lucide-react"
+import {
+  BoxIcon,
+  CircleHelpIcon,
+  LayoutDashboardIcon,
+  LayoutGridIcon,
+} from "lucide-react"
 
 export type NavItem = {
   title: string
@@ -22,6 +27,13 @@ export type NavItem = {
 // Cloud, Terminal, Assistant, Settings), so the sidebar never links to a missing page.
 export const navMain: NavItem[] = [
   { title: "Dashboard", url: "/", icon: LayoutDashboardIcon },
+  {
+    title: "Apps",
+    url: "/apps/",
+    icon: LayoutGridIcon,
+    capability: "containers",
+    showWhenUnavailable: true,
+  },
   {
     title: "Containers",
     url: "/containers/",

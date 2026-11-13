@@ -667,10 +667,513 @@
           }
         }
       }
+    },
+    "/api/apps": {
+      "get": {
+        "tags": [
+          "apps"
+        ],
+        "summary": "List Apps",
+        "operationId": "listApps",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AppOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listapps"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "apps"
+        ],
+        "summary": "Create App",
+        "description": "Save the compose file and deploy it. Follow progress at /api/jobs/{id}/events.",
+        "operationId": "createApp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewApp"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/{name}": {
+      "get": {
+        "tags": [
+          "apps"
+        ],
+        "summary": "Get App",
+        "operationId": "getApp",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 63,
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,62}$",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "apps"
+        ],
+        "summary": "Update Compose",
+        "description": "Replace the compose file (the old one is kept as compose.prev.yaml) and redeploy.",
+        "operationId": "updateAppCompose",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 63,
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,62}$",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComposeIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "apps"
+        ],
+        "summary": "Delete App",
+        "description": "`compose down` and forget the app. With delete_data, also remove its volumes and\nthe app directory (including data/).",
+        "operationId": "deleteApp",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 63,
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,62}$",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "delete_data",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Delete Data"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/convert": {
+      "post": {
+        "tags": [
+          "apps"
+        ],
+        "summary": "Convert Docker Run",
+        "description": "Turn a `docker run \u2026` command into a compose file to review before deploying.",
+        "operationId": "convertDockerRun",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/validate": {
+      "post": {
+        "tags": [
+          "apps"
+        ],
+        "summary": "Validate Compose",
+        "operationId": "validateCompose",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 63,
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,62}$",
+              "default": "athena-validate",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComposeIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/{name}/{action}": {
+      "post": {
+        "tags": [
+          "apps"
+        ],
+        "summary": "App Action",
+        "description": "start (up -d), stop, restart, or update (pull + up -d).",
+        "operationId": "appAction",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 63,
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,62}$",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "action",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "start",
+                "stop",
+                "restart",
+                "update"
+              ],
+              "type": "string",
+              "title": "Action"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AppDetail": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "running",
+              "partial",
+              "stopped",
+              "not_deployed"
+            ],
+            "title": "Status"
+          },
+          "running": {
+            "type": "integer",
+            "title": "Running"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "ports": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ports"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "compose": {
+            "type": "string",
+            "title": "Compose"
+          },
+          "containers": {
+            "items": {
+              "$ref": "#/components/schemas/ContainerOut"
+            },
+            "type": "array",
+            "title": "Containers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "source",
+          "status",
+          "running",
+          "total",
+          "ports",
+          "created_at",
+          "updated_at",
+          "compose",
+          "containers"
+        ],
+        "title": "AppDetail"
+      },
+      "AppOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "running",
+              "partial",
+              "stopped",
+              "not_deployed"
+            ],
+            "title": "Status"
+          },
+          "running": {
+            "type": "integer",
+            "title": "Running"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "ports": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ports"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "source",
+          "status",
+          "running",
+          "total",
+          "ports",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "AppOut"
+      },
       "AuthStatus": {
         "properties": {
           "setup_required": {
@@ -830,6 +1333,20 @@
         ],
         "title": "CapabilityManifest"
       },
+      "ComposeIn": {
+        "properties": {
+          "compose": {
+            "type": "string",
+            "maxLength": 262144,
+            "title": "Compose"
+          }
+        },
+        "type": "object",
+        "required": [
+          "compose"
+        ],
+        "title": "ComposeIn"
+      },
       "ContainerOut": {
         "properties": {
           "id": {
@@ -927,6 +1444,47 @@
           "service"
         ],
         "title": "ContainerOut"
+      },
+      "ConvertIn": {
+        "properties": {
+          "command": {
+            "type": "string",
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Command"
+          }
+        },
+        "type": "object",
+        "required": [
+          "command"
+        ],
+        "title": "ConvertIn"
+      },
+      "ConvertOut": {
+        "properties": {
+          "compose": {
+            "type": "string",
+            "title": "Compose"
+          },
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "compose",
+          "service",
+          "warnings"
+        ],
+        "title": "ConvertOut"
       },
       "Credentials": {
         "properties": {
@@ -1058,6 +1616,36 @@
         ],
         "title": "LogsOut"
       },
+      "NewApp": {
+        "properties": {
+          "compose": {
+            "type": "string",
+            "maxLength": 262144,
+            "title": "Compose"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 63,
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,62}$",
+            "title": "Name"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "compose",
+              "docker-run"
+            ],
+            "title": "Source",
+            "default": "compose"
+          }
+        },
+        "type": "object",
+        "required": [
+          "compose",
+          "name"
+        ],
+        "title": "NewApp"
+      },
       "SetupRequest": {
         "properties": {
           "username": {
@@ -1143,6 +1731,27 @@
           "is_admin"
         ],
         "title": "UserOut"
+      },
+      "ValidateOut": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Errors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok",
+          "errors"
+        ],
+        "title": "ValidateOut"
       },
       "ValidationError": {
         "properties": {
