@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M1 (platform + capabilities), in progress. Part 1 (capabilities) is in PR `feat/m1-capabilities`; part 2 (database + auth) is next.
+**Current milestone:** M1 (platform + capabilities), in review: part 1 in PR #11 (`feat/m1-capabilities`), part 2 in PR `feat/m1-auth`. M2 (containers + apps) is next.
 
 ## Done
 
@@ -38,16 +38,26 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - Web: `CapabilitiesProvider` with `useCapabilities()` and `useCapability(id)`, nav items filtered by their `capability`, and a dashboard "Capabilities" card with Re-detect. Package managers that aren't installed are hidden.
   - 40 server tests, using `tests/fake_probe.py` to simulate each OS. Verified on macOS: Colima found, Homebrew ready, rclone missing.
 
+- **M1 part 2, database + auth** (branch `feat/m1-auth`):
+  - SQLite at `<data-dir>/athena.db`, with SQLModel models (`users`, `sessions`) and Alembic migrations (`0001`) run on every start. Covered by a model/migration drift test.
+  - Auth: one admin created at `/setup`, argon2id passwords, hashed session tokens in an HttpOnly SameSite=Strict cookie, a CSRF header on writes, login throttling (5 per 5 minutes), and no username enumeration.
+  - API: `/api/auth/status|setup|login|logout`. Everything else except health requires a session.
+  - Web: `AuthProvider` gate (redirects to `/setup/` or `/login/`), the setup and login pages (`CredentialsForm`), `NavUser` in the sidebar footer with Log out, and the API client adds CSRF and handles 401.
+  - 56 server tests. Verified in the browser against the built UI: setup (including the mismatch error), the dashboard, logout, a wrong password, login, and a CSRF-protected Re-detect.
+
 ## In progress
 
-- M1 part 2: SQLite + migrations, the admin account, sessions, CSRF, `/setup` and `/login`.
+- M1 PR review and merge (#11, then the auth PR).
 - Not yet verified: a real `athena service install` on any OS (only dry runs), and real capability detection on Linux and Windows hosts (only CI and fakes).
 
 ## Next
 
-M1, platform + capabilities (see `docs/mvp-design.md` §3 and §10):
-1. First-run setup wizard (`/setup`), admin account (argon2), session cookie, CSRF, and `/login`. Wire up `NavUser` (`apps/web/components/nav-user.tsx`).
-2. SQLite plus migrations (SQLModel and Alembic).
+M2, containers + apps (see `docs/mvp-design.md` §4.1 and §10):
+1. A container provider over the Docker API, for each runtime found in the `containers` capability, plus a "Start" action for stopped runtimes (e.g. `colima start`) and setup instructions on Windows.
+2. App lifecycle (list, start, stop, restart, logs, stats, remove, update image) via `python-on-whales` for Compose.
+3. Custom apps: paste or upload a compose file, and import a `docker run` command.
+4. Long-running operations as jobs with progress over SSE.
+5. Audit log table for privileged actions (§7).
 
 ## Open questions
 

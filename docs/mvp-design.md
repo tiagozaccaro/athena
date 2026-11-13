@@ -395,6 +395,7 @@ GET/PUT /api/settings/{appearance|ai|system}
 | xterm.js, CodeMirror 6, next-themes, openapi-typescript | MIT |
 | Base UI (`@base-ui/react`), `cn`, Turborepo, openapi-fetch, lucide-react, sonner, zod | MIT / ISC |
 | pydantic-settings, platformdirs, hatchling | MIT |
+| SQLModel, SQLAlchemy, Alembic, argon2-cffi | MIT |
 | httpx2 (test client) | BSD-3-Clause |
 | FastAPI, SQLModel, Pydantic, pydantic-ai, pydantic-ai-harness, uvicorn | MIT / BSD |
 | docker (Python SDK), Docker Engine (Moby), Compose v2 | Apache-2.0 |
@@ -438,7 +439,10 @@ M2–M4 can proceed in parallel once M1 lands, and so can M5 and M6. M7 depends 
 | shadcn primitives (M0) | Base UI (`base-nova` style from preset `b0`), lucide icons |
 | Dev API access (M0) | `next.config.ts` adds an `/api` rewrite to the server in `next dev` only; builds are static exports with `trailingSlash: true`, served by FastAPI `StaticFiles` |
 | Python (M0) | 3.13 for the server and the installers (`requires-python >= 3.12`) |
-| Versioning (M0) | release-please `simple` type with `extra-files` that bump `pyproject.toml` and both `package.json` files |
+| Versioning (M0) | release-please `simple` type with `extra-files` that bump `pyproject.toml` and both `package.json` files; first release is 0.1.0 |
+| Capability detection (M1) | All host access goes through `athena.platform.probe.Probe` (never raises); the Docker-compatible API is pinged directly over a unix socket or Windows named pipe, with no Docker SDK; the manifest lists only capabilities relevant to the host's OS |
+| Auth (M1) | One admin, created on first run at `/setup`. Passwords use argon2id. The session cookie `athena_session` is a random token (only its SHA-256 is stored), HttpOnly, SameSite=Strict, Secure on HTTPS, with a 30-day TTL. A per-session CSRF token goes in the `X-CSRF-Token` header on writes. Failed logins are limited to 5 per client per 5 minutes. Public routes: `/api/health`, `/api/auth/*`, and the static UI |
+| Database (M1) | SQLite at `<data-dir>/athena.db` (WAL, foreign keys on), SQLModel models, Alembic migrations run on every start from code. A test fails if models and migrations drift |
 
 ## 12. Open questions
 

@@ -9,6 +9,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from athena import __version__
+from athena.auth.deps import require_user
 
 router = APIRouter(tags=["system"])
 
@@ -42,7 +43,7 @@ def health() -> Health:
     return Health(status="ok", version=__version__)
 
 
-@router.get("/system/info", operation_id="getSystemInfo")
+@router.get("/system/info", operation_id="getSystemInfo", dependencies=[require_user])
 def system_info() -> SystemInfo:
     os_name = current_os()
     if os_name == "darwin":

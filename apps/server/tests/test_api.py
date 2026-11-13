@@ -1,22 +1,16 @@
 from pathlib import Path
 
+from conftest import make_app, signed_in
 from fake_probe import FakeProbe
 from fastapi.testclient import TestClient
 
 from athena import __version__
-from athena.config import Settings
-from athena.main import create_app
 from athena.platform.detect import detect
 from athena.platform.store import CapabilityStore
 
 
-def fake_store() -> CapabilityStore:
-    return CapabilityStore(detector=lambda: detect(FakeProbe(os="darwin")))
-
-
 def client(tmp_path: Path, web_dir: Path | None = None) -> TestClient:
-    settings = Settings(data_dir=tmp_path / "data", web_dir=web_dir or tmp_path / "no-web")
-    return TestClient(create_app(settings, capability_store=fake_store()))
+    return signed_in(TestClient(make_app(tmp_path, web_dir)))
 
 
 def test_health(tmp_path: Path) -> None:
@@ -75,9 +69,8 @@ def test_capabilities_refresh_reruns_detection(tmp_path: Path) -> None:
         calls.append(1)
         return detect(FakeProbe())
 
-    settings = Settings(data_dir=tmp_path / "data", web_dir=tmp_path / "no-web")
-    app = create_app(settings, capability_store=CapabilityStore(detector=detector))
-    with TestClient(app) as c:
+    app = make_app(tmp_path, store=CapabilityStore(detector=detector))
+    with signed_in(TestClient(app)) as c:
         c.get("/api/system/capabilities")
         first = len(calls)
         c.get("/api/system/capabilities")
