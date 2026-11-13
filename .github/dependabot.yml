@@ -19,6 +19,13 @@ updates:
     groups:
       web-minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # TypeScript 7 (native compiler) needs Next.js and typescript-eslint support first.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      # Types track the minimum supported Node (engines: >=20.9), not the latest Node.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: uv
     directory: /apps/server

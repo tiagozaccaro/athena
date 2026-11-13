@@ -11,3 +11,8 @@ allowBuilds:
 permissions:
   '@tanstack/react-table':
     skills: false
+
+# next@16.4.5 pins baseline-browser-mapping@2.10.32 (security advisory: affected < 2.11.0).
+# Remove once a Next release depends on a patched version.
+overrides:
+  baseline-browser-mapping: ^2.11.0
