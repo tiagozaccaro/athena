@@ -28,7 +28,9 @@ class Runtime:
         return [*self.cli, *args]
 
 
-def runtime_from(capability: Capability | None, which: Which = shutil.which) -> Runtime:
+def runtime_from(capability: Capability | None, which: Which | None = None) -> Runtime:
+    # Looked up at call time (not as a default argument) so tests can patch shutil.which.
+    which = which or shutil.which
     if capability is None or capability.status != "ready":
         detail = capability.detail if capability else "No container capability detected"
         raise RuntimeUnavailableError(detail or "Container runtime isn't ready")
