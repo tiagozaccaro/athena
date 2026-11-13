@@ -70,46 +70,57 @@ jobs:
         shell: pwsh
         run: ./scripts/install.ps1 -DryRun -Version 0.0.0
 
+  # Decides which project jobs exist yet, so jobs for unbuilt parts are skipped
+  # without ever waiting for a (scarce) macOS or Windows runner.
+  detect:
+    name: detect projects
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.check.outputs.web }}
+      server: ${{ steps.check.outputs.server }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - id: check
+        run: |
+          if [ -f pnpm-lock.yaml ]; then echo "web=true" >> "$GITHUB_OUTPUT"; else echo "web=false" >> "$GITHUB_OUTPUT"; fi
+          if [ -f apps/server/pyproject.toml ]; then echo "server=true" >> "$GITHUB_OUTPUT"; else echo "server=false" >> "$GITHUB_OUTPUT"; fi
+
   web:
     name: web
+    needs: detect
+    if: needs.detect.outputs.web == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      # The steps below switch on once the monorepo exists (milestone M0).
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
-        if: hashFiles('pnpm-lock.yaml') != ''
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        if: hashFiles('pnpm-lock.yaml') != ''
         with:
           node-version: lts/*
           cache: pnpm
 
       - name: Install
-        if: hashFiles('pnpm-lock.yaml') != ''
         run: pnpm install --frozen-lockfile
 
       - name: Lint
-        if: hashFiles('pnpm-lock.yaml') != ''
         run: pnpm run --if-present lint
 
       - name: Typecheck
-        if: hashFiles('pnpm-lock.yaml') != ''
         run: pnpm run --if-present typecheck
 
       - name: Build
-        if: hashFiles('pnpm-lock.yaml') != ''
         run: pnpm run --if-present build
-
-      - name: Skipped
-        if: hashFiles('pnpm-lock.yaml') == ''
-        run: echo "No pnpm workspace yet; web checks start with milestone M0."
 
   server:
     name: server (${{ matrix.os }})
+    needs: detect
+    if: needs.detect.outputs.server == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -123,36 +134,26 @@ jobs:
         with:
           persist-credentials: false
 
-      # The steps below switch on once apps/server exists (milestone M0).
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-        if: hashFiles('apps/server/pyproject.toml') != ''
         with:
           enable-cache: true
 
       - name: Install
-        if: hashFiles('apps/server/pyproject.toml') != ''
         run: uv sync --locked
 
       - name: Lint
-        if: hashFiles('apps/server/pyproject.toml') != ''
         run: |
           uv run ruff check
           uv run ruff format --check
 
       - name: Test
-        if: hashFiles('apps/server/pyproject.toml') != ''
         run: uv run pytest
-
-      - name: Skipped
-        if: hashFiles('apps/server/pyproject.toml') == ''
-        working-directory: .
-        run: echo "No server package yet; server checks start with milestone M0."
 
   # The single required status check for branch protection. Add new jobs to `needs`.
   ci-ok:
     name: ci-ok
     if: always()
-    needs: [repo, install-scripts, web, server]
+    needs: [repo, install-scripts, detect, web, server]
     runs-on: ubuntu-latest
     steps:
       - name: All CI jobs passed
