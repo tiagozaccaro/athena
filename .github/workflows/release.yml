@@ -41,10 +41,34 @@ jobs:
         with:
           persist-credentials: false
 
-      # From M0 on, this job also builds the web app and the server wheel
-      # (athena_server-<version>-py3-none-any.whl) and uploads them here.
-      - name: Upload install scripts
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      - name: Build the web UI (static export)
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+
+      # The wheel bundles the exported UI, so `athena serve` serves it at /.
+      # The install scripts download athena_server-<version>-py3-none-any.whl.
+      - name: Build the server wheel
+        run: |
+          cp -R apps/web/out apps/server/src/athena/web
+          cd apps/server
+          uv build --wheel --out-dir ../../dist
+          ls -l ../../dist
+
+      - name: Check the wheel contains the UI
+        run: python3 -c "import sys,zipfile,glob; w=glob.glob('dist/*.whl')[0]; n=zipfile.ZipFile(w).namelist(); sys.exit(0 if 'athena/web/index.html' in n else 'web UI missing from ' + w)"
+
+      - name: Upload release assets
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.release-please.outputs.tag_name }}
-        run: gh release upload "$TAG" scripts/install.sh scripts/install.ps1 --clobber
+        run: gh release upload "$TAG" dist/*.whl scripts/install.sh scripts/install.ps1 --clobber

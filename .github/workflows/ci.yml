@@ -82,35 +82,36 @@ jobs:
         with:
           persist-credentials: false
 
-      # The steps below switch on once the monorepo exists (milestone M0).
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
-        if: hashFiles('pnpm-lock.yaml') != ''
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        if: hashFiles('pnpm-lock.yaml') != ''
         with:
           node-version: lts/*
           cache: pnpm
 
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+
       - name: Install
-        if: hashFiles('pnpm-lock.yaml') != ''
         run: pnpm install --frozen-lockfile
 
+      - name: API client is up to date with the server
+        run: |
+          pnpm gen:api
+          git diff --exit-code -- packages/api-client || {
+            echo "::error::packages/api-client is out of date. Run 'pnpm gen:api' and commit the result."
+            exit 1
+          }
+
       - name: Lint
-        if: hashFiles('pnpm-lock.yaml') != ''
-        run: pnpm run --if-present lint
+        run: pnpm lint
 
       - name: Typecheck
-        if: hashFiles('pnpm-lock.yaml') != ''
-        run: pnpm run --if-present typecheck
+        run: pnpm typecheck
 
-      - name: Build
-        if: hashFiles('pnpm-lock.yaml') != ''
-        run: pnpm run --if-present build
-
-      - name: Skipped
-        if: hashFiles('pnpm-lock.yaml') == ''
-        run: echo "No pnpm workspace yet; web checks start with milestone M0."
+      - name: Build (static export)
+        run: pnpm build
 
   server:
     name: server (${{ matrix.os }})
@@ -127,30 +128,23 @@ jobs:
         with:
           persist-credentials: false
 
-      # The steps below switch on once apps/server exists (milestone M0).
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-        if: hashFiles('apps/server/pyproject.toml') != ''
         with:
           enable-cache: true
 
       - name: Install
-        if: hashFiles('apps/server/pyproject.toml') != ''
         run: uv sync --locked
 
       - name: Lint
-        if: hashFiles('apps/server/pyproject.toml') != ''
         run: |
           uv run ruff check
           uv run ruff format --check
 
       - name: Test
-        if: hashFiles('apps/server/pyproject.toml') != ''
         run: uv run pytest
 
-      - name: Skipped
-        if: hashFiles('apps/server/pyproject.toml') == ''
-        working-directory: .
-        run: echo "No server package yet; server checks start with milestone M0."
+      - name: Service install dry run
+        run: uv run athena service install --dry-run
 
   # The single required status check for branch protection. Add new jobs to `needs`.
   ci-ok:

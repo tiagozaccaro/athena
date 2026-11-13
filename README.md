@@ -37,7 +37,42 @@ Then open `http://<your-server-ip>:8420`. Run the script with `--help` (or `-Hel
 
 ## Development
 
-The project is a monorepo: a Next.js + shadcn/ui frontend (pnpm) and a Python backend (uv). Setup instructions arrive with milestone M0. Until then, read:
+The project is a monorepo: a Next.js + shadcn/ui frontend (pnpm + Turborepo) and a Python backend (uv).
+
+**Requirements:** Node.js 20.9+, [pnpm](https://pnpm.io), and [uv](https://docs.astral.sh/uv/).
+
+```bash
+pnpm install
+cd apps/server && uv sync && cd ../..
+```
+
+Run the backend and the frontend in two terminals:
+
+```bash
+cd apps/server && uv run athena serve --reload --port 8420
+```
+
+```bash
+pnpm dev
+```
+
+Open http://localhost:3000. `next dev` proxies `/api` to the server on port 8420, and the API docs are at http://localhost:8420/api/docs.
+
+| Task | Command |
+|---|---|
+| Lint, typecheck, build the web app | `pnpm lint`, `pnpm typecheck`, `pnpm build` |
+| Server tests and lint | `cd apps/server && uv run pytest && uv run ruff check` |
+| Regenerate the API client after changing server routes | `pnpm gen:api` |
+| Add a shadcn component | `pnpm dlx shadcn@latest add <name> -c apps/web` |
+
+| Path | What |
+|---|---|
+| `apps/web` | Next.js app (static export), app shell from the shadcn `dashboard-01` block |
+| `packages/ui` | shadcn/ui components shared by the app |
+| `packages/api-client` | Typed API client generated from the server's OpenAPI schema |
+| `apps/server` | FastAPI server and the `athena` CLI (`serve`, `openapi`, `service install`) |
+
+More reading:
 
 - [docs/mvp-design.md](docs/mvp-design.md): architecture and decisions
 - [CONTRIBUTING.md](CONTRIBUTING.md): branches, commits and pull requests

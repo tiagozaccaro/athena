@@ -7,7 +7,12 @@
   "packages": {
     ".": {
       "package-name": "athena",
-      "changelog-path": "CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        { "type": "toml", "path": "apps/server/pyproject.toml", "jsonpath": "$.project.version" },
+        { "type": "json", "path": "package.json", "jsonpath": "$.version" },
+        { "type": "json", "path": "apps/web/package.json", "jsonpath": "$.version" }
+      ]
     }
   }
 }

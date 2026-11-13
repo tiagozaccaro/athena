@@ -1,0 +1,42 @@
+"use client"
+
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+
+import type { NavItem } from "@/components/nav"
+import {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@workspace/ui/components/sidebar"
+
+// The block's "Quick Create" button becomes "Add app" when the store lands (M3).
+export function NavMain({ items }: { items: NavItem[] }) {
+  const pathname = usePathname()
+  return (
+    <SidebarGroup>
+      <SidebarGroupContent className="flex flex-col gap-2">
+        <SidebarMenu>
+          {items.map((item) => {
+            const active =
+              item.url === "/" ? pathname === "/" : pathname.startsWith(item.url)
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  tooltip={item.title}
+                  isActive={active}
+                  render={<Link href={item.url} />}
+                >
+                  <item.icon />
+                  <span>{item.title}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )
+          })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  )
+}

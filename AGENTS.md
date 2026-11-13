@@ -22,12 +22,16 @@ The repo is public at `github.com/tiagozaccaro/athena`. `main` is protected: no 
 
 Full details are in `CONTRIBUTING.md`.
 
-## Layout (planned)
+## Layout
 
-- `apps/web`: Next.js, static export (`output: "export"`), shadcn/ui. Served by the Python server in production.
-- `packages/ui`: shadcn components. Athena-made components go in `packages/ui/src/components/athena/`.
-- `packages/api-client`: TS client generated from the server's OpenAPI. Don't hand-write request types.
-- `apps/server`: Python (uv), FastAPI, SQLite. Package `athena`.
+- `apps/web`: Next.js 16, static export, shadcn/ui on Base UI (`base-nova` style, preset `b0`, lucide icons). Served by the Python server in production.
+  - `next.config.ts` exports statically for `next build` and proxies `/api` to `http://localhost:8420` only in `next dev`, because rewrites aren't allowed with static export.
+  - All data loads client-side through `@workspace/api-client`. There are no server actions and no dynamic routes; use query params for detail pages.
+  - Next.js 16 differs from older versions. Read `apps/web/AGENTS.md` and the docs in `apps/web/node_modules/next/dist/docs/` before writing Next code.
+  - Sidebar entries live in `apps/web/components/nav.ts`. Add a section only when its page exists.
+- `packages/ui`: shadcn components (`pnpm dlx shadcn@latest add <name> -c apps/web`). Athena-made components go in `packages/ui/src/components/athena/`.
+- `packages/api-client`: generated from the server's OpenAPI schema with `pnpm gen:api`. Never hand-write request types; CI fails if the client is out of date.
+- `apps/server`: Python 3.13 (uv), FastAPI, package `athena`, CLI `athena` (`serve`, `openapi`, `service install|uninstall|status`). API routes go under `/api` with an explicit `operation_id`. Tests are in `apps/server/tests`.
 - `catalog/`: built-in app store (compose + `x-athena` metadata).
 - `scripts/install.sh`, `scripts/install.ps1`: the one-line installers. They're attached to every GitHub release. Keep them in sync with the server's `athena service` CLI.
 - `.github/`: CI (`ci.yml`), PR title check, release-please (`release.yml`), Dependabot, templates.
