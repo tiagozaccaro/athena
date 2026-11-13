@@ -20,12 +20,19 @@ class UnsupportedPlatformError(RuntimeError):
     pass
 
 
-def _serve_args(spec: ServiceSpec, *, include_defaults: bool = True) -> list[str]:
+def _posix(path: Path) -> str:
+    """systemd and launchd always take POSIX paths, even when the plan is built elsewhere."""
+    return path.as_posix()
+
+
+def _serve_args(
+    spec: ServiceSpec, *, include_defaults: bool = True, posix: bool = False
+) -> list[str]:
     args = ["-m", "athena", "serve"]
     if include_defaults or spec.port != DEFAULT_PORT:
         args += ["--port", str(spec.port)]
     if include_defaults or spec.data_dir != default_data_dir():
-        args += ["--data-dir", str(spec.data_dir)]
+        args += ["--data-dir", _posix(spec.data_dir) if posix else str(spec.data_dir)]
     return args
 
 
@@ -39,7 +46,8 @@ def _systemd_quote(arg: str) -> str:
 
 
 def systemd_unit(spec: ServiceSpec) -> str:
-    exec_start = " ".join(_systemd_quote(a) for a in [str(spec.python), *_serve_args(spec)])
+    argv = [_posix(spec.python), *_serve_args(spec, posix=True)]
+    exec_start = " ".join(_systemd_quote(a) for a in argv)
     return f"""[Unit]
 Description=Athena home server
 Documentation=https://github.com/tiagozaccaro/athena
@@ -100,11 +108,11 @@ def launchd_plist(spec: ServiceSpec) -> str:
     logs = spec.data_dir / "logs"
     data = {
         "Label": LAUNCHD_LABEL,
-        "ProgramArguments": [str(spec.python), *_serve_args(spec)],
+        "ProgramArguments": [_posix(spec.python), *_serve_args(spec, posix=True)],
         "RunAtLoad": True,
         "KeepAlive": True,
-        "StandardOutPath": str(logs / "athena.log"),
-        "StandardErrorPath": str(logs / "athena.log"),
+        "StandardOutPath": _posix(logs / "athena.log"),
+        "StandardErrorPath": _posix(logs / "athena.log"),
         # launchd starts with a minimal PATH; Colima and Docker live in Homebrew.
         "EnvironmentVariables": {
             "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",

@@ -54,7 +54,7 @@ def test_launchd_plist() -> None:
         port=8420,
     )
     data = plistlib.loads(launchd_plist(spec).encode())
-    assert data["ProgramArguments"][:4] == [str(spec.python), "-m", "athena", "serve"]
+    assert data["ProgramArguments"][:4] == [spec.python.as_posix(), "-m", "athena", "serve"]
     assert data["RunAtLoad"] and data["KeepAlive"]
     assert "/opt/homebrew/bin" in data["EnvironmentVariables"]["PATH"]
 
