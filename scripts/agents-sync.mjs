@@ -65,8 +65,10 @@ if (args.has("--hermes")) {
   // `hermes mcp add` asks "Enable all N tools? [Y/n/select]" and cancels (exit 0) on EOF,
   // so answer "Y" on stdin and verify with `hermes mcp list` afterwards.
   const hermes = (...a) => spawnSync("hermes", a, { cwd: root, encoding: "utf8", shell, input: "Y\n" });
+  // Escape every regex metacharacter (including backslash) in the server name.
+  const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const isListed = (name) =>
-    new RegExp(`^\\s*${name.replace(/[-]/g, "\\-")}\\s`, "m").test(hermes("mcp", "list").stdout ?? "");
+    new RegExp(`^\\s*${escapeRegExp(name)}\\s`, "m").test(hermes("mcp", "list").stdout ?? "");
 
   if (hermes("--version").status !== 0) {
     console.error("hermes CLI not found on PATH. Install Hermes Agent, or use --hermes-print.");
