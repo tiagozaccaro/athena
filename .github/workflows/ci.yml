@@ -54,7 +54,9 @@ jobs:
 
       - name: Dry run (Linux / macOS)
         if: runner.os != 'Windows'
-        run: bash scripts/install.sh --dry-run --version 0.0.0
+        run: |
+          bash scripts/install.sh --dry-run --version 0.0.0
+          bash scripts/install.sh --dry-run --uninstall --purge
 
       - name: Lint (PSScriptAnalyzer)
         if: runner.os == 'Windows'
@@ -68,7 +70,9 @@ jobs:
       - name: Dry run (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: ./scripts/install.ps1 -DryRun -Version 0.0.0
+        run: |
+          ./scripts/install.ps1 -DryRun -Version 0.0.0
+          ./scripts/install.ps1 -DryRun -Uninstall -Purge
 
   web:
     name: web
