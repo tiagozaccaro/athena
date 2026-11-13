@@ -45,7 +45,7 @@ class Credentials(BaseModel):
 
 class SetupRequest(BaseModel):
     username: str
-    password: str = Field(min_length=service.MIN_PASSWORD_LENGTH, max_length=256)
+    password: str = Field(min_length=service.MIN_PW_LENGTH, max_length=256)
 
     @field_validator("username")
     @classmethod

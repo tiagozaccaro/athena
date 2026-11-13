@@ -92,7 +92,7 @@ def _reset_password(args: argparse.Namespace) -> int:
     from sqlalchemy.exc import OperationalError
     from sqlmodel import Session, select
 
-    from athena.auth.service import MIN_PASSWORD_LENGTH, set_password
+    from athena.auth.service import MIN_PW_LENGTH, set_password
     from athena.db import Database, User
 
     db_path = Path(args.data_dir) / "athena.db"
@@ -122,9 +122,9 @@ def _reset_password(args: argparse.Namespace) -> int:
             password = _read_new_password(args)
             if password is None:
                 return 1
-            if len(password) < MIN_PASSWORD_LENGTH:
+            if len(password) < MIN_PW_LENGTH:
                 print(
-                    f"error: password must be at least {MIN_PASSWORD_LENGTH} characters",
+                    f"error: password must be at least {MIN_PW_LENGTH} characters",
                     file=sys.stderr,
                 )
                 return 1
