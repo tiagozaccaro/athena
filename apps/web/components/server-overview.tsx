@@ -17,7 +17,9 @@ import {
 } from "@workspace/ui/components/card"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 
+import { useOptionalHostStats } from "@/components/dashboard/host-stats-provider"
 import { useApi } from "@/hooks/use-api"
+import { formatDuration } from "@/lib/format"
 
 const OS_LABELS = {
   linux: "Linux",
@@ -25,9 +27,14 @@ const OS_LABELS = {
   windows: "Windows",
 } as const
 
-// M0 dashboard: proves the UI ↔ API round trip. Live stats and app cards come in M4.
 export function ServerOverview() {
   const info = useApi(() => api.GET("/api/system/info"))
+  const stats = useOptionalHostStats()
+  const host = stats?.host
+  const uptime =
+    host && host.boot_time > 0 && host.latest
+      ? formatDuration(host.latest.t - host.boot_time)
+      : undefined
 
   if (info.status === "error") {
     return (
@@ -48,6 +55,9 @@ export function ServerOverview() {
           ["Host", info.data.hostname],
           ["Operating system", info.data.os_version],
           ["Platform", `${OS_LABELS[info.data.os]} · ${info.data.arch}`],
+          ...(stats
+            ? [["Uptime", uptime] as [string, string | undefined]]
+            : []),
           ["Athena", info.data.version],
           ["Python", info.data.python],
         ]
@@ -55,6 +65,7 @@ export function ServerOverview() {
           ["Host", undefined],
           ["Operating system", undefined],
           ["Platform", undefined],
+          ...(stats ? [["Uptime", undefined] as [string, undefined]] : []),
           ["Athena", undefined],
           ["Python", undefined],
         ]

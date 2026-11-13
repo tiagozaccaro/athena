@@ -5,11 +5,13 @@ import socket
 import sys
 from typing import Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from athena import __version__
 from athena.auth.deps import require_user
+from athena.monitor import HostMonitor, StatsSnapshot
 
 router = APIRouter(tags=["system"])
 
@@ -63,4 +65,30 @@ def system_info() -> SystemInfo:
         arch=platform.machine().lower(),
         hostname=socket.gethostname(),
         python=platform.python_version(),
+    )
+
+
+def _monitor(request: Request) -> HostMonitor:
+    return request.app.state.monitor
+
+
+@router.get("/system/stats", operation_id="getSystemStats", dependencies=[require_user])
+async def system_stats(request: Request) -> StatsSnapshot:
+    """Current host stats plus up to an hour of samples for sparklines."""
+    return await _monitor(request).snapshot()
+
+
+@router.get(
+    "/system/stats/stream",
+    operation_id="streamSystemStats",
+    dependencies=[require_user],
+    response_class=StreamingResponse,
+    responses={200: {"content": {"text/event-stream": {}}}},
+)
+def stream_system_stats(request: Request) -> StreamingResponse:
+    """Server-Sent Events: a `stats` event (`HostStats` JSON) after every new sample."""
+    return StreamingResponse(
+        _monitor(request).events(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

@@ -38,6 +38,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/system/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * System Stats
+         * @description Current host stats plus up to an hour of samples for sparklines.
+         */
+        get: operations["getSystemStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/stats/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stream System Stats
+         * @description Server-Sent Events: a `stats` event (`HostStats` JSON) after every new sample.
+         */
+        get: operations["streamSystemStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/status": {
         parameters: {
             query?: never;
@@ -789,6 +829,23 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** DiskUsage */
+        DiskUsage: {
+            /** Mountpoint */
+            mountpoint: string;
+            /** Device */
+            device: string;
+            /** Fstype */
+            fstype: string;
+            /** Total */
+            total: number;
+            /** Used */
+            used: number;
+            /** Free */
+            free: number;
+            /** Percent */
+            percent: number;
+        };
         /** EnvIn */
         EnvIn: {
             /** Env */
@@ -903,6 +960,54 @@ export interface components {
             /** Password */
             password: string;
         };
+        /**
+         * StatsSample
+         * @description One sample of the fast-changing metrics. Rates are per second since the last sample.
+         */
+        StatsSample: {
+            /** T */
+            t: number;
+            /** Cpu Percent */
+            cpu_percent: number;
+            /** Mem Used */
+            mem_used: number;
+            /** Mem Total */
+            mem_total: number;
+            /** Swap Used */
+            swap_used: number;
+            /** Swap Total */
+            swap_total: number;
+            /** Net Rx */
+            net_rx: number;
+            /** Net Tx */
+            net_tx: number;
+            /** Disk Read */
+            disk_read: number | null;
+            /** Disk Write */
+            disk_write: number | null;
+            /** Cpu Temp */
+            cpu_temp: number | null;
+        };
+        /** StatsSnapshot */
+        StatsSnapshot: {
+            /** Interval */
+            interval: number;
+            /** Boot Time */
+            boot_time: number;
+            /** Cpu Count */
+            cpu_count: number;
+            /** Cpu Count Physical */
+            cpu_count_physical: number | null;
+            /** Load Avg */
+            load_avg: number[] | null;
+            /** Disks */
+            disks: components["schemas"]["DiskUsage"][];
+            /** Temperatures */
+            temperatures: components["schemas"]["Temperature"][] | null;
+            latest: components["schemas"]["StatsSample"] | null;
+            /** History */
+            history: components["schemas"]["StatsSample"][];
+        };
         /** StoreApp */
         StoreApp: {
             /** Catalog */
@@ -974,6 +1079,17 @@ export interface components {
             hostname: string;
             /** Python */
             python: string;
+        };
+        /** Temperature */
+        Temperature: {
+            /** Label */
+            label: string;
+            /** Current */
+            current: number;
+            /** High */
+            high?: number | null;
+            /** Critical */
+            critical?: number | null;
         };
         /** UserOut */
         UserOut: {
@@ -1049,6 +1165,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SystemInfo"];
+                };
+            };
+        };
+    };
+    getSystemStats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatsSnapshot"];
+                };
+            };
+        };
+    };
+    streamSystemStats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": unknown;
                 };
             };
         };

@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M3 (app store), in review: part A in PR #17, part B (remote catalogs + CasaOS + `.env` editing) in PR `feat/m3-catalogs`. M4 (dashboard + appearance) is next.
+**Current milestone:** M4 (dashboard + appearance). M3 is done (#17, #18). Step 1, live host stats, is in PR `feat/m4-host-stats`; the dashboard app grid is next.
 
 ## Done
 
@@ -81,7 +81,7 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - 138 server tests. Verified on Colima: browse, a bad-port error, a Forgejo install from the store (running, single Open link :3002, `.env` mode 600), and removal. An IT Tools install failed on Docker Hub's anonymous pull rate limit, and the failure is reported clearly in the job dialog.
 
 - **Agent UI verification** (#19): the Playwright MCP server (headless, isolated) in `.mcp.json`, synced to OpenCode and Hermes and enabled for Claude Code; the `athena-ui-verify` skill. Verified that OpenCode connects, Hermes has it enabled and loads the skill, and all 12 tools the skill names exist.
-- **M3 part B, remote catalogs** (branch `feat/m3-catalogs`):
+- **M3 part B, remote catalogs** (#18):
   - `athena/catalog/remote.py`: repo URL to archive URL, safe tar/zip extraction, finds `apps/` or `Apps/` when nested, normalizes the catalog, atomic swap.
   - `athena/catalog/casaos.py`: the CasaOS to Athena converter (YAML 1.2 booleans).
   - `catalogs` table (migration 0005); the registry reloads built-in plus downloaded catalogs.
@@ -90,21 +90,27 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - Web: `/store/catalogs` (list, refresh, remove, one-click CasaOS AppStore, add form), a Catalogs button and source badges in the Store, and an app Settings tab (`.env` editor).
   - 163 server tests (CasaOS fixtures from 3 real apps). Verified: the official CasaOS release zip imports 182 apps, all passing `compose config`. In the browser: one-click add, search across catalogs, an imported app's form, and the Forgejo Settings tab changing the port 3002 to 3003 (redeployed, Open link updated).
 
+- **M4 step 1, live host stats** (branch `feat/m4-host-stats`):
+  - `athena/monitor.py`: `HostMonitor` samples psutil every 2 s (1 h ring buffer), with disks refreshed every 30 s. Disk filtering and de-duplication per OS (APFS volumes collapse to `/`), and network totals skip loopback and container bridges.
+  - API: `GET /api/system/stats` (snapshot + history) and `GET /api/system/stats/stream` (SSE `stats` events). The monitor starts in the app lifespan.
+  - `athena serve` now has a 5 s graceful-shutdown timeout. Found in verification: an open SSE stream kept the server from stopping at all.
+  - Web: `HostStatsProvider` (snapshot, then SSE; reloads the snapshot after a reconnect), CPU/memory/network/disk-activity cards with 5 min / 1 h sparklines and a Live/Reconnecting badge, Storage card (shadcn `progress`), Temperatures card (only when reported), and uptime on the Server card. `recharts` added to `apps/web`.
+  - 179 server tests. Verified in the browser on macOS: live updates, the range toggle, stopping the server (badge shows Reconnecting, server exits in 5 s) and restarting it (reconnects by itself), phone width and dark mode, and no console errors other than the deliberate outages. Temperatures only verified with fakes (macOS has no sensors API).
+
 ## In progress
 
-- M3 part B review and merge (the catalogs PR; #17 merged).
+- M4 step 1 (host stats) review and merge.
 - Not yet verified: a real `athena service install` on any OS (only dry runs), and real capability detection on Linux and Windows hosts (only CI and fakes).
 
 ## Next
 
 M4, dashboard + appearance (see `docs/mvp-design.md` §4.6, §5.4):
-1. Live host stats (psutil: CPU, memory, disks, network, uptime, temperatures where available) sampled server-side with a ~1 h ring buffer, streamed over SSE; dashboard cards and shadcn charts.
-2. An app grid on the dashboard (status, Open links).
-3. A Settings page: Appearance (light/dark/system, base color, theme, chart color, body and heading font, radius, switched live via data attributes plus generated CSS; preset code import/export), plus Account (change password).
+1. An app grid on the dashboard (status, Open, start/stop), reusing the Apps page data.
+2. A Settings page: Appearance (light/dark/system, base color, theme, chart color, body and heading font, radius, switched live via data attributes plus generated CSS; preset code import/export), plus Account (change password).
 
 Later: auto-refreshing catalogs on a schedule, stripping missing host devices from imported apps, and Docker Hub login for pulls (rate limits).
 
-Later: container stats, importing existing compose projects not created by Athena, and Windows path translation for WSL bind mounts.
+Later: per-container stats, verifying temperatures on a real Linux host, importing existing compose projects not created by Athena, and Windows path translation for WSL bind mounts.
 
 ## Open questions
 

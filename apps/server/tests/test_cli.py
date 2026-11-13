@@ -79,3 +79,16 @@ def test_reset_password_prompts_twice(
     code = main(["admin", "reset-password", "--data-dir", str(tmp_path / "data")])
     assert code == 1
     assert "don't match" in capsys.readouterr().err
+
+
+def test_serve_bounds_graceful_shutdown(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Open SSE streams (the dashboard) must not keep the server from stopping."""
+    import uvicorn
+
+    seen: dict = {}
+    monkeypatch.setattr(uvicorn, "run", lambda *a, **kw: seen.update(kw))
+    for key in ("ATHENA_HOST", "ATHENA_PORT", "ATHENA_DATA_DIR", "ATHENA_LOG_TO_FILE"):
+        monkeypatch.delenv(key, raising=False)
+    assert main(["serve", "--port", "8499", "--data-dir", str(tmp_path / "d")]) == 0
+    assert seen["port"] == 8499
+    assert 0 < seen["timeout_graceful_shutdown"] <= 10

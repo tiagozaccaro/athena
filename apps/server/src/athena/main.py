@@ -18,6 +18,7 @@ from athena.config import Settings
 from athena.db import Database
 from athena.jobs import JobManager
 from athena.logging_setup import setup_logging
+from athena.monitor import HostMonitor
 from athena.platform.store import CapabilityStore
 
 
@@ -25,6 +26,7 @@ def create_app(
     settings: Settings | None = None,
     capability_store: CapabilityStore | None = None,
     catalogs: CatalogRegistry | None = None,
+    monitor: HostMonitor | None = None,
 ) -> FastAPI:
     settings = settings or Settings()
     if settings.log_to_file:
@@ -38,8 +40,10 @@ def create_app(
         # Detect in the background so the server answers immediately; the first
         # GET /api/system/capabilities waits for it if it isn't done yet.
         task = asyncio.create_task(store.get())
+        app.state.monitor.start()
         yield
         task.cancel()
+        await app.state.monitor.stop()
 
     app = FastAPI(
         title="Athena",
@@ -55,6 +59,7 @@ def create_app(
     app.state.login_throttle = LoginThrottle()
     app.state.jobs = JobManager()
     app.state.app_jobs = {}
+    app.state.monitor = monitor or HostMonitor()
     app.state.catalogs = catalogs or CatalogRegistry(remote_root=settings.data_dir / "catalogs")
     # Public: /api/health and /api/auth/*. Everything else needs a signed-in session.
     app.include_router(system.router, prefix="/api")
