@@ -9,8 +9,11 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from athena import __version__
-from athena.api import capabilities, system
+from athena.api import auth, capabilities, system
+from athena.auth.deps import require_user
+from athena.auth.service import LoginThrottle
 from athena.config import Settings
+from athena.db import Database
 from athena.logging_setup import setup_logging
 from athena.platform.store import CapabilityStore
 
@@ -22,6 +25,8 @@ def create_app(
     if settings.log_to_file:
         setup_logging(settings.data_dir)
     store = capability_store or CapabilityStore()
+    db = Database(settings.data_dir / "athena.db")
+    db.migrate()
 
     @contextlib.asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -41,8 +46,12 @@ def create_app(
     )
     app.state.settings = settings
     app.state.capabilities = store
+    app.state.db = db
+    app.state.login_throttle = LoginThrottle()
+    # Public: /api/health and /api/auth/*. Everything else needs a signed-in session.
     app.include_router(system.router, prefix="/api")
-    app.include_router(capabilities.router, prefix="/api")
+    app.include_router(auth.router, prefix="/api")
+    app.include_router(capabilities.router, prefix="/api", dependencies=[require_user])
 
     # Mounted last so /api routes win. In development the UI is served by `next dev`
     # instead, and this directory doesn't exist.

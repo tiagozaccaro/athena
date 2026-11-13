@@ -19,7 +19,11 @@ import { Skeleton } from "@workspace/ui/components/skeleton"
 
 import { useApi } from "@/hooks/use-api"
 
-const OS_LABELS = { linux: "Linux", darwin: "macOS", windows: "Windows" } as const
+const OS_LABELS = {
+  linux: "Linux",
+  darwin: "macOS",
+  windows: "Windows",
+} as const
 
 // M0 dashboard: proves the UI ↔ API round trip. Live stats and app cards come in M4.
 export function ServerOverview() {
