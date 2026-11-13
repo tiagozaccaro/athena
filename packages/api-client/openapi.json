@@ -1039,6 +1039,206 @@
           }
         }
       }
+    },
+    "/api/store/categories": {
+      "get": {
+        "tags": [
+          "store"
+        ],
+        "summary": "Categories",
+        "operationId": "listStoreCategories",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Category"
+                  },
+                  "type": "array",
+                  "title": "Response Liststorecategories"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/apps": {
+      "get": {
+        "tags": [
+          "store"
+        ],
+        "summary": "List Store Apps",
+        "operationId": "listStoreApps",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "default": "",
+              "title": "Q"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 32
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StoreApp"
+                  },
+                  "title": "Response Liststoreapps"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/apps/{catalog}/{app_id}": {
+      "get": {
+        "tags": [
+          "store"
+        ],
+        "summary": "Get Store App",
+        "operationId": "getStoreApp",
+        "parameters": [
+          {
+            "name": "catalog",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+              "title": "Catalog"
+            }
+          },
+          {
+            "name": "app_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+              "title": "App Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreAppDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/apps/{catalog}/{app_id}/install": {
+      "post": {
+        "tags": [
+          "store"
+        ],
+        "summary": "Install",
+        "description": "Write compose.yaml and .env from the install form, then deploy as a job.",
+        "operationId": "installStoreApp",
+        "parameters": [
+          {
+            "name": "catalog",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+              "title": "Catalog"
+            }
+          },
+          {
+            "name": "app_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+              "title": "App Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstallIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid values: detail.errors maps field keys to messages"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1052,6 +1252,28 @@
           "source": {
             "type": "string",
             "title": "Source"
+          },
+          "catalog_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Id"
+          },
+          "web_port": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Web Port"
           },
           "status": {
             "type": "string",
@@ -1124,6 +1346,28 @@
           "source": {
             "type": "string",
             "title": "Source"
+          },
+          "catalog_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Id"
+          },
+          "web_port": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Web Port"
           },
           "status": {
             "type": "string",
@@ -1333,6 +1577,29 @@
         ],
         "title": "CapabilityManifest"
       },
+      "Category": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "count"
+        ],
+        "title": "Category"
+      },
       "ComposeIn": {
         "properties": {
           "compose": {
@@ -1504,6 +1771,85 @@
         ],
         "title": "Credentials"
       },
+      "FormField": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "password",
+              "port",
+              "path",
+              "number",
+              "boolean",
+              "select"
+            ],
+            "title": "Type"
+          },
+          "default": {
+            "type": "string",
+            "title": "Default"
+          },
+          "required": {
+            "type": "boolean",
+            "title": "Required"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Options"
+          },
+          "generated": {
+            "type": "boolean",
+            "title": "Generated"
+          },
+          "advanced": {
+            "type": "boolean",
+            "title": "Advanced"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "description",
+          "type",
+          "default",
+          "required",
+          "options",
+          "generated",
+          "advanced"
+        ],
+        "title": "FormField"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1535,6 +1881,28 @@
           "version"
         ],
         "title": "Health"
+      },
+      "InstallIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 63,
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,62}$",
+            "title": "Name"
+          },
+          "values": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "InstallIn"
       },
       "JobOut": {
         "properties": {
@@ -1665,6 +2033,185 @@
           "password"
         ],
         "title": "SetupRequest"
+      },
+      "StoreApp": {
+        "properties": {
+          "catalog": {
+            "type": "string",
+            "title": "Catalog"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "installed": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Installed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "catalog",
+          "id",
+          "title",
+          "description",
+          "category",
+          "icon",
+          "installed"
+        ],
+        "title": "StoreApp"
+      },
+      "StoreAppDetail": {
+        "properties": {
+          "catalog": {
+            "type": "string",
+            "title": "Catalog"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "installed": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Installed"
+          },
+          "homepage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Homepage"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "platforms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Platforms"
+          },
+          "images": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Images"
+          },
+          "web_port": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Web Port"
+          },
+          "suggested_name": {
+            "type": "string",
+            "title": "Suggested Name"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/FormField"
+            },
+            "type": "array",
+            "title": "Fields"
+          },
+          "compose": {
+            "type": "string",
+            "title": "Compose"
+          }
+        },
+        "type": "object",
+        "required": [
+          "catalog",
+          "id",
+          "title",
+          "description",
+          "category",
+          "icon",
+          "installed",
+          "homepage",
+          "notes",
+          "platforms",
+          "images",
+          "web_port",
+          "suggested_name",
+          "fields",
+          "compose"
+        ],
+        "title": "StoreAppDetail"
       },
       "SystemInfo": {
         "properties": {

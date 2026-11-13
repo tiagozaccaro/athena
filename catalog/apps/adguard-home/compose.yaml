@@ -1,0 +1,30 @@
+x-athena:
+  title: AdGuard Home
+  description: Network-wide ad and tracker blocking DNS server.
+  category: network
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/adguard-home.svg
+  homepage: https://adguard.com/adguard-home/overview.html
+  web_port: WEB_PORT
+  notes: >-
+    Port 53 is often taken by the system's DNS resolver (systemd-resolved on Ubuntu). Change the DNS port, or free port 53, before pointing devices at it.
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "3000"
+    - key: DNS_PORT
+      label: DNS port
+      type: port
+      default: "53"
+
+services:
+  adguardhome:
+    image: adguard/adguardhome:v0.107.65
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT}:3000"
+      - "${DNS_PORT}:53/tcp"
+      - "${DNS_PORT}:53/udp"
+    volumes:
+      - ${ATHENA_APP_DATA}/work:/opt/adguardhome/work
+      - ${ATHENA_APP_DATA}/conf:/opt/adguardhome/conf

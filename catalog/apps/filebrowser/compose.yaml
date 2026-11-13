@@ -1,0 +1,41 @@
+x-athena:
+  title: File Browser
+  description: A simple web file manager for a folder on your server.
+  category: files
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/filebrowser.svg
+  homepage: https://filebrowser.org
+  web_port: WEB_PORT
+  notes: >-
+    The first admin password is printed in the container's logs on first start.
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "8084"
+    - key: FILES_PATH
+      label: Folder to manage
+      type: path
+      description: The folder File Browser shows and edits.
+      default: "@app_data/files"
+    - key: PUID
+      label: User ID
+      default: "@uid"
+      advanced: true
+    - key: PGID
+      label: Group ID
+      default: "@gid"
+      advanced: true
+
+services:
+  filebrowser:
+    image: filebrowser/filebrowser:v2-s6
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT}:80"
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+    volumes:
+      - ${FILES_PATH}:/srv
+      - ${ATHENA_APP_DATA}/database:/database
+      - ${ATHENA_APP_DATA}/config:/config

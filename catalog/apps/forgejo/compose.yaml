@@ -1,0 +1,37 @@
+x-athena:
+  title: Forgejo
+  description: A lightweight, community-run Git forge with issues and pull requests.
+  category: development
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/forgejo.svg
+  homepage: https://forgejo.org
+  web_port: WEB_PORT
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "3002"
+    - key: SSH_PORT
+      label: SSH port
+      type: port
+      default: "2222"
+    - key: PUID
+      label: User ID
+      default: "@uid"
+      advanced: true
+    - key: PGID
+      label: Group ID
+      default: "@gid"
+      advanced: true
+
+services:
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:11
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT}:3000"
+      - "${SSH_PORT}:22"
+    environment:
+      USER_UID: ${PUID}
+      USER_GID: ${PGID}
+    volumes:
+      - ${ATHENA_APP_DATA}/data:/data

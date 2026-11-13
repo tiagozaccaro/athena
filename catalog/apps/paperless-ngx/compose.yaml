@@ -1,0 +1,76 @@
+x-athena:
+  title: Paperless-ngx
+  description: Scan, index and archive all your documents.
+  category: productivity
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/paperless-ngx.svg
+  homepage: https://docs.paperless-ngx.com
+  web_port: WEB_PORT
+  notes: >-
+    Create the first user from the server: docker exec -it <container> createsuperuser (the container is listed under this app).
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "8000"
+    - key: CONSUME_PATH
+      label: Inbox folder
+      type: path
+      description: Documents dropped here are imported automatically.
+      default: "@app_data/consume"
+    - key: DB_PASSWORD
+      label: Database password
+      type: password
+      description: Leave empty to generate one.
+      generate: secret
+    - key: SECRET_KEY
+      label: Secret key
+      type: password
+      description: Leave empty to generate one.
+      generate: secret
+    - key: TZ
+      label: Timezone
+      default: "@timezone"
+      advanced: true
+    - key: PUID
+      label: User ID
+      default: "@uid"
+      advanced: true
+    - key: PGID
+      label: Group ID
+      default: "@gid"
+      advanced: true
+
+services:
+  broker:
+    image: redis:8
+    restart: unless-stopped
+    volumes:
+      - ${ATHENA_APP_DATA}/redis:/data
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: paperless
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ${ATHENA_APP_DATA}/db:/var/lib/postgresql/data
+  webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:3.4
+    restart: unless-stopped
+    depends_on: [db, broker]
+    ports:
+      - "${WEB_PORT}:8000"
+    environment:
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_DBHOST: db
+      PAPERLESS_DBPASS: ${DB_PASSWORD}
+      PAPERLESS_SECRET_KEY: ${SECRET_KEY}
+      PAPERLESS_TIME_ZONE: ${TZ}
+      USERMAP_UID: ${PUID}
+      USERMAP_GID: ${PGID}
+    volumes:
+      - ${ATHENA_APP_DATA}/data:/usr/src/paperless/data
+      - ${ATHENA_APP_DATA}/media:/usr/src/paperless/media
+      - ${ATHENA_APP_DATA}/export:/usr/src/paperless/export
+      - ${CONSUME_PATH}:/usr/src/paperless/consume

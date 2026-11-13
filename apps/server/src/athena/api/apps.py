@@ -30,6 +30,10 @@ AppStatus = Literal["running", "partial", "stopped", "not_deployed"]
 class AppOut(BaseModel):
     name: str
     source: str
+    catalog_id: str | None = None
+    """Store app id for apps installed from a catalog."""
+    web_port: int | None = None
+    """The port "Open" should use, when the catalog declares one."""
     status: AppStatus
     running: int
     total: int
@@ -99,7 +103,21 @@ def _get_app(db: DbSession, name: str) -> App:
     return app
 
 
-def _summarize(app: App, all_containers: list[ContainerOut]) -> AppOut:
+def _web_port(request: Request, app: App) -> int | None:
+    """Catalog apps declare their web port (a number, or an env key in their .env)."""
+    if not app.catalog_id or "/" not in app.catalog_id:
+        return None
+    catalog, app_id = app.catalog_id.split("/", 1)
+    entry = request.app.state.catalogs.get(catalog, app_id)
+    if entry is None or entry.meta.web_port is None:
+        return None
+    port = entry.meta.web_port
+    if isinstance(port, str):
+        port = _store(request).read_env(app.name).get(port, "")
+    return int(port) if str(port).isdigit() else None
+
+
+def _summarize(app: App, all_containers: list[ContainerOut], web_port: int | None = None) -> AppOut:
     mine = [c for c in all_containers if c.project == app.name]
     running = sum(c.state == "running" for c in mine)
     state: AppStatus = (
@@ -115,6 +133,8 @@ def _summarize(app: App, all_containers: list[ContainerOut]) -> AppOut:
     return AppOut(
         name=app.name,
         source=app.source,
+        catalog_id=app.catalog_id,
+        web_port=web_port,
         status=state,
         running=running,
         total=len(mine),
@@ -174,19 +194,19 @@ async def _validate_with_cli(runtime: Runtime, store: AppStore, name: str, text:
 
 
 @router.get("", operation_id="listApps")
-async def list_apps(runtime: RuntimeDep, db: DbSession) -> list[AppOut]:
+async def list_apps(request: Request, runtime: RuntimeDep, db: DbSession) -> list[AppOut]:
     apps = db.exec(select(App).order_by(App.name)).all()
     if not apps:
         return []
     all_containers = await _containers(runtime)
-    return [_summarize(a, all_containers) for a in apps]
+    return [_summarize(a, all_containers, _web_port(request, a)) for a in apps]
 
 
 @router.get("/{name}", operation_id="getApp")
 async def get_app(name: AppName, request: Request, runtime: RuntimeDep, db: DbSession) -> AppDetail:
     app = _get_app(db, name)
     all_containers = await _containers(runtime)
-    summary = _summarize(app, all_containers)
+    summary = _summarize(app, all_containers, _web_port(request, app))
     return AppDetail(
         **summary.model_dump(),
         compose=_store(request).read(name),
@@ -242,27 +262,44 @@ def _deploy_body(runtime: Runtime, store: AppStore, name: str, path: FsPath, pul
     return body
 
 
+def deploy_new_app(
+    request: Request,
+    runtime: Runtime,
+    user: Authed,
+    db: DbSession,
+    *,
+    name: str,
+    compose_text: str,
+    source: str,
+    env_text: str | None = None,
+    catalog_id: str | None = None,
+) -> JobOut:
+    """Save an app's files, record it, and start its deploy job (shared with the store)."""
+    if db.exec(select(App).where(App.name == name)).first():
+        raise HTTPException(status.HTTP_409_CONFLICT, f"An app named {name!r} exists")
+    try:
+        parse_compose(compose_text)
+    except InvalidComposeError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from exc
+    store = _store(request)
+    path = store.write(name, compose_text)
+    if env_text is not None:
+        store.write_env(name, env_text)
+    db.add(App(name=name, source=source, catalog_id=catalog_id))
+    db.commit()
+    audit.record(db, user.user.username, "app.create", name, catalog_id or source)
+    return _start_job(
+        request, name, f"Deploy {name}", _deploy_body(runtime, store, name, path, True)
+    )
+
+
 @router.post("", operation_id="createApp", status_code=status.HTTP_202_ACCEPTED)
 async def create_app(
     body: NewApp, request: Request, runtime: RuntimeDep, user: Authed, db: DbSession
 ) -> JobOut:
     """Save the compose file and deploy it. Follow progress at /api/jobs/{id}/events."""
-    if db.exec(select(App).where(App.name == body.name)).first():
-        raise HTTPException(status.HTTP_409_CONFLICT, f"An app named {body.name!r} exists")
-    try:
-        parse_compose(body.compose)
-    except InvalidComposeError as exc:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from exc
-    store = _store(request)
-    path = store.write(body.name, body.compose)
-    db.add(App(name=body.name, source=body.source))
-    db.commit()
-    audit.record(db, user.user.username, "app.create", body.name, body.source)
-    return _start_job(
-        request,
-        body.name,
-        f"Deploy {body.name}",
-        _deploy_body(runtime, store, body.name, path, True),
+    return deploy_new_app(
+        request, runtime, user, db, name=body.name, compose_text=body.compose, source=body.source
     )
 
 

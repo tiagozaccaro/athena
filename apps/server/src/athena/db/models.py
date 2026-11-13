@@ -57,6 +57,8 @@ class App(SQLModel, table=True):
     name: str = Field(unique=True, index=True, max_length=63)
     """Compose project name: lowercase letters, digits, dash and underscore."""
     source: str = Field(default="compose", max_length=16)
-    """How it was created: "compose", "docker-run" (later: "catalog")."""
+    """How it was created: "compose", "docker-run" or "catalog"."""
+    catalog_id: str | None = Field(default=None, max_length=128)
+    """For catalog installs: "<catalog>/<app id>", e.g. "builtin/jellyfin"."""
     created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
     updated_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))

@@ -1,0 +1,41 @@
+x-athena:
+  title: Syncthing
+  description: Continuous, peer-to-peer file synchronization between devices.
+  category: files
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/syncthing.svg
+  homepage: https://syncthing.net
+  web_port: WEB_PORT
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "8384"
+    - key: SYNC_PATH
+      label: Sync folder
+      type: path
+      description: Where synced folders are stored.
+      default: "@app_data/sync"
+    - key: PUID
+      label: User ID
+      default: "@uid"
+      advanced: true
+    - key: PGID
+      label: Group ID
+      default: "@gid"
+      advanced: true
+
+services:
+  syncthing:
+    image: syncthing/syncthing:1
+    restart: unless-stopped
+    hostname: athena-syncthing
+    ports:
+      - "${WEB_PORT}:8384"
+      - "22000:22000/tcp"
+      - "22000:22000/udp"
+      - "21027:21027/udp"
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+    volumes:
+      - ${SYNC_PATH}:/var/syncthing

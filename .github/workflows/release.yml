@@ -60,12 +60,20 @@ jobs:
       - name: Build the server wheel
         run: |
           cp -R apps/web/out apps/server/src/athena/web
+          cp -R catalog apps/server/src/athena/catalog_builtin
           cd apps/server
           uv build --wheel --out-dir ../../dist
           ls -l ../../dist
 
-      - name: Check the wheel contains the UI
-        run: python3 -c "import sys,zipfile,glob; w=glob.glob('dist/*.whl')[0]; n=zipfile.ZipFile(w).namelist(); sys.exit(0 if 'athena/web/index.html' in n else 'web UI missing from ' + w)"
+      - name: Check the wheel contains the UI and the catalog
+        run: |
+          python3 - <<'PY'
+          import glob, sys, zipfile
+          wheel = glob.glob("dist/*.whl")[0]
+          names = zipfile.ZipFile(wheel).namelist()
+          missing = [p for p in ("athena/web/index.html", "athena/catalog_builtin/apps/jellyfin/compose.yaml") if p not in names]
+          sys.exit(f"missing from {wheel}: {missing}" if missing else 0)
+          PY
 
       - name: Upload release assets
         env:

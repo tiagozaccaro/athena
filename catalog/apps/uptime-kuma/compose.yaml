@@ -1,0 +1,21 @@
+x-athena:
+  title: Uptime Kuma
+  description: Monitor websites and services and get alerts when they go down.
+  category: monitoring
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/uptime-kuma.svg
+  homepage: https://github.com/louislam/uptime-kuma
+  web_port: WEB_PORT
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "3001"
+
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:2
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT}:3001"
+    volumes:
+      - ${ATHENA_APP_DATA}/data:/app/data

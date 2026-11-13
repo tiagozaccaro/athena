@@ -54,3 +54,4 @@ coverage/
 
 # Web UI bundled into the server wheel at release time
 apps/server/src/athena/web/
+apps/server/src/athena/catalog_builtin/

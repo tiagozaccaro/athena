@@ -1,0 +1,27 @@
+x-athena:
+  title: Node-RED
+  description: Low-code, flow-based programming for automations and IoT.
+  category: home
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/node-red.svg
+  homepage: https://nodered.org
+  web_port: WEB_PORT
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "1880"
+    - key: TZ
+      label: Timezone
+      default: "@timezone"
+      advanced: true
+
+services:
+  node-red:
+    image: nodered/node-red:4.1
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT}:1880"
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ${ATHENA_APP_DATA}/data:/data

@@ -1,0 +1,29 @@
+x-athena:
+  title: FreshRSS
+  description: A fast, self-hosted RSS and Atom feed reader.
+  category: productivity
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/freshrss.svg
+  homepage: https://freshrss.org
+  web_port: WEB_PORT
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "8083"
+    - key: TZ
+      label: Timezone
+      default: "@timezone"
+      advanced: true
+
+services:
+  freshrss:
+    image: freshrss/freshrss:1
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT}:80"
+    environment:
+      TZ: ${TZ}
+      CRON_MIN: "*/20"
+    volumes:
+      - ${ATHENA_APP_DATA}/data:/var/www/FreshRSS/data
+      - ${ATHENA_APP_DATA}/extensions:/var/www/FreshRSS/extensions

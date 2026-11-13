@@ -1,0 +1,28 @@
+x-athena:
+  title: code-server
+  description: VS Code in the browser, running on your server.
+  category: development
+  icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/visual-studio-code.svg
+  homepage: https://github.com/coder/code-server
+  web_port: WEB_PORT
+  env:
+    - key: WEB_PORT
+      label: Web port
+      type: port
+      default: "8443"
+    - key: PASSWORD
+      label: Password
+      type: password
+      description: Used to sign in. Leave empty to generate one (see .env in the app folder).
+      generate: secret
+
+services:
+  code-server:
+    image: codercom/code-server:4.103.2
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT}:8080"
+    environment:
+      PASSWORD: ${PASSWORD}
+    volumes:
+      - ${ATHENA_APP_DATA}/home:/home/coder

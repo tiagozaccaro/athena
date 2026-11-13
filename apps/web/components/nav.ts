@@ -4,6 +4,7 @@ import {
   CircleHelpIcon,
   LayoutDashboardIcon,
   LayoutGridIcon,
+  StoreIcon,
 } from "lucide-react"
 
 export type NavItem = {
@@ -31,6 +32,13 @@ export const navMain: NavItem[] = [
     title: "Apps",
     url: "/apps/",
     icon: LayoutGridIcon,
+    capability: "containers",
+    showWhenUnavailable: true,
+  },
+  {
+    title: "Store",
+    url: "/store/",
+    icon: StoreIcon,
     capability: "containers",
     showWhenUnavailable: true,
   },

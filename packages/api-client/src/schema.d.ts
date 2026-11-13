@@ -436,6 +436,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/store/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Categories */
+        get: operations["listStoreCategories"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/store/apps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Store Apps */
+        get: operations["listStoreApps"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/store/apps/{catalog}/{app_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Store App */
+        get: operations["getStoreApp"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/store/apps/{catalog}/{app_id}/install": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Install
+         * @description Write compose.yaml and .env from the install form, then deploy as a job.
+         */
+        post: operations["installStoreApp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -446,6 +517,10 @@ export interface components {
             name: string;
             /** Source */
             source: string;
+            /** Catalog Id */
+            catalog_id?: string | null;
+            /** Web Port */
+            web_port?: number | null;
             /**
              * Status
              * @enum {string}
@@ -478,6 +553,10 @@ export interface components {
             name: string;
             /** Source */
             source: string;
+            /** Catalog Id */
+            catalog_id?: string | null;
+            /** Web Port */
+            web_port?: number | null;
             /**
              * Status
              * @enum {string}
@@ -552,6 +631,15 @@ export interface components {
             /** Capabilities */
             capabilities: components["schemas"]["Capability"][];
         };
+        /** Category */
+        Category: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Count */
+            count: number;
+        };
         /** ComposeIn */
         ComposeIn: {
             /** Compose */
@@ -601,6 +689,30 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** FormField */
+        FormField: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Description */
+            description: string | null;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "text" | "password" | "port" | "path" | "number" | "boolean" | "select";
+            /** Default */
+            default: string;
+            /** Required */
+            required: boolean;
+            /** Options */
+            options: string[] | null;
+            /** Generated */
+            generated: boolean;
+            /** Advanced */
+            advanced: boolean;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -615,6 +727,15 @@ export interface components {
             status: "ok";
             /** Version */
             version: string;
+        };
+        /** InstallIn */
+        InstallIn: {
+            /** Name */
+            name: string;
+            /** Values */
+            values?: {
+                [key: string]: string;
+            };
         };
         /** JobOut */
         JobOut: {
@@ -663,6 +784,56 @@ export interface components {
             username: string;
             /** Password */
             password: string;
+        };
+        /** StoreApp */
+        StoreApp: {
+            /** Catalog */
+            catalog: string;
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** Category */
+            category: string;
+            /** Icon */
+            icon: string | null;
+            /** Installed */
+            installed: string[];
+        };
+        /** StoreAppDetail */
+        StoreAppDetail: {
+            /** Catalog */
+            catalog: string;
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** Category */
+            category: string;
+            /** Icon */
+            icon: string | null;
+            /** Installed */
+            installed: string[];
+            /** Homepage */
+            homepage: string | null;
+            /** Notes */
+            notes: string | null;
+            /** Platforms */
+            platforms: string[];
+            /** Images */
+            images: string[];
+            /** Web Port */
+            web_port: string | number | null;
+            /** Suggested Name */
+            suggested_name: string;
+            /** Fields */
+            fields: components["schemas"]["FormField"][];
+            /** Compose */
+            compose: string;
         };
         /** SystemInfo */
         SystemInfo: {
@@ -1476,6 +1647,124 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    listStoreCategories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Category"][];
+                };
+            };
+        };
+    };
+    listStoreApps: {
+        parameters: {
+            query?: {
+                q?: string;
+                category?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreApp"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getStoreApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                catalog: string;
+                app_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreAppDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    installStoreApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                catalog: string;
+                app_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstallIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Invalid values: detail.errors maps field keys to messages */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

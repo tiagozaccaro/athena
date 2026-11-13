@@ -3,8 +3,10 @@
 <data-dir>/apps/<name>/compose.yaml       the app definition
 <data-dir>/apps/<name>/compose.prev.yaml  the previous version, kept on every edit
 <data-dir>/apps/<name>/data/              exposed to compose as ${ATHENA_APP_DATA}
+<data-dir>/apps/<name>/.env               install-form values (catalog apps), mode 600
 """
 
+import contextlib
 import os
 import re
 import shutil
@@ -77,12 +79,37 @@ class AppStore:
         path.write_text(text if text.endswith("\n") else text + "\n", encoding="utf-8")
         return path
 
+    def read_env(self, name: str) -> dict[str, str]:
+        """Values from the app's .env (as written by Athena: KEY='v' or KEY="v")."""
+        path = self.dir(name) / ".env"
+        values: dict[str, str] = {}
+        if not path.is_file():
+            return values
+        for line in path.read_text(encoding="utf-8").splitlines():
+            key, sep, raw = line.partition("=")
+            if not sep or key.startswith("#"):
+                continue
+            raw = raw.strip()
+            if len(raw) >= 2 and raw[0] == raw[-1] and raw[0] in "'\"":
+                raw = raw[1:-1]
+                if line.partition("=")[2].strip().startswith('"'):
+                    raw = raw.replace('\\"', '"').replace("\\\\", "\\").replace("$$", "$")
+            values[key.strip()] = raw
+        return values
+
+    def write_env(self, name: str, text: str) -> None:
+        path = self.dir(name) / ".env"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        with contextlib.suppress(OSError):
+            path.chmod(0o600)  # may hold generated passwords
+
     def remove(self, name: str, delete_data: bool) -> None:
         directory = self.dir(name)
         if delete_data:
             shutil.rmtree(directory, ignore_errors=True)
             return
-        for file in ("compose.yaml", "compose.prev.yaml"):
+        for file in ("compose.yaml", "compose.prev.yaml", ".env"):
             (directory / file).unlink(missing_ok=True)
         # Keep data/ and anything else the user put there; only tidy up empty dirs.
         for path in (directory / "data", directory):
