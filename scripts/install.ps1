@@ -124,7 +124,7 @@ function Install-Uv {
 }
 
 # Keeps Athena's Python, tools and entry point in Athena-owned directories.
-function Set-UvEnvironment {
+function Use-UvEnvironment {
     $env:UV_TOOL_DIR = Join-Path $InstallRoot 'tools'
     $env:UV_TOOL_BIN_DIR = $BinDir
     $env:UV_PYTHON_INSTALL_DIR = Join-Path $InstallRoot 'python'
@@ -135,7 +135,7 @@ function Install-Athena {
     $url = "https://github.com/$Repo/releases/download/v$Version/$wheel"
     $athena = Join-Path $BinDir 'athena.exe'
     Write-Step "Installing Athena $Version"
-    Set-UvEnvironment
+    Use-UvEnvironment
     Invoke-Step "mkdir $BinDir, $DataDir" {
         New-Item -ItemType Directory -Force -Path $BinDir, $DataDir | Out-Null
     }
@@ -148,9 +148,9 @@ function Install-Athena {
     }
 }
 
-function Uninstall-Athena {
+function Uninstall-Athena([bool]$PurgeData) {
     Write-Step 'Uninstalling Athena'
-    Set-UvEnvironment
+    Use-UvEnvironment
     $athena = Join-Path $BinDir 'athena.exe'
     if ($DryRun -or (Test-Path $athena)) {
         Invoke-Step 'athena service uninstall' { & $athena service uninstall }
@@ -161,7 +161,7 @@ function Uninstall-Athena {
         Invoke-Step 'uv tool uninstall athena-server' { & $uvPath tool uninstall athena-server }
     }
     Invoke-Step "remove $InstallRoot" { Remove-Item -Recurse -Force $InstallRoot -ErrorAction SilentlyContinue }
-    if ($Purge) {
+    if ($PurgeData) {
         Write-Step "Deleting data in $DataDir"
         Invoke-Step "remove $DataDir" { Remove-Item -Recurse -Force $DataDir -ErrorAction SilentlyContinue }
     }
@@ -181,7 +181,7 @@ Assert-Windows
 if ($DryRun) { Write-Step 'Dry run: nothing will be changed' }
 
 if ($Uninstall) {
-    Uninstall-Athena
+    Uninstall-Athena -PurgeData $Purge.IsPresent
     return
 }
 
