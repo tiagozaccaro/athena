@@ -29,7 +29,3 @@ jobs:
             chore
             revert
           requireScope: false
-          subjectPattern: ^(?![A-Z]).+$
-          subjectPatternError: |
-            The subject "{subject}" in "{title}" must start with a lowercase letter,
-            e.g. "feat(store): add install form".
