@@ -88,6 +88,8 @@ function Find-ContainerRuntime {
     if (Test-Command 'wsl') {
         $null = & wsl.exe -e sh -c 'command -v docker' 2>$null
         if ($LASTEXITCODE -eq 0) { $found += 'Docker Engine in WSL2' }
+        # A failed probe (no WSL distro) must not leak out as the script's exit code.
+        $global:LASTEXITCODE = 0
     }
     if (Test-Command 'podman') { $found += 'Podman' }
     if (Test-Command 'rdctl') { $found += 'Rancher Desktop' }
