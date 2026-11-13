@@ -79,6 +79,10 @@ class AppStore:
         path.write_text(text if text.endswith("\n") else text + "\n", encoding="utf-8")
         return path
 
+    def read_env_text(self, name: str) -> str | None:
+        path = self.dir(name) / ".env"
+        return path.read_text(encoding="utf-8") if path.is_file() else None
+
     def read_env(self, name: str) -> dict[str, str]:
         """Values from the app's .env (as written by Athena: KEY='v' or KEY="v")."""
         path = self.dir(name) / ".env"

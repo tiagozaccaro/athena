@@ -1,6 +1,7 @@
 """Athena-managed apps (compose projects). All routes need a session (see main.py)."""
 
 import asyncio
+import re
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path as FsPath
@@ -45,6 +46,8 @@ class AppOut(BaseModel):
 
 class AppDetail(AppOut):
     compose: str
+    env: str | None
+    """The app's .env file (install-form values for store apps), if it has one."""
     containers: list[ContainerOut]
 
 
@@ -210,6 +213,7 @@ async def get_app(name: AppName, request: Request, runtime: RuntimeDep, db: DbSe
     return AppDetail(
         **summary.model_dump(),
         compose=_store(request).read(name),
+        env=_store(request).read_env_text(name),
         containers=[c for c in all_containers if c.project == name],
     )
 
@@ -326,6 +330,44 @@ async def update_compose(
     audit.record(db, user.user.username, "app.edit", name)
     return _start_job(
         request, name, f"Redeploy {name}", _deploy_body(runtime, store, name, path, False)
+    )
+
+
+class EnvIn(BaseModel):
+    env: str = Field(max_length=64 * 1024)
+
+
+_ENV_LINE = re.compile(r"^\s*(#.*)?$|^[A-Za-z_][A-Za-z0-9_]*=.*$")
+
+
+@router.put("/{name}/env", operation_id="updateAppEnv", status_code=status.HTTP_202_ACCEPTED)
+async def update_env(
+    name: AppName,
+    body: EnvIn,
+    request: Request,
+    runtime: RuntimeDep,
+    user: Authed,
+    db: DbSession,
+) -> JobOut:
+    """Replace the app's .env (e.g. change a store app's port or folder) and redeploy."""
+    app = _get_app(db, name)
+    bad = [i + 1 for i, line in enumerate(body.env.splitlines()) if not _ENV_LINE.match(line)]
+    if bad:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            f"Lines {', '.join(map(str, bad[:5]))} aren't KEY=value, a comment or blank",
+        )
+    store = _store(request)
+    store.write_env(name, body.env if body.env.endswith("\n") else body.env + "\n")
+    app.updated_at = datetime.now(UTC)
+    db.add(app)
+    db.commit()
+    audit.record(db, user.user.username, "app.env", name)
+    return _start_job(
+        request,
+        name,
+        f"Redeploy {name}",
+        _deploy_body(runtime, store, name, store.compose_path(name), False),
     )
 
 

@@ -43,7 +43,7 @@ const tokens = EditorView.theme({
 export type CodeEditorProps = {
   value: string
   onChange?: (value: string) => void
-  language?: "yaml"
+  language?: "yaml" | "text"
   readOnly?: boolean
   placeholder?: string
   minHeight?: string

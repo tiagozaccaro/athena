@@ -62,3 +62,19 @@ class App(SQLModel, table=True):
     """For catalog installs: "<catalog>/<app id>", e.g. "builtin/jellyfin"."""
     created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
     updated_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
+
+
+class Catalog(SQLModel, table=True):
+    """A remote app catalog, downloaded to <data-dir>/catalogs/<id>/."""
+
+    __tablename__ = "catalogs"
+
+    id: str = Field(primary_key=True, max_length=63)
+    name: str = Field(max_length=100)
+    url: str = Field(max_length=500)
+    kind: str = Field(default="auto", max_length=16)
+    """auto, athena or casaos."""
+    app_count: int = 0
+    refreshed_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
+    error: str | None = None
+    created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))

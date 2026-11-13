@@ -55,7 +55,7 @@ def create_app(
     app.state.login_throttle = LoginThrottle()
     app.state.jobs = JobManager()
     app.state.app_jobs = {}
-    app.state.catalogs = catalogs or CatalogRegistry()
+    app.state.catalogs = catalogs or CatalogRegistry(remote_root=settings.data_dir / "catalogs")
     # Public: /api/health and /api/auth/*. Everything else needs a signed-in session.
     app.include_router(system.router, prefix="/api")
     app.include_router(auth.router, prefix="/api")
