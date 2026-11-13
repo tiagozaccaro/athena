@@ -14,6 +14,7 @@ import zipfile
 from collections.abc import Callable
 from pathlib import Path, PurePosixPath
 from typing import Literal
+from urllib.parse import urlsplit
 
 from athena.catalog.casaos import import_casaos_tree
 from athena.catalog.loader import load_catalog
@@ -53,7 +54,8 @@ def archive_url(url: str) -> str:
         if host == "gitlab.com":
             return f"https://gitlab.com/{owner}/{repo}/-/archive/{branch}/{repo}-{branch}.tar.gz"
         return f"https://codeberg.org/{owner}/{repo}/archive/{branch}.tar.gz"
-    if re.search(r"\.(tar\.gz|tgz|zip)(\?.*)?$", url):
+    # Plain string checks, not a regex: the URL is user input (CodeQL py/polynomial-redos).
+    if urlsplit(url).path.lower().endswith((".tar.gz", ".tgz", ".zip")):
         return url
     raise CatalogFetchError(
         "Use a GitHub, Codeberg or GitLab repository URL, or a direct .tar.gz/.zip link"

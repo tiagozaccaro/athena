@@ -24,7 +24,7 @@ FIXTURES = Path(__file__).parent / "fixtures" / "casaos"
 
 
 def casaos(name: str):
-    return convert(name, (FIXTURES / f"{name}.yml").read_text(), "casaos")
+    return convert(name, (FIXTURES / f"{name}.yml").read_text(encoding="utf-8"), "casaos")
 
 
 def test_jellyfin_conventions_are_mapped(tmp_path: Path) -> None:
@@ -156,7 +156,7 @@ def casaos_tree() -> dict[str, str]:
     """A CasaOS store nested like its release zip."""
     base = "build/sysroot/var/lib/casaos/appstore/default.new/Apps"
     return {
-        f"{base}/{n}/docker-compose.yml": (FIXTURES / f"{n}.yml").read_text()
+        f"{base}/{n}/docker-compose.yml": (FIXTURES / f"{n}.yml").read_text(encoding="utf-8")
         for n in (
             "Jellyfin",
             "Vaultwarden",
@@ -166,7 +166,7 @@ def casaos_tree() -> dict[str, str]:
 
 ATHENA_APP = (
     Path(__file__).parents[3] / "catalog" / "apps" / "it-tools" / "compose.yaml"
-).read_text()
+).read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize(
