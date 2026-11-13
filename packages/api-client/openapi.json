@@ -46,10 +46,166 @@
           }
         }
       }
+    },
+    "/api/system/capabilities": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Get Capabilities",
+        "description": "What this host supports. The UI and the assistant only offer what's `available`.",
+        "operationId": "getCapabilities",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilityManifest"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/capabilities/refresh": {
+      "post": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Refresh Capabilities",
+        "description": "Re-run detection, e.g. after the user installs or starts a container runtime.",
+        "operationId": "refreshCapabilities",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilityManifest"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "Capability": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "stopped",
+              "missing",
+              "unsupported",
+              "needs_privilege"
+            ],
+            "title": "Status"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "actions": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "start",
+                "setup"
+              ]
+            },
+            "type": "array",
+            "title": "Actions",
+            "default": []
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "readOnly": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "status",
+          "available"
+        ],
+        "title": "Capability"
+      },
+      "CapabilityManifest": {
+        "properties": {
+          "os": {
+            "type": "string",
+            "enum": [
+              "linux",
+              "darwin",
+              "windows"
+            ],
+            "title": "Os"
+          },
+          "os_version": {
+            "type": "string",
+            "title": "Os Version"
+          },
+          "arch": {
+            "type": "string",
+            "title": "Arch"
+          },
+          "detected_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Detected At"
+          },
+          "capabilities": {
+            "items": {
+              "$ref": "#/components/schemas/Capability"
+            },
+            "type": "array",
+            "title": "Capabilities"
+          }
+        },
+        "type": "object",
+        "required": [
+          "os",
+          "os_version",
+          "arch",
+          "detected_at",
+          "capabilities"
+        ],
+        "title": "CapabilityManifest"
+      },
       "Health": {
         "properties": {
           "status": {

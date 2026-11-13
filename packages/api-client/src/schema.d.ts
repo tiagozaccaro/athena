@@ -38,10 +38,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/system/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Capabilities
+         * @description What this host supports. The UI and the assistant only offer what's `available`.
+         */
+        get: operations["getCapabilities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/capabilities/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh Capabilities
+         * @description Re-run detection, e.g. after the user installs or starts a container runtime.
+         */
+        post: operations["refreshCapabilities"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Capability */
+        Capability: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "stopped" | "missing" | "unsupported" | "needs_privilege";
+            /** Provider */
+            provider?: string | null;
+            /** Detail */
+            detail?: string | null;
+            /**
+             * Actions
+             * @default []
+             */
+            actions: ("start" | "setup")[];
+            /** Available */
+            readonly available: boolean;
+        };
+        /** CapabilityManifest */
+        CapabilityManifest: {
+            /**
+             * Os
+             * @enum {string}
+             */
+            os: "linux" | "darwin" | "windows";
+            /** Os Version */
+            os_version: string;
+            /** Arch */
+            arch: string;
+            /**
+             * Detected At
+             * Format: date-time
+             */
+            detected_at: string;
+            /** Capabilities */
+            capabilities: components["schemas"]["Capability"][];
+        };
         /** Health */
         Health: {
             /**
@@ -115,6 +197,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SystemInfo"];
+                };
+            };
+        };
+    };
+    getCapabilities: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapabilityManifest"];
+                };
+            };
+        };
+    };
+    refreshCapabilities: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapabilityManifest"];
                 };
             };
         };

@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
+import { isAllowed, useCapabilities } from "@/components/capabilities-provider"
 import type { NavItem } from "@/components/nav"
 import {
   SidebarGroup,
@@ -15,26 +16,31 @@ import {
 // The block's "Quick Create" button becomes "Add app" when the store lands (M3).
 export function NavMain({ items }: { items: NavItem[] }) {
   const pathname = usePathname()
+  const { manifest } = useCapabilities()
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
-          {items.map((item) => {
-            const active =
-              item.url === "/" ? pathname === "/" : pathname.startsWith(item.url)
-            return (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton
-                  tooltip={item.title}
-                  isActive={active}
-                  render={<Link href={item.url} />}
-                >
-                  <item.icon />
-                  <span>{item.title}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )
-          })}
+          {items
+            .filter((item) => isAllowed(manifest, item.capability))
+            .map((item) => {
+              const active =
+                item.url === "/"
+                  ? pathname === "/"
+                  : pathname.startsWith(item.url)
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    tooltip={item.title}
+                    isActive={active}
+                    render={<Link href={item.url} />}
+                  >
+                    <item.icon />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )
+            })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

@@ -1,15 +1,22 @@
 from pathlib import Path
 
+from fake_probe import FakeProbe
 from fastapi.testclient import TestClient
 
 from athena import __version__
 from athena.config import Settings
 from athena.main import create_app
+from athena.platform.detect import detect
+from athena.platform.store import CapabilityStore
+
+
+def fake_store() -> CapabilityStore:
+    return CapabilityStore(detector=lambda: detect(FakeProbe(os="darwin")))
 
 
 def client(tmp_path: Path, web_dir: Path | None = None) -> TestClient:
     settings = Settings(data_dir=tmp_path / "data", web_dir=web_dir or tmp_path / "no-web")
-    return TestClient(create_app(settings))
+    return TestClient(create_app(settings, capability_store=fake_store()))
 
 
 def test_health(tmp_path: Path) -> None:
@@ -48,3 +55,47 @@ def test_openapi_has_stable_operation_ids(tmp_path: Path) -> None:
     paths = client(tmp_path).get("/api/openapi.json").json()["paths"]
     assert paths["/api/health"]["get"]["operationId"] == "getHealth"
     assert paths["/api/system/info"]["get"]["operationId"] == "getSystemInfo"
+
+
+def test_capabilities_manifest(tmp_path: Path) -> None:
+    with client(tmp_path) as c:
+        body = c.get("/api/system/capabilities").json()
+    assert body["os"] == "darwin"
+    by_id = {cap["id"]: cap for cap in body["capabilities"]}
+    assert by_id["containers"]["status"] == "missing"
+    assert by_id["containers"]["available"] is False
+    assert by_id["files"]["available"] is True
+    assert "packages.apt" not in by_id
+
+
+def test_capabilities_refresh_reruns_detection(tmp_path: Path) -> None:
+    calls = []
+
+    def detector():
+        calls.append(1)
+        return detect(FakeProbe())
+
+    settings = Settings(data_dir=tmp_path / "data", web_dir=tmp_path / "no-web")
+    app = create_app(settings, capability_store=CapabilityStore(detector=detector))
+    with TestClient(app) as c:
+        c.get("/api/system/capabilities")
+        first = len(calls)
+        c.get("/api/system/capabilities")
+        assert len(calls) == first  # cached
+        assert c.post("/api/system/capabilities/refresh").status_code == 200
+        assert len(calls) == first + 1
+
+
+def test_logging_writes_to_data_dir(tmp_path: Path) -> None:
+    import logging
+
+    from athena.logging_setup import setup_logging
+
+    log_file = setup_logging(tmp_path)
+    logging.getLogger("athena.test").info("hello from the test")
+    for handler in logging.getLogger().handlers:
+        handler.flush()
+    assert "hello from the test" in log_file.read_text()
+    for handler in list(logging.getLogger().handlers):
+        logging.getLogger().removeHandler(handler)
+        handler.close()

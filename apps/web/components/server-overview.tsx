@@ -56,7 +56,7 @@ export function ServerOverview() {
         ]
 
   return (
-    <Card className="max-w-xl">
+    <Card>
       <CardHeader>
         <CardTitle>Server</CardTitle>
         <CardDescription>The machine Athena is running on</CardDescription>

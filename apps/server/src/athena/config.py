@@ -26,3 +26,5 @@ class Settings(BaseSettings):
     data_dir: Path = default_data_dir()
     # Directory with the exported web UI. Defaults to the copy bundled in the wheel.
     web_dir: Path = Path(__file__).parent / "web"
+    # Set by `athena serve`; tests leave it off so they don't write log files.
+    log_to_file: bool = False
