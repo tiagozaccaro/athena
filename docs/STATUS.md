@@ -80,6 +80,8 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - The wheel bundles `catalog/` (release workflow plus an artifact check).
   - 138 server tests. Verified on Colima: browse, a bad-port error, a Forgejo install from the store (running, single Open link :3002, `.env` mode 600), and removal. An IT Tools install failed on Docker Hub's anonymous pull rate limit, and the failure is reported clearly in the job dialog.
 
+- **Agent UI verification** (branch `chore/agents-browser-verify`): the Playwright MCP server (headless, isolated) in `.mcp.json`, synced to OpenCode and Hermes and enabled for Claude Code; the `athena-ui-verify` skill. Verified that OpenCode connects, Hermes has it enabled and loads the skill, and all 12 tools the skill names exist.
+
 ## In progress
 
 - M3 part A review and merge. Next: part B (remote catalogs, CasaOS importer).

@@ -1,5 +1,5 @@
 {
-  "enabledMcpjsonServers": ["shadcn", "next-devtools"],
+  "enabledMcpjsonServers": ["shadcn", "next-devtools", "playwright"],
   "permissions": {
     "allow": [
       "mcp__shadcn",
