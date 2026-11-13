@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M0 (monorepo skeleton), in review as PR `feat/m0-monorepo`. M1 (platform + capabilities) is next.
+**Current milestone:** M1 (platform + capabilities), in progress. Part 1 (capabilities) is in PR `feat/m1-capabilities`; part 2 (database + auth) is next.
 
 ## Done
 
@@ -29,19 +29,25 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - Dependabot covers npm and uv.
   - Verified locally on macOS: the static export served by FastAPI, the `next dev` proxy, the wheel installed with `uv tool install` and serving the UI, and the service install dry run.
 
+- **M1 part 1, capabilities** (branch `feat/m1-capabilities`):
+  - `athena/platform/` has a never-raising `Probe` (which, run with timeout, Docker API `/version` ping over a unix socket or Windows named pipe) and per-OS detectors.
+  - Detected: containers (Docker Engine or Podman on Linux; Colima or Podman on macOS; WSL Docker, Podman or Rancher Desktop on Windows), package managers for the host's OS only, `terminal.host`, `cloud.rclone`, `files` and `shares.webdav`.
+  - Statuses are ready, stopped, missing, unsupported or needs_privilege, with `start`/`setup` actions.
+  - `GET /api/system/capabilities` (cached, detected in the background at startup) and `POST …/refresh`.
+  - Logging goes to `<data-dir>/logs/athena.log` (rotating) plus stderr.
+  - Web: `CapabilitiesProvider` with `useCapabilities()` and `useCapability(id)`, nav items filtered by their `capability`, and a dashboard "Capabilities" card with Re-detect. Package managers that aren't installed are hidden.
+  - 40 server tests, using `tests/fake_probe.py` to simulate each OS. Verified on macOS: Colima found, Homebrew ready, rclone missing.
+
 ## In progress
 
-- M0 PR review and merge. Not yet verified: the Linux and Windows server jobs (CI covers them), and a real `athena service install` on any OS. Only dry runs have been done.
+- M1 part 2: SQLite + migrations, the admin account, sessions, CSRF, `/setup` and `/login`.
+- Not yet verified: a real `athena service install` on any OS (only dry runs), and real capability detection on Linux and Windows hosts (only CI and fakes).
 
 ## Next
 
 M1, platform + capabilities (see `docs/mvp-design.md` §3 and §10):
-1. `platform/detect.py` and the capability manifest, plus `GET /api/system/capabilities` and refresh. Follow the `athena-platform-feature` skill.
-2. Filter the web sidebar and pages by capability (the `capability` field in `apps/web/components/nav.ts`), using a `useCapability(id)` hook.
-3. First-run setup wizard (`/setup`), admin account (argon2), session cookie, CSRF, and `/login`. Wire up `NavUser` (`apps/web/components/nav-user.tsx`).
-4. SQLite plus migrations (SQLModel and Alembic).
-5. Server logging to `<data-dir>/logs` by default. The Windows Scheduled Task uses `pythonw.exe`, so stderr goes nowhere.
-6. CodeQL: confirm the default setup picked up Python, or reconfigure it.
+1. First-run setup wizard (`/setup`), admin account (argon2), session cookie, CSRF, and `/login`. Wire up `NavUser` (`apps/web/components/nav-user.tsx`).
+2. SQLite plus migrations (SQLModel and Alembic).
 
 ## Open questions
 

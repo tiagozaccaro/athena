@@ -17,6 +17,7 @@ def _serve(args: argparse.Namespace) -> int:
     os.environ["ATHENA_HOST"] = args.host
     os.environ["ATHENA_PORT"] = str(args.port)
     os.environ["ATHENA_DATA_DIR"] = str(args.data_dir)
+    os.environ["ATHENA_LOG_TO_FILE"] = "1"
     Path(args.data_dir).mkdir(parents=True, exist_ok=True)
     uvicorn.run(
         "athena.main:create_app",
@@ -24,6 +25,7 @@ def _serve(args: argparse.Namespace) -> int:
         host=args.host,
         port=args.port,
         reload=args.reload,
+        log_config=None,  # athena.logging_setup configures logging in create_app
     )
     return 0
 
