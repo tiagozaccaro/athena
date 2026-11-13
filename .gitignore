@@ -43,6 +43,7 @@ Thumbs.db
 # Agent-local files (shared agent config is committed; see AGENTS.md)
 .claude/settings.local.json
 .opencode/
+.playwright-mcp/
 CLAUDE.local.md
 
 # Monorepo extras

@@ -80,6 +80,7 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - The wheel bundles `catalog/` (release workflow plus an artifact check).
   - 138 server tests. Verified on Colima: browse, a bad-port error, a Forgejo install from the store (running, single Open link :3002, `.env` mode 600), and removal. An IT Tools install failed on Docker Hub's anonymous pull rate limit, and the failure is reported clearly in the job dialog.
 
+- **Agent UI verification** (#19): the Playwright MCP server (headless, isolated) in `.mcp.json`, synced to OpenCode and Hermes and enabled for Claude Code; the `athena-ui-verify` skill. Verified that OpenCode connects, Hermes has it enabled and loads the skill, and all 12 tools the skill names exist.
 - **M3 part B, remote catalogs** (branch `feat/m3-catalogs`):
   - `athena/catalog/remote.py`: repo URL to archive URL, safe tar/zip extraction, finds `apps/` or `Apps/` when nested, normalizes the catalog, atomic swap.
   - `athena/catalog/casaos.py`: the CasaOS to Athena converter (YAML 1.2 booleans).
@@ -91,7 +92,7 @@ _Shared handoff log for every coding agent. Update it at the end of each session
 
 ## In progress
 
-- M3 review and merge (#17, then the catalogs PR).
+- M3 part B review and merge (the catalogs PR; #17 merged).
 - Not yet verified: a real `athena service install` on any OS (only dry runs), and real capability detection on Linux and Windows hosts (only CI and fakes).
 
 ## Next

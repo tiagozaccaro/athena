@@ -72,11 +72,12 @@ Everything agent-related has one source of truth in the repo. Each agent reads i
 **MCP servers** (`.mcp.json`):
 - `shadcn`: browse, search and install registry items.
 - `next-devtools`: Next.js docs and runtime diagnostics while `pnpm dev` runs.
+- `playwright`: a headless browser with an in-memory profile, for UI verification (navigate, accessibility snapshots, screenshots in `.playwright-mcp/`, clicks, console, network, resize). It uses the system Chrome; on a machine without Chrome, add `--browser firefox` or install Chrome.
 
 **Skills** (`.agents/skills/`, third-party ones pinned in `skills-lock.json`):
 - `shadcn`
 - `building-pydantic-ai-agents`, `pydantic-ai-harness`, `pydantic`
-- `athena-platform-feature` (written for this project)
+- `athena-platform-feature` and `athena-ui-verify` (written for this project)
 
 **Changing tooling:**
 - *Add an MCP server:* edit `.mcp.json`, then run `node scripts/agents-sync.mjs` to regenerate `opencode.json` and the Hermes snippet. Never edit the `mcp` block of `opencode.json` by hand.
@@ -89,6 +90,10 @@ Everything agent-related has one source of truth in the repo. Each agent reads i
 - **OpenCode:** nothing to do. `opencode.json` is committed.
 - **Hermes Agent:** run `node scripts/agents-sync.mjs --hermes`. It trusts this repo's skills (`hermes skills trust`) and adds any missing MCP servers to `~/.hermes/config.yaml` through `hermes mcp add`. Then restart Hermes or run `/reload-mcp`. `--hermes-print` only prints the YAML block.
   - Known gap: Hermes's skill scanner rates `pydantic-ai-harness` as "dangerous" and hides it. That's a false positive from its docs mentioning `~/.ssh`, `os.environ` and command denylists. Hermes agents should read `.agents/skills/pydantic-ai-harness/SKILL.md` directly when working on the assistant.
+
+## Definition of done for UI work
+
+Any change to `apps/web`, or to an API the UI uses, is verified in a real browser with the `athena-ui-verify` skill (release build on port 8421, fresh data dir, happy path plus a failure, console and network checks, phone width and dark mode, cleanup) before it's reported as done.
 
 ## Handoff
 
