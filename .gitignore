@@ -44,3 +44,13 @@ Thumbs.db
 .claude/settings.local.json
 .opencode/
 CLAUDE.local.md
+
+# Monorepo extras
+.pnp
+.pnp.*
+coverage/
+*.pem
+.vercel
+
+# Web UI bundled into the server wheel at release time
+apps/server/src/athena/web/

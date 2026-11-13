@@ -393,6 +393,9 @@ GET/PUT /api/settings/{appearance|ai|system}
 | Next.js, React, shadcn/ui, Radix/Base UI, Tailwind, Recharts, TanStack Table | MIT |
 | AI Elements, Vercel AI SDK | Apache-2.0 |
 | xterm.js, CodeMirror 6, next-themes, openapi-typescript | MIT |
+| Base UI (`@base-ui/react`), `cn`, Turborepo, openapi-fetch, lucide-react, sonner, zod | MIT / ISC |
+| pydantic-settings, platformdirs, hatchling | MIT |
+| httpx2 (test client) | BSD-3-Clause |
 | FastAPI, SQLModel, Pydantic, pydantic-ai, pydantic-ai-harness, uvicorn | MIT / BSD |
 | docker (Python SDK), Docker Engine (Moby), Compose v2 | Apache-2.0 |
 | python-on-whales, psutil, platformdirs, ptyprocess, pywinpty, send2trash | MIT / BSD / ISC |
@@ -432,6 +435,10 @@ M2–M4 can proceed in parallel once M1 lands, and so can M5 and M6. M7 depends 
 | Windows container runtime | Detect only: Docker Engine in WSL2, Podman, or Rancher Desktop. Show instructions when none is found |
 | Linux privilege | Run as a root systemd service (CasaOS-style) |
 | Next.js mode | Static export served by FastAPI |
+| shadcn primitives (M0) | Base UI (`base-nova` style from preset `b0`), lucide icons |
+| Dev API access (M0) | `next.config.ts` adds an `/api` rewrite to the server in `next dev` only; builds are static exports with `trailingSlash: true`, served by FastAPI `StaticFiles` |
+| Python (M0) | 3.13 for the server and the installers (`requires-python >= 3.12`) |
+| Versioning (M0) | release-please `simple` type with `extra-files` that bump `pyproject.toml` and both `package.json` files |
 
 ## 12. Open questions
 
