@@ -16,6 +16,7 @@ from athena.api.containers import RuntimeDep
 from athena.apps import docker_run
 from athena.apps.store import APP_NAME, AppStore, InvalidComposeError, compose, parse_compose
 from athena.auth.deps import Authed, DbSession
+from athena.catalog.model import CatalogApp
 from athena.containers import service as containers
 from athena.containers.runtime import Runtime
 from athena.containers.service import ContainerError, ContainerOut
@@ -35,6 +36,10 @@ class AppOut(BaseModel):
     """Store app id for apps installed from a catalog."""
     web_port: int | None = None
     """The port "Open" should use, when the catalog declares one."""
+    title: str | None = None
+    """The store app's display name (e.g. "Home Assistant"), for catalog apps."""
+    icon: str | None = None
+    """The store app's icon URL, for catalog apps."""
     status: AppStatus
     running: int
     total: int
@@ -106,12 +111,15 @@ def _get_app(db: DbSession, name: str) -> App:
     return app
 
 
-def _web_port(request: Request, app: App) -> int | None:
-    """Catalog apps declare their web port (a number, or an env key in their .env)."""
+def _catalog_entry(request: Request, app: App) -> CatalogApp | None:
     if not app.catalog_id or "/" not in app.catalog_id:
         return None
     catalog, app_id = app.catalog_id.split("/", 1)
-    entry = request.app.state.catalogs.get(catalog, app_id)
+    return request.app.state.catalogs.get(catalog, app_id)
+
+
+def _web_port(request: Request, app: App, entry: CatalogApp | None) -> int | None:
+    """Catalog apps declare their web port (a number, or an env key in their .env)."""
     if entry is None or entry.meta.web_port is None:
         return None
     port = entry.meta.web_port
@@ -120,7 +128,7 @@ def _web_port(request: Request, app: App) -> int | None:
     return int(port) if str(port).isdigit() else None
 
 
-def _summarize(app: App, all_containers: list[ContainerOut], web_port: int | None = None) -> AppOut:
+def _summarize(request: Request, app: App, all_containers: list[ContainerOut]) -> AppOut:
     mine = [c for c in all_containers if c.project == app.name]
     running = sum(c.state == "running" for c in mine)
     state: AppStatus = (
@@ -133,11 +141,15 @@ def _summarize(app: App, all_containers: list[ContainerOut], web_port: int | Non
         else "partial"
     )
     ports = sorted({p for c in mine for p in c.ports})
+    # The catalog can be removed after install; the app then just loses its icon and title.
+    entry = _catalog_entry(request, app)
     return AppOut(
         name=app.name,
         source=app.source,
         catalog_id=app.catalog_id,
-        web_port=web_port,
+        web_port=_web_port(request, app, entry),
+        title=entry.meta.title if entry else None,
+        icon=entry.meta.icon if entry else None,
         status=state,
         running=running,
         total=len(mine),
@@ -202,14 +214,14 @@ async def list_apps(request: Request, runtime: RuntimeDep, db: DbSession) -> lis
     if not apps:
         return []
     all_containers = await _containers(runtime)
-    return [_summarize(a, all_containers, _web_port(request, a)) for a in apps]
+    return [_summarize(request, a, all_containers) for a in apps]
 
 
 @router.get("/{name}", operation_id="getApp")
 async def get_app(name: AppName, request: Request, runtime: RuntimeDep, db: DbSession) -> AppDetail:
     app = _get_app(db, name)
     all_containers = await _containers(runtime)
-    summary = _summarize(app, all_containers, _web_port(request, app))
+    summary = _summarize(request, app, all_containers)
     return AppDetail(
         **summary.model_dump(),
         compose=_store(request).read(name),

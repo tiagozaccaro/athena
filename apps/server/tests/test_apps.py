@@ -108,6 +108,7 @@ def test_create_deploys_and_lists(api: TestClient, tmp_path: Path) -> None:
     assert apps[0]["name"] == "site"
     assert (apps[0]["status"], apps[0]["running"], apps[0]["total"]) == ("running", 1, 1)
     assert apps[0]["ports"] == ["8080→80/tcp"]
+    assert (apps[0]["title"], apps[0]["icon"]) == (None, None)  # not from a catalog
 
     detail = api.get("/api/apps/site").json()
     assert detail["compose"] == COMPOSE

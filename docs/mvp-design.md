@@ -209,7 +209,8 @@ services:
   - No capability: psutil covers all three OSes. Metrics a host can't report are `null` and hidden (temperatures exist only on Linux; disk I/O counters can be missing on Windows and in containers).
   - Memory "used" is total − available. Network totals skip loopback and container bridges (`veth*`, `docker*`, `br-*`, `vEthernet*`), which would double count.
   - Disks: physical partitions only, minus pseudo/snap/image filesystems, macOS `dontbrowse` volumes and read-only mounts other than `/`; partitions with identical total and free space (APFS volumes in one container, bind mounts) collapse to the shortest mount point; used = total − free. Refreshed every 30 s.
-- Cards: system stats (CPU, memory, network, disk activity, each with a 5 min / 1 h sparkline), storage, temperatures (when reported), server info with uptime, capabilities; later the app grid with open/start/stop.
+- Cards: system stats (CPU, memory, network, disk activity, each with a 5 min / 1 h sparkline), apps, storage, temperatures (when reported), server info with uptime, capabilities.
+- Apps card: one tile per app with its store icon and title (`AppOut.title`/`icon`, looked up from the catalog; plain compose apps fall back to initials), status, Open links and a one-click start/stop. When the runtime isn't ready it shows the same Start/setup panel as the Apps page; it's hidden where containers are unsupported, like the Apps nav item.
 
 ---
 

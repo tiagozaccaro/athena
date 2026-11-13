@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M4 (dashboard + appearance). M3 is done (#17, #18). Step 1, live host stats, is in PR `feat/m4-host-stats`; the dashboard app grid is next.
+**Current milestone:** M4 (dashboard + appearance). M3 is done (#17, #18). Step 1, live host stats, is merged (#20). Step 2, the dashboard app grid, is in PR `feat/m4-dashboard-apps`; the Settings page is next.
 
 ## Done
 
@@ -90,23 +90,27 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - Web: `/store/catalogs` (list, refresh, remove, one-click CasaOS AppStore, add form), a Catalogs button and source badges in the Store, and an app Settings tab (`.env` editor).
   - 163 server tests (CasaOS fixtures from 3 real apps). Verified: the official CasaOS release zip imports 182 apps, all passing `compose config`. In the browser: one-click add, search across catalogs, an imported app's form, and the Forgejo Settings tab changing the port 3002 to 3003 (redeployed, Open link updated).
 
-- **M4 step 1, live host stats** (branch `feat/m4-host-stats`):
+- **M4 step 1, live host stats** (#20):
   - `athena/monitor.py`: `HostMonitor` samples psutil every 2 s (1 h ring buffer), with disks refreshed every 30 s. Disk filtering and de-duplication per OS (APFS volumes collapse to `/`), and network totals skip loopback and container bridges.
   - API: `GET /api/system/stats` (snapshot + history) and `GET /api/system/stats/stream` (SSE `stats` events). The monitor starts in the app lifespan.
   - `athena serve` now has a 5 s graceful-shutdown timeout. Found in verification: an open SSE stream kept the server from stopping at all.
   - Web: `HostStatsProvider` (snapshot, then SSE; reloads the snapshot after a reconnect), CPU/memory/network/disk-activity cards with 5 min / 1 h sparklines and a Live/Reconnecting badge, Storage card (shadcn `progress`), Temperatures card (only when reported), and uptime on the Server card. `recharts` added to `apps/web`.
   - 179 server tests. Verified in the browser on macOS: live updates, the range toggle, stopping the server (badge shows Reconnecting, server exits in 5 s) and restarting it (reconnects by itself), phone width and dark mode, and no console errors other than the deliberate outages. Temperatures only verified with fakes (macOS has no sensors API).
 
+- **M4 step 2, dashboard apps** (branch `feat/m4-dashboard-apps`):
+  - `AppOut` now carries `title` and `icon` from the app's catalog entry (`None` for compose apps or if the catalog was removed).
+  - Web: an Apps card on the dashboard (tiles with icon, status, Open, start/stop; Store and All apps links; the runtime Start/setup panel when containers aren't ready). `useAppsList()` is shared with the Apps page, which now shows icons too. After any tile action the list reloads at once, so a failed action doesn't leave a stale tile.
+  - 179 server tests. Verified in the browser on Colima with a store Forgejo and a compose nginx app (both `athena-test-*`): icons and fallback initials, Open links (:3012, :18090), stop and start from the tiles (checked with `docker ps` and curl), stopping an app removed behind the UI's back (error toast, tile gone in ~200 ms), the stopped-runtime panel (fake empty `HOME`), phone width and dark mode. Test apps removed afterwards.
+
 ## In progress
 
-- M4 step 1 (host stats) review and merge.
+- M4 step 2 (dashboard apps) review and merge.
 - Not yet verified: a real `athena service install` on any OS (only dry runs), and real capability detection on Linux and Windows hosts (only CI and fakes).
 
 ## Next
 
 M4, dashboard + appearance (see `docs/mvp-design.md` §4.6, §5.4):
-1. An app grid on the dashboard (status, Open, start/stop), reusing the Apps page data.
-2. A Settings page: Appearance (light/dark/system, base color, theme, chart color, body and heading font, radius, switched live via data attributes plus generated CSS; preset code import/export), plus Account (change password).
+1. A Settings page: Appearance (light/dark/system, base color, theme, chart color, body and heading font, radius, switched live via data attributes plus generated CSS; preset code import/export), plus Account (change password).
 
 Later: auto-refreshing catalogs on a schedule, stripping missing host devices from imported apps, and Docker Hub login for pulls (rate limits).
 

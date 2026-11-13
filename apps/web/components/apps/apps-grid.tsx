@@ -13,7 +13,6 @@ import {
   Trash2Icon,
 } from "lucide-react"
 
-import { api, errorMessage, type Schemas } from "@workspace/api-client"
 import { Button } from "@workspace/ui/components/button"
 import {
   Card,
@@ -47,29 +46,12 @@ import {
   OpenLinks,
 } from "@/components/apps/app-bits"
 import { useAppJobs } from "@/components/apps/use-app-jobs"
-
-type AppOut = Schemas["AppOut"]
-
-const REFRESH_MS = 10_000
+import { useAppsList } from "@/components/apps/use-apps-list"
+import { AppIcon } from "@/components/store/app-icon"
 
 export function AppsGrid() {
-  const [apps, setApps] = React.useState<AppOut[] | null>(null)
-  const [error, setError] = React.useState<string | null>(null)
+  const { apps, error, load } = useAppsList()
   const [removing, setRemoving] = React.useState<string | null>(null)
-
-  const load = React.useCallback(async () => {
-    const { data, error: err } = await api.GET("/api/apps")
-    if (data) {
-      setApps(data)
-      setError(null)
-    } else setError(errorMessage(err, "Couldn't list apps"))
-  }, [])
-
-  React.useEffect(() => {
-    void load()
-    const timer = window.setInterval(load, REFRESH_MS)
-    return () => window.clearInterval(timer)
-  }, [load])
 
   const jobs = useAppJobs(() => void load())
 
@@ -126,10 +108,15 @@ export function AppsGrid() {
         {apps.map((app) => (
           <Card key={app.name}>
             <CardHeader>
-              <CardTitle>
+              <CardTitle className="flex min-w-0 items-center gap-2">
+                <AppIcon
+                  title={app.title ?? app.name}
+                  icon={app.icon}
+                  className="size-6"
+                />
                 <Link
                   href={`/apps/view/?name=${encodeURIComponent(app.name)}`}
-                  className="hover:underline"
+                  className="truncate hover:underline"
                 >
                   {app.name}
                 </Link>

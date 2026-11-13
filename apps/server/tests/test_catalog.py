@@ -229,6 +229,8 @@ def test_install_writes_env_and_deploys(api: TestClient, tmp_path: Path) -> None
     listed = api.get("/api/apps").json()[0]
     assert (listed["source"], listed["catalog_id"]) == ("catalog", "builtin/nextcloud")
     assert listed["web_port"] == 9999
+    assert listed["title"] == "Nextcloud"
+    assert listed["icon"].endswith(".svg")
     store = api.get("/api/store/apps", params={"q": "nextcloud"}).json()[0]
     assert store["installed"] == ["cloud"]
     # The suggested name skips taken names.
