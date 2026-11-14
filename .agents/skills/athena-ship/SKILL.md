@@ -28,6 +28,10 @@ scripts/check.sh --quick    # same without the web build, while iterating
 
 Done when it prints "All checks passed". If it regenerated `packages/api-client`, commit those files.
 
+If `git config core.hooksPath` doesn't print `.githooks`, run `git config core.hooksPath .githooks` so the pre-push hook runs these checks on every push.
+
+If the docs check fails, you renamed or removed something that AGENTS.md, AGENT-NOTES or a skill still names. Fix the doc in the same commit; don't silence it.
+
 Also, depending on what changed:
 - **Anything in `apps/web`, or an API the UI uses:** browser verification with the `athena-ui-verify` skill. This is required before saying "done".
 - **A database model:** a new migration (see the `athena-recipes` skill). `tests/test_db.py` fails without one.

@@ -29,6 +29,9 @@ jobs:
       - name: Agent MCP config is in sync (.mcp.json -> opencode.json)
         run: node scripts/agents-sync.mjs --check
 
+      - name: Agent docs point at real files and names
+        run: node scripts/check-docs.mjs
+
       - name: Claude skills link points at the shared skills
         run: test "$(readlink .claude/skills)" = "../.agents/skills"
 
