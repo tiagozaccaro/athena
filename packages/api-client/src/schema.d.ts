@@ -238,11 +238,32 @@ export interface paths {
         };
         /**
          * Job Events
-         * @description Server-Sent Events: `log` (one output line, JSON string) and a final `status`.
+         * @description Server-Sent Events: `log` (one output line, JSON string), `progress` (a
+         *     JobProgress, for jobs that report it) and a final `status`.
          */
         get: operations["streamJobEvents"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/{job_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel Job
+         * @description Stop a job that says it's `cancellable`. It ends as failed, with "Cancelled".
+         */
+        post: operations["cancelJob"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1203,10 +1224,271 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cloud/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Providers */
+        get: operations["listCloudProviders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cloud/remotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Remotes */
+        get: operations["listCloudRemotes"];
+        put?: never;
+        /**
+         * Create Remote
+         * @description Creates the remote, then returns rclone's first follow-up question, if any.
+         */
+        post: operations["createCloudRemote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cloud/remotes/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Remote */
+        get: operations["getCloudRemote"];
+        /** Update Remote */
+        put: operations["updateCloudRemote"];
+        post?: never;
+        /**
+         * Delete Remote
+         * @description Athena forgets the remote; nothing stored on it is touched.
+         */
+        delete: operations["deleteCloudRemote"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cloud/remotes/{name}/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Answer Remote
+         * @description Answer the question a create or update returned.
+         */
+        post: operations["answerCloudRemote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cloud/files/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Files */
+        get: operations["listCloudFiles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cloud/files/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download
+         * @description A file from the remote, streamed. Folders can't be downloaded: copy them to a
+         *     location first. Like the file manager, only images, audio and video show inline.
+         */
+        get: operations["downloadCloudFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cloud/files/folder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Folder */
+        post: operations["createCloudFolder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cloud/files/rename": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rename */
+        post: operations["renameCloudFile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cloud/files/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete */
+        post: operations["deleteCloudFiles"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cloud/files/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Chunk
+         * @description Like /api/files/upload: pieces in order. They're kept on the server, and the file
+         *     is sent to the remote after the last one, so that request takes longer.
+         */
+        post: operations["uploadCloudChunk"];
+        /** Cancel Upload */
+        delete: operations["cancelCloudUpload"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cloud/transfer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Transfer
+         * @description Copy or move items between a location and a remote, or between remotes, as a
+         *     job that reports progress and can be cancelled. Location to location copies use
+         *     /api/files/transfer.
+         */
+        post: operations["transferCloudFiles"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cloud/sync/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Sync
+         * @description What a sync would do: how many files it copies, and which ones it deletes.
+         */
+        post: operations["previewCloudSync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cloud/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync
+         * @description Make `dest` match `source`: copies new and changed files and **deletes** files
+         *     that aren't at the source. Run the preview first.
+         */
+        post: operations["syncCloudFolders"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AnswerIn */
+        AnswerIn: {
+            /** State */
+            state: string;
+            /** Answer */
+            answer: string;
+        };
         /** AppDetail */
         AppDetail: {
             /** Name */
@@ -1404,10 +1686,74 @@ export interface components {
             /** Count */
             count: number;
         };
+        /** CloudDeleteIn */
+        CloudDeleteIn: {
+            /** Remote */
+            remote: string;
+            /** Paths */
+            paths: string[];
+        };
+        /** CloudFolderIn */
+        CloudFolderIn: {
+            /** Remote */
+            remote: string;
+            /**
+             * Path
+             * @default
+             */
+            path: string;
+            /** Name */
+            name: string;
+        };
+        /** CloudRenameIn */
+        CloudRenameIn: {
+            /** Remote */
+            remote: string;
+            /** Path */
+            path: string;
+            /** Name */
+            name: string;
+        };
+        /** CloudTransferIn */
+        CloudTransferIn: {
+            /**
+             * Op
+             * @enum {string}
+             */
+            op: "copy" | "move";
+            source: components["schemas"]["Place"];
+            /** Paths */
+            paths: string[];
+            dest: components["schemas"]["Place"];
+        };
         /** ComposeIn */
         ComposeIn: {
             /** Compose */
             compose: string;
+        };
+        /** ConfigQuestion */
+        ConfigQuestion: {
+            /** State */
+            state: string;
+            option: components["schemas"]["ProviderOption"];
+            /**
+             * Error
+             * @default
+             */
+            error: string;
+        };
+        /** ConfigStep */
+        ConfigStep: {
+            /** Remote */
+            remote: string;
+            /** Done */
+            done: boolean;
+            question?: components["schemas"]["ConfigQuestion"] | null;
+            /**
+             * Error
+             * @default
+             */
+            error: string;
         };
         /** ContainerOut */
         ContainerOut: {
@@ -1601,6 +1947,22 @@ export interface components {
             started_at: string;
             /** Finished At */
             finished_at?: string | null;
+            progress?: components["schemas"]["JobProgress"] | null;
+            /**
+             * Cancellable
+             * @default false
+             */
+            cancellable: boolean;
+        };
+        /** JobProgress */
+        JobProgress: {
+            /** Fraction */
+            fraction?: number | null;
+            /**
+             * Text
+             * @default
+             */
+            text: string;
         };
         /** Listing */
         Listing: {
@@ -1704,6 +2066,16 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** OptionExample */
+        OptionExample: {
+            /** Value */
+            value: string;
+            /**
+             * Help
+             * @default
+             */
+            help: string;
+        };
         /**
          * PackageRef
          * @description A search result.
@@ -1732,6 +2104,82 @@ export interface components {
             /** New Password */
             new_password: string;
         };
+        /**
+         * Place
+         * @description A folder in a location or on a remote: exactly one of `location` and `remote`.
+         */
+        Place: {
+            /** Location */
+            location?: number | null;
+            /** Remote */
+            remote?: string | null;
+            /**
+             * Path
+             * @default
+             */
+            path: string;
+        };
+        /** Provider */
+        Provider: {
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Options */
+            options: components["schemas"]["ProviderOption"][];
+        };
+        /** ProviderOption */
+        ProviderOption: {
+            /** Name */
+            name: string;
+            /**
+             * Help
+             * @default
+             */
+            help: string;
+            /**
+             * Type
+             * @default string
+             */
+            type: string;
+            /**
+             * Required
+             * @default false
+             */
+            required: boolean;
+            /**
+             * Password
+             * @default false
+             */
+            password: boolean;
+            /**
+             * Sensitive
+             * @default false
+             */
+            sensitive: boolean;
+            /**
+             * Advanced
+             * @default false
+             */
+            advanced: boolean;
+            /**
+             * Default
+             * @default
+             */
+            default: string;
+            /**
+             * Examples
+             * @default []
+             */
+            examples: components["schemas"]["OptionExample"][];
+            /**
+             * Exclusive
+             * @default false
+             */
+            exclusive: boolean;
+            /** Provider */
+            provider?: string | null;
+        };
         /** PublicShare */
         PublicShare: {
             /**
@@ -1751,6 +2199,54 @@ export interface components {
             modified?: string | null;
             /** Expires At */
             expires_at?: string | null;
+        };
+        /** RemoteDetail */
+        RemoteDetail: {
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
+            /** Description */
+            description: string;
+            /** Values */
+            values: {
+                [key: string]: string;
+            };
+            /** Secrets */
+            secrets: string[];
+        };
+        /** RemoteIn */
+        RemoteIn: {
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
+            /**
+             * Parameters
+             * @default {}
+             */
+            parameters: {
+                [key: string]: string;
+            };
+        };
+        /** RemoteOut */
+        RemoteOut: {
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
+            /** Description */
+            description: string;
+        };
+        /** RemoteUpdateIn */
+        RemoteUpdateIn: {
+            /**
+             * Parameters
+             * @default {}
+             */
+            parameters: {
+                [key: string]: string;
+            };
         };
         /** RenameIn */
         RenameIn: {
@@ -1947,6 +2443,20 @@ export interface components {
             fields: components["schemas"]["FormField"][];
             /** Compose */
             compose: string;
+        };
+        /** SyncIn */
+        SyncIn: {
+            source: components["schemas"]["Place"];
+            dest: components["schemas"]["Place"];
+        };
+        /** SyncPreview */
+        SyncPreview: {
+            /** Copy Count */
+            copy_count: number;
+            /** Delete Count */
+            delete_count: number;
+            /** Deletes */
+            deletes: string[];
         };
         /** SystemInfo */
         SystemInfo: {
@@ -2436,6 +2946,37 @@ export interface operations {
                 };
                 content: {
                     "text/event-stream": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancelJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
                 };
             };
             /** @description Validation Error */
@@ -4438,6 +4979,542 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WebDavPassword"];
+                };
+            };
+        };
+    };
+    listCloudProviders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Provider"][];
+                };
+            };
+        };
+    };
+    listCloudRemotes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteOut"][];
+                };
+            };
+        };
+    };
+    createCloudRemote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemoteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigStep"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getCloudRemote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    updateCloudRemote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemoteUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigStep"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deleteCloudRemote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    answerCloudRemote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigStep"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listCloudFiles: {
+        parameters: {
+            query: {
+                remote: string;
+                path?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Listing"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    downloadCloudFile: {
+        parameters: {
+            query: {
+                remote: string;
+                path: string;
+                inline?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    createCloudFolder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloudFolderIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileEntry"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    renameCloudFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloudRenameIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileEntry"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deleteCloudFiles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloudDeleteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    uploadCloudChunk: {
+        parameters: {
+            query: {
+                remote: string;
+                name: string;
+                upload_id: string;
+                offset: number;
+                total: number;
+                path?: string;
+                overwrite?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancelCloudUpload: {
+        parameters: {
+            query: {
+                upload_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    transferCloudFiles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloudTransferIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    previewCloudSync: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SyncIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    syncCloudFolders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SyncIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

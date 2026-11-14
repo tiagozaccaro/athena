@@ -124,6 +124,18 @@ CodeQL runs on every PR and its alerts can block a merge.
 - Tests that need a CLI to be _absent_ must really hide it from PATH. A test passed on every machine with `docker` and only failed on macOS CI, which has none. Run such tests with the tool removed from PATH.
 - The release wheel must include the catalog (`athena/catalog_builtin`) and the web export. Once it shipped without the catalog, and the store was empty. `build-wheel.sh` now fails if either is missing.
 
+### rclone (cloud storage)
+
+- rclone accepts `name:..` and leaves an alias remote's folder (`operations/list` on `loc:..` listed its parent). The API's own `remotes.check_path` is the only guard; never pass a user path into an fs string without it.
+- Every rc call is a job in rclone, so job ids climb on every request (`core/version` too). Use the `jobid` an `_async` call returns; don't guess it.
+- `_config: {"BwLimit": …}` has no effect: the bandwidth limit is global (`core/bwlimit`). To make a transfer slow enough to test progress or cancel, run the test WebDAV server with `rclone serve webdav <dir> --addr 127.0.0.1:<port> --user u --pass p --bwlimit 3M` and add it as a `webdav` remote. It's a real remote with no cloud account needed.
+- Progress can reach 100% while the job still runs: rclone counts bytes once it has read them, and a slow remote may still be taking them. The job dialog then says "finishing…". A cancel at that point can still leave the whole file on the remote.
+- `rclone serve webdav` caches folder listings for about 5 minutes, so files written straight to its folder don't show up in listings or sync previews until then. Create test files through the API.
+- In the non-interactive config flow, a refused answer (a bad OAuth token) comes back with the same `State`, an `Error` and no `Option`: ask the same question again. Athena returns it as `ConfigStep.error` with `question: null`.
+- rclone marks more than passwords as `Sensitive` (WebDAV `user`, S3 keys, OAuth client secrets). Treat both flags as secrets; the edit form shows them as "Unchanged".
+- `config/create` writes the section immediately, before its follow-up questions are answered, so a remote abandoned halfway stays in the config unless it's deleted (the dialog's Cancel does that).
+- Newer rclone (1.76) asks about Google's retiring shared client id before the OAuth step; older ones don't. Tests loop over questions until `config_token` instead of hard-coding the order.
+
 ### Web (Next.js 16, shadcn on Base UI)
 
 - Base UI, not Radix: component APIs differ (`render` prop instead of `asChild`, different `Select` and `ToggleGroup` APIs). Check the `shadcn` skill or `shadcn docs <component>` before using one.
@@ -148,6 +160,9 @@ CodeQL runs on every PR and its alerts can block a merge.
 - Fake anything that would change the host: a stub `brew`/`colima` first on the server's `PATH` (reads can pass through to the real tool), or `HOME` pointed at an empty folder so a runtime looks stopped. For files, point `HOME` at a scratch folder so the default Home location isn't the real one.
 - Anonymous Docker Hub pulls are rate-limited (429). Image-checking loops used up the quota for hours. Prefer ghcr.io or codeberg.org images in tests, and don't loop `docker manifest inspect`.
 - Keep the developer's personal data out of fixtures and screenshots. For example, a fixture once used a real installed-cask list and was replaced with neutral entries.
+- Playwright MCP can crash at launch on macOS (`SIGTRAP`, `bootstrap_check_in … MachPortRendezvousServer: unknown error code (124)`), even outside the sandbox. It was transient: the same call worked a few minutes later. Retry before giving up, and drive the API with a script meanwhile.
+- `browser_file_upload` only accepts files under the repo (`.playwright-mcp/` is git-ignored). Copy test files there instead of using the scratchpad, and delete them afterwards.
+- A text input with a `<datalist>` shows up as a `combobox` in snapshots, not a textbox: type into it, don't wait for a listbox.
 - What the sandbox can't do: `mount_webdav` (Finder mounts), `.claude/settings.json` edits, and turning on Claude's PR monitor. Say so and leave them to the maintainer; don't work around the guard.
 
 ### Installers and E2E
@@ -164,5 +179,7 @@ CodeQL runs on every PR and its alerts can block a merge.
 - Hermes quarantines `pydantic-ai-harness` as "dangerous" (a false positive). Read its `SKILL.md` directly.
 - Hermes's scanner also hides **our own** skills when they contain `curl … | python3` (rated critical "supply chain"), even when Python only parses JSON. In skills, use `jq` or save to a file first. `sudo`, `uv run` and systemd mentions are only medium and don't hide a skill. To check a skill before committing: `PYTHONPATH=~/.hermes/hermes-agent ~/.hermes/tools/python-3.14*/bin/python3 -c "from pathlib import Path; from tools.skills_guard import scan_skill; print(scan_skill(Path('.agents/skills/<name>'), source='project').verdict)"` should print `safe`.
 - Another agent session may be working in the main checkout at the same time (uncommitted changes on its feature branch). For unrelated work, use `git worktree add ../athena-<topic> -b <branch> origin/main` instead of switching branches under it.
+- The machine can be offline (no DNS, even outside the sandbox). `uv run --offline --with <pkg>==<version>` uses uv's cache when the package was installed before.
+- `pkill` and `ps` may fail in the sandbox ("Cannot get process list"). Find a server by its port with `lsof -nP -t -iTCP:<port> -sTCP:LISTEN` and `kill` that pid.
 - Port 8420 may be the maintainer's own Athena. Use 8421 or another spare port.
 - Act only on containers, apps and images named `athena-demo-*` / `athena-test-*`. The maintainer's own containers run on the same engine. Leave pulled images unless you know you pulled them, and say which ones are left.

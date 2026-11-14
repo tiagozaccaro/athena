@@ -4,6 +4,8 @@ import * as React from "react"
 
 import { api, errorMessage } from "@workspace/api-client"
 
+import { isRemote, type Source } from "@/components/files/file-utils"
+
 /** Pieces of 8 MB: small enough for any proxy, big enough to keep requests few. */
 const CHUNK = 8 * 1024 * 1024
 
@@ -13,7 +15,7 @@ export type UploadStatus =
 export type Upload = {
   id: string
   file: File
-  location: number
+  source: Source
   folder: string
   sent: number
   status: UploadStatus
@@ -38,7 +40,8 @@ type PieceResult = {
   response: Response
 }
 
-/** Where the pieces go. The default is the file manager's /api/files/upload. */
+/** Where the pieces go. The default is the file manager's /api/files/upload, or
+ * /api/cloud/files/upload for a remote. */
 export type UploadTransport = {
   send: (u: Upload, offset: number, piece: Blob) => Promise<PieceResult>
   cancel: (u: Upload) => Promise<unknown>
@@ -51,10 +54,26 @@ const binary = {
 
 const filesTransport: UploadTransport = {
   send: (u, offset, piece) =>
-    api.POST("/api/files/upload", {
+    isRemote(u.source)
+      ? api.POST("/api/cloud/files/upload", {
+          params: {
+            query: {
+              remote: u.source.remote,
+              path: u.folder,
+              name: u.file.name,
+              upload_id: u.id,
+              offset,
+              total: u.file.size,
+              overwrite: u.overwrite ?? false,
+            },
+          },
+          body: piece as unknown as string,
+          ...binary,
+        })
+      : api.POST("/api/files/upload", {
       params: {
         query: {
-          location: u.location,
+          location: u.source.location,
           path: u.folder,
           name: u.file.name,
           upload_id: u.id,
@@ -67,11 +86,19 @@ const filesTransport: UploadTransport = {
       ...binary,
     }),
   cancel: (u) =>
-    api.DELETE("/api/files/upload", {
-      params: {
-        query: { location: u.location, path: u.folder, upload_id: u.id },
-      },
-    }),
+    isRemote(u.source)
+      ? api.DELETE("/api/cloud/files/upload", {
+          params: { query: { upload_id: u.id } },
+        })
+      : api.DELETE("/api/files/upload", {
+          params: {
+            query: {
+              location: u.source.location,
+              path: u.folder,
+              upload_id: u.id,
+            },
+          },
+        }),
 }
 
 /** Uploads through a share link (POST /api/public/shares/{token}/upload). */
@@ -103,7 +130,7 @@ export function shareTransport(token: string): UploadTransport {
  * finished file so the listing can refresh.
  */
 export function useUploads(
-  onUploaded: (location: number, folder: string) => void,
+  onUploaded: (source: Source, folder: string) => void,
   transport: UploadTransport = filesTransport
 ) {
   const [uploads, setUploads] = React.useState<Upload[]>([])
@@ -155,7 +182,7 @@ export function useUploads(
         update(u.id, { sent: offset })
       } while (offset < size)
       update(u.id, { status: "done", sent: size })
-      onUploadedRef.current(u.location, u.folder)
+      onUploadedRef.current(u.source, u.folder)
     },
     [update]
   )
@@ -184,11 +211,11 @@ export function useUploads(
   }, [sendOne, update])
 
   const add = React.useCallback(
-    (files: File[], location: number, folder: string) => {
+    (files: File[], source: Source, folder: string) => {
       const added = files.map<Upload>((file) => ({
         id: uploadId(),
         file,
-        location,
+        source,
         folder,
         sent: 0,
         status: "queued",

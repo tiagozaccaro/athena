@@ -141,6 +141,18 @@ jobs:
       - name: Install
         run: uv sync --locked
 
+      # tests/test_cloud.py drives a real rclone where one is installed. Ubuntu gets the
+      # distro's older rclone on purpose: it's what Ubuntu LTS users will have.
+      - name: Install rclone
+        shell: bash
+        run: |
+          case "$RUNNER_OS" in
+            Linux) sudo apt-get update -qq && sudo apt-get install -y -qq rclone ;;
+            macOS) brew install rclone ;;
+            Windows) choco install rclone -y --no-progress ;;
+          esac
+          rclone version
+
       - name: Lint
         run: |
           uv run ruff check

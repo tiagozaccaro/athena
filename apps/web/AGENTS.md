@@ -30,7 +30,7 @@ Next.js 16 with a static export (`output: "export"`, `trailingSlash: true`), Rea
 |---|---|
 | `app/(app)/` | Signed-in pages, inside `AuthProvider` then `CapabilitiesProvider` (`layout.tsx`). Each `page.tsx` is a few lines that render a view from `components/` |
 | `app/(auth)/` | `/setup` and `/login` |
-| `components/<area>/` | Views and pieces per area: `apps`, `containers`, `dashboard`, `files`, `packages`, `settings`, `share` (the public `/s/` page), `store`, `terminal` |
+| `components/<area>/` | Views and pieces per area: `apps`, `cloud`, `containers`, `dashboard`, `files`, `packages`, `settings`, `share` (the public `/s/` page), `store`, `terminal` |
 | `components/nav.ts` | Sidebar entries; add one only when its page exists |
 | `components/job-dialog.tsx`, `log-view.tsx` | Job progress and live logs |
 | `hooks/` | `use-api.ts` (load on mount), `use-event-stream.ts` (SSE) |
@@ -59,6 +59,7 @@ Next.js 16 with a static export (`output: "export"`, `trailingSlash: true`), Rea
   - Use shadcn first: search the registries (shadcn MCP or skill, `@ai-elements` for chat UI) before building anything.
   - Base UI isn't Radix: it uses the `render` prop instead of `asChild`, and `Select` and `ToggleGroup` have different APIs. Check the `shadcn` skill.
   - Code editing uses `CodeEditor` from `@workspace/ui/components/athena/code-editor`; terminals use `<Terminal>` from `@workspace/ui/components/athena/terminal`, with `TerminalSession`, `ShellSheet` and `useTerminalAccess` in `components/terminal/`. The share dialogs are `components/files/share-*.tsx`, and the WebDAV switch is `components/settings/webdav-card.tsx`.
+  - Files work on a `Source` (`{ location }` or `{ remote }`, in `components/files/file-utils.ts`): use `downloadUrl(source, …)`, `folderHref(source, …)` and `FolderPicker` (`components/files/folder-picker.tsx`), which already handle cloud remotes. Get remotes from `useRemotes()` (`components/cloud/use-remotes.ts`), which is empty when rclone isn't ready.
 - **Theming:**
   - Use theme tokens only (`bg-card`, `text-muted-foreground`): no raw colors and no `dark:` overrides.
   - Base color, theme, chart color, fonts and radius switch at runtime through data attributes on `<html>` (`lib/appearance.ts`).

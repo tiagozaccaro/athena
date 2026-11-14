@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react"
 import {
   BoxIcon,
   CircleHelpIcon,
+  CloudIcon,
   FolderIcon,
   LayoutDashboardIcon,
   LayoutGridIcon,
@@ -60,6 +61,14 @@ export const navMain: NavItem[] = [
     url: "/files/",
     icon: FolderIcon,
     capability: "files",
+  },
+  {
+    title: "Cloud",
+    url: "/cloud/",
+    icon: CloudIcon,
+    // Shown without rclone too, so the page can say how to install it.
+    capability: "cloud.rclone",
+    showWhenUnavailable: true,
   },
   {
     title: "Containers",

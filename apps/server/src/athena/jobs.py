@@ -23,6 +23,12 @@ MAX_LINES = 5000
 KEEP_FINISHED = 100
 
 
+class JobProgress(BaseModel):
+    fraction: float | None = None
+    """0 to 1, or None when the total isn't known yet."""
+    text: str = ""
+
+
 class JobOut(BaseModel):
     id: str
     title: str
@@ -31,10 +37,13 @@ class JobOut(BaseModel):
     error: str | None = None
     started_at: datetime
     finished_at: datetime | None = None
+    progress: JobProgress | None = None
+    cancellable: bool = False
+    """POST /api/jobs/{id}/cancel stops it."""
 
 
 class Job:
-    def __init__(self, title: str) -> None:
+    def __init__(self, title: str, cancellable: bool = False) -> None:
         self.id = secrets.token_hex(8)
         self.title = title
         self.status: JobStatus = "running"
@@ -42,6 +51,13 @@ class Job:
         self.error: str | None = None
         self.started_at = datetime.now(UTC)
         self.finished_at: datetime | None = None
+        self.progress: JobProgress | None = None
+        self.cancellable = cancellable
+        self.cancel_hook: Callable[[], Awaitable[None]] | None = None
+        """Called by `cancel()` to stop the work in progress. The body also checks
+        `cancelled` between steps."""
+        self.cancelled = False
+        self._progress_version = 0
         self._changed = asyncio.Condition()
 
     def out(self) -> JobOut:
@@ -53,6 +69,8 @@ class Job:
             error=self.error,
             started_at=self.started_at,
             finished_at=self.finished_at,
+            progress=self.progress,
+            cancellable=self.cancellable and self.status == "running",
         )
 
     async def log(self, line: str) -> None:
@@ -62,6 +80,23 @@ class Job:
                 del self.lines[: len(self.lines) - MAX_LINES]
             self._changed.notify_all()
 
+    async def set_progress(self, fraction: float | None, text: str) -> None:
+        async with self._changed:
+            if fraction is not None:
+                fraction = min(max(fraction, 0.0), 1.0)
+            self.progress = JobProgress(fraction=fraction, text=text)
+            self._progress_version += 1
+            self._changed.notify_all()
+
+    async def cancel(self) -> bool:
+        """Ask the job to stop. False if it can't be stopped or has already finished."""
+        if not self.cancellable or self.status != "running":
+            return False
+        self.cancelled = True
+        if self.cancel_hook is not None:
+            await self.cancel_hook()
+        return True
+
     async def finish(self, error: str | None = None) -> None:
         async with self._changed:
             self.status = "failed" if error else "succeeded"
@@ -70,17 +105,27 @@ class Job:
             self._changed.notify_all()
 
     async def events(self) -> AsyncIterator[str]:
-        """SSE stream: every line so far, then new lines, then a final `status` event."""
+        """SSE stream: every line so far, then new lines and `progress` updates, then a
+        final `status` event."""
         sent = 0
+        progress_sent = 0
         while True:
             async with self._changed:
-                if sent >= len(self.lines) and self.status == "running":
+                if (
+                    sent >= len(self.lines)
+                    and progress_sent == self._progress_version
+                    and self.status == "running"
+                ):
                     await self._changed.wait()
                 new = self.lines[sent:]
                 sent = len(self.lines)
+                progress = self.progress if progress_sent != self._progress_version else None
+                progress_sent = self._progress_version
                 done = self.status != "running"
             for line in new:
                 yield f"event: log\ndata: {json.dumps(line)}\n\n"
+            if progress is not None:
+                yield f"event: progress\ndata: {progress.model_dump_json()}\n\n"
             if done:
                 payload = {"status": self.status, "error": self.error}
                 yield f"event: status\ndata: {json.dumps(payload)}\n\n"
@@ -115,9 +160,10 @@ class JobManager:
         self._jobs: dict[str, Job] = {}
         self._tasks: set[asyncio.Task[None]] = set()
 
-    def start(self, title: str, body: JobBody) -> Job:
-        """Run `body(job)` in the background. Raise inside it (or return) to finish."""
-        job = Job(title)
+    def start(self, title: str, body: JobBody, cancellable: bool = False) -> Job:
+        """Run `body(job)` in the background. Raise inside it (or return) to finish.
+        A `cancellable` body stops when `job.cancelled` is set (see `Job.cancel`)."""
+        job = Job(title, cancellable)
         self._jobs[job.id] = job
         self._prune()
 
