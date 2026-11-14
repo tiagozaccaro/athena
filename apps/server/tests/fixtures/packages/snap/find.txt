@@ -1,0 +1,4 @@
+Name                 Version          Publisher        Notes  Summary
+jq                   1.5+dfsg-1       mvo**            -      Command-line JSON processor
+jqp                  0.7.0            noahgorstein     -      A TUI playground to experiment with jq
+yq                   v4.44.3          mikefarah        -      A lightweight and portable command-line YAML processor

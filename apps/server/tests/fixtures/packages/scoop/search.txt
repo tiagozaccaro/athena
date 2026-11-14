@@ -1,0 +1,8 @@
+Results from local buckets...
+
+Name Version Source Binaries
+---- ------- ------ --------
+jq   1.7.1   main
+gojq 0.12.16 main
+jid  0.7.6   main   jid.exe
+

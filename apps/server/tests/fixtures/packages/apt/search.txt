@@ -1,0 +1,20 @@
+libjs-jquery-blockui - simulate synchronous behaviour using AJAX
+libjs-bootsidemenu - jQuery plugin to easily build a sliding menu
+libjs-jquery-datatables-extensions - extensions for the jQuery plug-in for tables from different data sources
+libjs-jquery-datatables - jQuery plug-in that makes nice tables from different data sources
+python3-django-paintstore - Integrates jQuery ColorPicker in Django admin (Python 3 version)
+libjs-jquery-flot - plotting library for jQuery
+libjs-jquery-flot-docs - Documentation for Flot
+fq - jq for binary formats (program)
+libjs-jquery-gitgraph - convert git log --graph to image with HTML5 canvas
+gojq - pure Go implementation of jq (program)
+golang-github-itchyny-gojq-dev - pure Go implementation of jq (library)
+golang-github-goji-param-dev - Rack / jQuery style parameter parsing for Go
+golang-github-puerkitobio-goquery-dev - jQuery-style HTML manipulation in Go
+golang-github-wader-gojq-dev - fork of the gojq library for fq
+haskell-js-dgtable-utils - obtain minified jquery.dgtable code
+libghc-js-dgtable-dev - obtain minified jquery.dgtable code
+libghc-js-dgtable-doc - obtain minified jquery.dgtable code; documentation
+libghc-js-dgtable-prof - obtain minified jquery.dgtable code; profiling libraries
+libghc-js-flot-data - bundles the jQuery Flot code into a Haskell package; runtime files
+libghc-js-flot-dev - bundles the jQuery Flot code into a Haskell package

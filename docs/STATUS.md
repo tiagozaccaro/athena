@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M4 (dashboard + appearance). M3 is done (#17, #18). Step 1, live host stats, is merged (#20). Step 2, the dashboard app grid, is merged (#21). Step 3, the Settings page (appearance + account), is in PR `feat/m4-settings`; with it M4 is complete. M5 (packages + terminal) is next.
+**Current milestone:** M5 (packages + terminal). M4 is done (#20, #21, #22). Part A, package managers, is in PR `feat/m5-packages`; part B (host terminal + container exec) is next.
 
 ## Done
 
@@ -102,7 +102,7 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - Web: an Apps card on the dashboard (tiles with icon, status, Open, start/stop; Store and All apps links; the runtime Start/setup panel when containers aren't ready). `useAppsList()` is shared with the Apps page, which now shows icons too. After any tile action the list reloads at once, so a failed action doesn't leave a stale tile.
   - 179 server tests. Verified in the browser on Colima with a store Forgejo and a compose nginx app (both `athena-test-*`): icons and fallback initials, Open links (:3012, :18090), stop and start from the tiles (checked with `docker ps` and curl), stopping an app removed behind the UI's back (error toast, tile gone in ~200 ms), the stopped-runtime panel (fake empty `HOME`), phone width and dark mode. Test apps removed afterwards.
 
-- **M4 step 3, Settings** (branch `feat/m4-settings`):
+- **M4 step 3, Settings** (#22):
   - `scripts/gen-theme-css.mjs` (`pnpm gen:theme`) generates `packages/ui/src/styles/themes.css` and `themes.json` from the shadcn registry (7 bases, 24 themes, 23 chart palettes, 5 radii, 26 fonts) and checks 18 combinations against it. `gray` is skipped (the registry refuses it).
   - All preset fonts via `next/font` (`apps/web/lib/fonts.ts`); `font-heading` and `font-mono` now read runtime variables in `globals.css`.
   - `users.appearance` (migration 0006), `GET/PUT /api/settings/appearance`, `POST /api/auth/password` (keeps this session, signs out others, throttled, audited).
@@ -110,14 +110,22 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - 189 server tests (10 new). Verified in the browser: every setting applies live and is saved; the UI's code for stone/blue/emerald/Geist/Lora/large is `b4DwxjALIm`, exactly what shadcn's encoder gives; settings come back from the account after clearing local storage; attributes are on `<html>` before `<body>` parses; preset import (invalid code → inline error; unsupported parts → warning toast); rose's dark sidebar; wrong current password (inline error, still signed in); password change (other session 401, old password rejected, audit row); phone width; dark mode.
   - Found and fixed during verification: the provider's initial load re-ran whenever next-themes changed `setTheme`'s identity, which re-applied the old saved settings and cancelled the pending save, so quick changes after an import were lost. It now loads once and builds each change on the latest state.
 
+- **M5 part A, package managers** (branch `feat/m5-packages`):
+  - `athena/packages/`: apt, dnf (4 and 5), zypper, pacman, apk, Homebrew, Flatpak, Snap, winget, Scoop, Chocolatey. Search, installed, upgradable; install, uninstall, upgrade (one or all), refresh lists, as jobs, one per manager at a time, audited.
+  - `/api/packages` (managers from the capability manifest, including `needs_privilege` ones with the reason), `/{mgr}/search|installed|upgradable`, `/{mgr}/install|uninstall|upgrade|refresh`.
+  - Fixtures: real recordings for brew, apt, apk, dnf4/dnf5, zypper, pacman and flatpak search (throwaway containers, images removed afterwards); hand-written for snap, winget, scoop and choco (README says which). Read-only real-tool tests run where the tool exists (brew passes locally).
+  - Web: Packages page (tab per manager; Installed with filter, inline update badges, uninstall; Updates with upgrade one/all; Search with install), confirm dialogs, job dialog, notes (pacman, choco). Nav item via `capability: "packages.*"`.
+  - 238 server tests pass (49 new); the real-tool tests for apt, choco and winget skip on this Mac and run in CI on their OS. Verified in the browser on macOS with real Homebrew reads and a stub for changes (nothing installed or removed on the host): installed list (49) and updates (12) match `brew`, filter, search with descriptions, install (stub), a failing install (exit code and Homebrew's error in the dialog), upgrade all and uninstall with confirmations (cancel sends nothing), refresh, audit rows, phone width (fixed: row actions were pushed off-screen), dark mode, no console errors; a host without Homebrew hides the nav item and the page says so.
+
 ## In progress
 
-- M4 step 3 (Settings) review and merge.
+- M5 part A (packages) review and merge.
+- Not yet verified for real: the Linux system managers' install/uninstall (only recorded reads and fakes) and every Windows manager (hand-written fixtures; CI runs choco/winget reads on Windows).
 - Not yet verified: a real `athena service install` on any OS (only dry runs), and real capability detection on Linux and Windows hosts (only CI and fakes).
 
 ## Next
 
-M5, packages + terminal (see `docs/mvp-design.md` §3, §4.2, §10): every detected package manager with search/install/upgrade as jobs, the host terminal and container exec on all OSes.
+M5 part B, terminal (see `docs/mvp-design.md` §4.2, §7): host shell in the browser (xterm.js over a WebSocket; a pty on Linux/macOS, ConPTY on Windows) and container exec; admin-only, can be switched off, audited.
 
 Later: a CI check that `themes.css` matches the registry (needs network; run `pnpm gen:theme` after shadcn upgrades for now), and switching shadcn styles at runtime (§5.4).
 

@@ -1,0 +1,31 @@
+{
+  "formulae": [
+    {
+      "name": "ca-certificates",
+      "installed_versions": [
+        "2026-10-20"
+      ],
+      "current_version": "2026-11-05",
+      "pinned": false,
+      "pinned_version": null
+    },
+    {
+      "name": "docker",
+      "installed_versions": [
+        "29.9.2"
+      ],
+      "current_version": "29.9.3",
+      "pinned": false,
+      "pinned_version": null
+    }
+  ],
+  "casks": [
+    {
+      "name": "jquake",
+      "installed_versions": [
+        "1.8.4"
+      ],
+      "current_version": "1.8.5"
+    }
+  ]
+}

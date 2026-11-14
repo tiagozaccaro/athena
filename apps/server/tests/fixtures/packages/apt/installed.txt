@@ -1,0 +1,25 @@
+ii 	adduser	3.152	add and remove users and groups
+ii 	apache2	2.4.69-1~deb13u1	Apache HTTP Server
+ii 	apache2-bin	2.4.69-1~deb13u1	Apache HTTP Server (modules and other binary files)
+ii 	apache2-data	2.4.69-1~deb13u1	Apache HTTP Server (common files)
+ii 	apache2-utils	2.4.69-1~deb13u1	Apache HTTP Server (utility programs for web servers)
+ii 	apt	3.0.3	commandline package manager
+ii 	base-files	13.8+deb13u7	Debian base system miscellaneous files
+ii 	base-passwd	3.6.7	Debian base system master password and group files
+ii 	bash	5.2.37-2+b10	GNU Bourne Again SHell
+ii 	bsdutils	1:2.41.5-0+deb13u1	basic utilities from 4.4BSD-Lite
+ii 	ca-certificates	20250419+deb13u1	Common CA certificates
+ii 	coreutils	9.7-3	GNU core utilities
+ii 	cron	3.0pl1-197	process scheduling daemon
+ii 	cron-daemon-common	3.0pl1-197	process scheduling daemon's configuration files
+ii 	dash	0.5.12-12	POSIX-compliant shell
+ii 	debconf	1.5.91	Debian configuration management system
+ii 	debian-archive-keyring	2025.1	OpenPGP archive certificates of the Debian archive
+ii 	debianutils	5.23.2	Miscellaneous utilities specific to Debian
+ii 	diffutils	1:3.10-4	File comparison utilities
+ii 	dpkg	1.22.22	Debian package management system
+ii 	findutils	4.10.0-3	utilities for finding files--find, xargs
+ii 	gcc-14-base	14.2.0-19	GCC, the GNU Compiler Collection (base package)
+ii 	grep	3.11-4+b1	GNU grep, egrep and fgrep
+ii 	gzip	1.13-1+deb13u1	GNU compression utilities
+ii 	hostname	3.25	utility to set/show the host name or domain name

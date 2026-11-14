@@ -4,6 +4,7 @@ import {
   CircleHelpIcon,
   LayoutDashboardIcon,
   LayoutGridIcon,
+  PackageIcon,
   Settings2Icon,
   StoreIcon,
 } from "lucide-react"
@@ -41,6 +42,15 @@ export const navMain: NavItem[] = [
     url: "/store/",
     icon: StoreIcon,
     capability: "containers",
+    showWhenUnavailable: true,
+  },
+  {
+    title: "Packages",
+    url: "/packages/",
+    icon: PackageIcon,
+    // Shown when any package manager is installed, even one that needs root, so the
+    // page can say why it can't be used.
+    capability: "packages.*",
     showWhenUnavailable: true,
   },
   {

@@ -1,0 +1,2 @@
+chocolatey|2.3.0
+jq|1.6

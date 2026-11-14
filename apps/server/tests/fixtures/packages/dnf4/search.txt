@@ -1,0 +1,2 @@
+jq	1.6-21.el9	Command-line JSON processor
+

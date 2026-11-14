@@ -1348,7 +1348,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InstallIn"
+                "$ref": "#/components/schemas/athena__api__store__InstallIn"
               }
             }
           }
@@ -1558,6 +1558,387 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Appearance"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/packages": {
+      "get": {
+        "tags": [
+          "packages"
+        ],
+        "summary": "List Managers",
+        "description": "The package managers found on this host (ready or not), in detection order.",
+        "operationId": "listPackageManagers",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ManagerOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listpackagemanagers"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/packages/{manager}/search": {
+      "get": {
+        "tags": [
+          "packages"
+        ],
+        "summary": "Search",
+        "operationId": "searchPackages",
+        "parameters": [
+          {
+            "name": "manager",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z]{2,16}$",
+              "title": "Manager"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 ._+:@/~-]{0,99}$",
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PackageRef"
+                  },
+                  "title": "Response Searchpackages"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/packages/{manager}/installed": {
+      "get": {
+        "tags": [
+          "packages"
+        ],
+        "summary": "Installed",
+        "operationId": "listInstalledPackages",
+        "parameters": [
+          {
+            "name": "manager",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z]{2,16}$",
+              "title": "Manager"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InstalledPackage"
+                  },
+                  "title": "Response Listinstalledpackages"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/packages/{manager}/upgradable": {
+      "get": {
+        "tags": [
+          "packages"
+        ],
+        "summary": "Upgradable",
+        "description": "From the package lists as last refreshed (apt, dnf and others cache them).",
+        "operationId": "listUpgradablePackages",
+        "parameters": [
+          {
+            "name": "manager",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z]{2,16}$",
+              "title": "Manager"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UpgradablePackage"
+                  },
+                  "title": "Response Listupgradablepackages"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/packages/{manager}/install": {
+      "post": {
+        "tags": [
+          "packages"
+        ],
+        "summary": "Install",
+        "operationId": "installPackage",
+        "parameters": [
+          {
+            "name": "manager",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z]{2,16}$",
+              "title": "Manager"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/athena__api__packages__InstallIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/packages/{manager}/uninstall": {
+      "post": {
+        "tags": [
+          "packages"
+        ],
+        "summary": "Uninstall",
+        "operationId": "uninstallPackage",
+        "parameters": [
+          {
+            "name": "manager",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z]{2,16}$",
+              "title": "Manager"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/packages/{manager}/upgrade": {
+      "post": {
+        "tags": [
+          "packages"
+        ],
+        "summary": "Upgrade",
+        "operationId": "upgradePackages",
+        "parameters": [
+          {
+            "name": "manager",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z]{2,16}$",
+              "title": "Manager"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpgradeIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/packages/{manager}/refresh": {
+      "post": {
+        "tags": [
+          "packages"
+        ],
+        "summary": "Refresh",
+        "description": "Update the package lists (apt update, dnf makecache\u2026) so search and upgrades are current.",
+        "operationId": "refreshPackageLists",
+        "parameters": [
+          {
+            "name": "manager",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z]{2,16}$",
+              "title": "Manager"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
                 }
               }
             }
@@ -2452,27 +2833,62 @@
         ],
         "title": "Health"
       },
-      "InstallIn": {
+      "InstalledPackage": {
         "properties": {
           "name": {
             "type": "string",
-            "maxLength": 63,
-            "pattern": "^[a-z0-9][a-z0-9_-]{0,62}$",
             "title": "Name"
           },
-          "values": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Values"
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
           }
         },
         "type": "object",
         "required": [
           "name"
         ],
-        "title": "InstallIn"
+        "title": "InstalledPackage"
       },
       "JobOut": {
         "properties": {
@@ -2554,6 +2970,87 @@
         ],
         "title": "LogsOut"
       },
+      "ManagerOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "stopped",
+              "missing",
+              "unsupported",
+              "needs_privilege"
+            ],
+            "title": "Status"
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "can_upgrade_one": {
+            "type": "boolean",
+            "title": "Can Upgrade One"
+          },
+          "can_refresh": {
+            "type": "boolean",
+            "title": "Can Refresh"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "status",
+          "available",
+          "can_upgrade_one",
+          "can_refresh"
+        ],
+        "title": "ManagerOut"
+      },
+      "NameIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._+:@/~-]{0,199}$",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "NameIn"
+      },
       "NewApp": {
         "properties": {
           "compose": {
@@ -2615,6 +3112,69 @@
           "url"
         ],
         "title": "NewCatalog"
+      },
+      "PackageRef": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "installed": {
+            "type": "boolean",
+            "title": "Installed",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "PackageRef",
+        "description": "A search result."
       },
       "PasswordChange": {
         "properties": {
@@ -3106,6 +3666,59 @@
         ],
         "title": "Temperature"
       },
+      "UpgradablePackage": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "UpgradablePackage"
+      },
+      "UpgradeIn": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._+:@/~-]{0,199}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "title": "UpgradeIn"
+      },
       "UserOut": {
         "properties": {
           "id": {
@@ -3189,6 +3802,54 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "athena__api__packages__InstallIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._+:@/~-]{0,199}$",
+            "title": "Name"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "InstallIn"
+      },
+      "athena__api__store__InstallIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 63,
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,62}$",
+            "title": "Name"
+          },
+          "values": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "InstallIn"
       }
     }
   }

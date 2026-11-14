@@ -92,6 +92,7 @@ export function useCapability(id: string): Capability | undefined {
 
 /**
  * Whether a nav item shows on this host. Items without a capability always show.
+ * A capability ending in ".*" matches any capability with that prefix.
  * `showWhenUnavailable` items also show when stopped/missing, but never when the
  * capability isn't reported at all or is unsupported here.
  */
@@ -101,6 +102,19 @@ export function isAllowed(
   showWhenUnavailable = false
 ): boolean {
   if (!capability) return true
+  if (capability.endsWith(".*")) {
+    // Any capability in the group, e.g. "packages.*" for the Packages page. Missing
+    // ones don't count: every OS lists the managers it could have.
+    const prefix = capability.slice(0, -1)
+    return (manifest?.capabilities ?? []).some(
+      (c) =>
+        c.id.startsWith(prefix) &&
+        (c.available ||
+          (showWhenUnavailable &&
+            c.status !== "unsupported" &&
+            c.status !== "missing"))
+    )
+  }
   const cap = manifest?.capabilities.find((c) => c.id === capability)
   if (!cap) return false
   if (cap.available) return true

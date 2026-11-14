@@ -1,0 +1,4 @@
+Name    Version         Rev    Tracking         Publisher   Notes
+core22  20240823        1612   latest/stable    canonical** base
+lxd     5.21.2-2f4ba6b  30131  5.21/stable/...  canonical** -
+snapd   2.63            21759  latest/stable    canonical** snapd

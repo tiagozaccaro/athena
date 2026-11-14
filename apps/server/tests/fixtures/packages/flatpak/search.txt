@@ -1,0 +1,8 @@
+uno.platform.uno-calculator	Uno Calculator	1.2.9	Linux port of the Microsoft Windows calculator app	flathub
+org.kde.kalk	Calculator	26.08.3	A feature rich calculator	flathub
+org.gnome.Calculator	Calculator	51.1	Perform arithmetic, scientific or financial calculations	flathub
+io.liri.Calculator	Liri Calculator	1.3.0	Perform arithmetic or scientific calculations	flathub
+io.github.yesser_studios.Yesser-Calculator	Yesser Calculator	1.3.0	Extend your calculator	flathub
+io.github.mike632t.x11-calc	RPN Calculator	0.26.0251	HP Calculator Simulator	flathub
+io.github.jordanl2.ModularCalculator	Modular Calculator	1.5.8	A powerful, scriptable, modular calculator aimed at scientific, engineering or computing work.	flathub
+io.github.johannesboehler2.BmiCalculator	BMI Calculator	1.6.2	Calculate your BMI	flathub

@@ -1,0 +1,6 @@
+Name                          Id                            Version        Available  Source
+---------------------------------------------------------------------------------------------
+Git                           Git.Git                       2.45.1         2.46.0     winget
+jq                            jqlang.jq                     1.7.1                     winget
+Microsoft Visual C++ 2015-2…  Microsoft.VCRedist.2015+.x64  14.40.33810.0             winget
+Some Local App                ARP\Machine\X64\SomeLocalApp  1.0

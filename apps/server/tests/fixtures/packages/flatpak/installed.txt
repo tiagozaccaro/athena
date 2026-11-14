@@ -1,0 +1,2 @@
+org.gnome.Calculator	Calculator	51.1	flathub
+org.kde.kalk	Calculator	26.08.2	flathub
