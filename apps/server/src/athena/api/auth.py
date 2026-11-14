@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field, field_validator
 from sqlmodel import Session
 
+from athena import audit
 from athena.auth import service
 from athena.auth.deps import COOKIE_NAME, Authed, DbSession
 from athena.db.models import User
@@ -125,3 +126,32 @@ def logout(
     if token:
         service.delete_session(db, token)
     response.delete_cookie(COOKIE_NAME, path="/")
+
+
+class PasswordChange(BaseModel):
+    current_password: str = Field(max_length=256)
+    new_password: str = Field(min_length=service.MIN_PW_LENGTH, max_length=256)
+
+
+@router.post("/password", operation_id="changePassword", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(body: PasswordChange, request: Request, user: Authed, db: DbSession) -> None:
+    """Change your password. Your other sessions are signed out; this one stays."""
+    throttle: service.LoginThrottle = request.app.state.login_throttle
+    client = request.client.host if request.client else "unknown"
+    if wait := throttle.retry_after(client):
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            f"Too many wrong passwords. Try again in {wait} seconds.",
+            headers={"Retry-After": str(wait)},
+        )
+    if not service.verify_password(user.user.password_hash, body.current_password):
+        throttle.fail(client)
+        # 400, not 401: the session is fine, and a 401 would make the UI sign out.
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Current password is wrong")
+    if body.new_password == body.current_password:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "The new password must differ from the current one"
+        )
+    throttle.reset(client)
+    service.set_password(db, user.user, body.new_password, keep_session=user.session.id)
+    audit.record(db, user.user.username, "auth.password", user.user.username)

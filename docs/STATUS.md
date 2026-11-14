@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M4 (dashboard + appearance). M3 is done (#17, #18). Step 1, live host stats, is merged (#20). Step 2, the dashboard app grid, is in PR `feat/m4-dashboard-apps`; the Settings page is next.
+**Current milestone:** M4 (dashboard + appearance). M3 is done (#17, #18). Step 1, live host stats, is merged (#20). Step 2, the dashboard app grid, is merged (#21). Step 3, the Settings page (appearance + account), is in PR `feat/m4-settings`; with it M4 is complete. M5 (packages + terminal) is next.
 
 ## Done
 
@@ -97,20 +97,29 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - Web: `HostStatsProvider` (snapshot, then SSE; reloads the snapshot after a reconnect), CPU/memory/network/disk-activity cards with 5 min / 1 h sparklines and a Live/Reconnecting badge, Storage card (shadcn `progress`), Temperatures card (only when reported), and uptime on the Server card. `recharts` added to `apps/web`.
   - 179 server tests. Verified in the browser on macOS: live updates, the range toggle, stopping the server (badge shows Reconnecting, server exits in 5 s) and restarting it (reconnects by itself), phone width and dark mode, and no console errors other than the deliberate outages. Temperatures only verified with fakes (macOS has no sensors API).
 
-- **M4 step 2, dashboard apps** (branch `feat/m4-dashboard-apps`):
+- **M4 step 2, dashboard apps** (#21):
   - `AppOut` now carries `title` and `icon` from the app's catalog entry (`None` for compose apps or if the catalog was removed).
   - Web: an Apps card on the dashboard (tiles with icon, status, Open, start/stop; Store and All apps links; the runtime Start/setup panel when containers aren't ready). `useAppsList()` is shared with the Apps page, which now shows icons too. After any tile action the list reloads at once, so a failed action doesn't leave a stale tile.
   - 179 server tests. Verified in the browser on Colima with a store Forgejo and a compose nginx app (both `athena-test-*`): icons and fallback initials, Open links (:3012, :18090), stop and start from the tiles (checked with `docker ps` and curl), stopping an app removed behind the UI's back (error toast, tile gone in ~200 ms), the stopped-runtime panel (fake empty `HOME`), phone width and dark mode. Test apps removed afterwards.
 
+- **M4 step 3, Settings** (branch `feat/m4-settings`):
+  - `scripts/gen-theme-css.mjs` (`pnpm gen:theme`) generates `packages/ui/src/styles/themes.css` and `themes.json` from the shadcn registry (7 bases, 24 themes, 23 chart palettes, 5 radii, 26 fonts) and checks 18 combinations against it. `gray` is skipped (the registry refuses it).
+  - All preset fonts via `next/font` (`apps/web/lib/fonts.ts`); `font-heading` and `font-mono` now read runtime variables in `globals.css`.
+  - `users.appearance` (migration 0006), `GET/PUT /api/settings/appearance`, `POST /api/auth/password` (keeps this session, signs out others, throttled, audited).
+  - Web: pre-paint inline script, `AppearanceProvider` (account settings win, instant apply, 400 ms debounced save, follows the `d` hotkey), Settings → Appearance (mode, base, theme, charts, fonts with previews, radius, read-only style, preset code copy/apply) and Settings → Account (change password); Settings in the sidebar.
+  - 189 server tests (10 new). Verified in the browser: every setting applies live and is saved; the UI's code for stone/blue/emerald/Geist/Lora/large is `b4DwxjALIm`, exactly what shadcn's encoder gives; settings come back from the account after clearing local storage; attributes are on `<html>` before `<body>` parses; preset import (invalid code → inline error; unsupported parts → warning toast); rose's dark sidebar; wrong current password (inline error, still signed in); password change (other session 401, old password rejected, audit row); phone width; dark mode.
+  - Found and fixed during verification: the provider's initial load re-ran whenever next-themes changed `setTheme`'s identity, which re-applied the old saved settings and cancelled the pending save, so quick changes after an import were lost. It now loads once and builds each change on the latest state.
+
 ## In progress
 
-- M4 step 2 (dashboard apps) review and merge.
+- M4 step 3 (Settings) review and merge.
 - Not yet verified: a real `athena service install` on any OS (only dry runs), and real capability detection on Linux and Windows hosts (only CI and fakes).
 
 ## Next
 
-M4, dashboard + appearance (see `docs/mvp-design.md` §4.6, §5.4):
-1. A Settings page: Appearance (light/dark/system, base color, theme, chart color, body and heading font, radius, switched live via data attributes plus generated CSS; preset code import/export), plus Account (change password).
+M5, packages + terminal (see `docs/mvp-design.md` §3, §4.2, §10): every detected package manager with search/install/upgrade as jobs, the host terminal and container exec on all OSes.
+
+Later: a CI check that `themes.css` matches the registry (needs network; run `pnpm gen:theme` after shadcn upgrades for now), and switching shadcn styles at runtime (§5.4).
 
 Later: auto-refreshing catalogs on a schedule, stripping missing host devices from imported apps, and Docker Hub login for pulls (rate limits).
 

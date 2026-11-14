@@ -3,6 +3,8 @@
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
 
+import { applyAppearance, storedAppearance } from "@/lib/appearance"
+
 function ThemeProvider({
   children,
   ...props
@@ -16,9 +18,23 @@ function ThemeProvider({
       {...props}
     >
       <ThemeHotkey />
+      <RestoreAppearance />
       {children}
     </NextThemesProvider>
   )
+}
+
+/**
+ * The inline script in app/layout.tsx sets the data-* attributes before first paint.
+ * React's dev-mode remount resets <html> to its JSX attributes, so re-apply them once
+ * here (a no-op in production, where nothing cleared them).
+ */
+function RestoreAppearance() {
+  React.useLayoutEffect(() => {
+    const stored = storedAppearance()
+    if (stored) applyAppearance(stored)
+  }, [])
+  return null
 }
 
 function isTypingTarget(target: EventTarget | null) {

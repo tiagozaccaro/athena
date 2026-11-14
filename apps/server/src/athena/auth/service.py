@@ -63,13 +63,16 @@ def create_user(db: Session, username: str, password: str) -> User:
     return user
 
 
-def set_password(db: Session, user: User, password: str) -> None:
-    """Replace the password and sign the user out everywhere."""
+def set_password(db: Session, user: User, password: str, keep_session: int | None = None) -> None:
+    """Replace the password and sign the user out everywhere (except `keep_session`)."""
     if len(password) < MIN_PW_LENGTH:
         raise ValueError(f"Password must be at least {MIN_PW_LENGTH} characters")
     user.password_hash = hash_password(password)
     db.add(user)
-    db.exec(delete(AuthSession).where(AuthSession.user_id == user.id))
+    stale = delete(AuthSession).where(AuthSession.user_id == user.id)
+    if keep_session is not None:
+        stale = stale.where(AuthSession.id != keep_session)
+    db.exec(stale)
     db.commit()
 
 

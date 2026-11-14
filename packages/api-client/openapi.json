@@ -206,6 +206,41 @@
         }
       }
     },
+    "/api/auth/password": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Change Password",
+        "description": "Change your password. Your other sessions are signed out; this one stays.",
+        "operationId": "changePassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/capabilities": {
       "get": {
         "tags": [
@@ -1479,6 +1514,66 @@
           }
         }
       }
+    },
+    "/api/settings/appearance": {
+      "get": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Get Appearance",
+        "operationId": "getAppearance",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Appearance"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Set Appearance",
+        "operationId": "setAppearance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Appearance"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Appearance"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1713,6 +1808,58 @@
           "updated_at"
         ],
         "title": "AppOut"
+      },
+      "Appearance": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "light",
+              "dark",
+              "system"
+            ],
+            "title": "Mode",
+            "default": "system"
+          },
+          "base_color": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]{1,32}$",
+            "title": "Base Color",
+            "default": "neutral"
+          },
+          "theme": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]{1,32}$",
+            "title": "Theme",
+            "default": "neutral"
+          },
+          "chart_color": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]{1,32}$",
+            "title": "Chart Color",
+            "default": "neutral"
+          },
+          "font": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]{1,32}$",
+            "title": "Font",
+            "default": "inter"
+          },
+          "font_heading": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]{1,32}$",
+            "title": "Font Heading",
+            "default": "inherit"
+          },
+          "radius": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]{1,32}$",
+            "title": "Radius",
+            "default": "default"
+          }
+        },
+        "type": "object",
+        "title": "Appearance"
       },
       "AuthStatus": {
         "properties": {
@@ -2468,6 +2615,27 @@
           "url"
         ],
         "title": "NewCatalog"
+      },
+      "PasswordChange": {
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "maxLength": 256,
+            "title": "Current Password"
+          },
+          "new_password": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 8,
+            "title": "New Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "PasswordChange"
       },
       "SetupRequest": {
         "properties": {
