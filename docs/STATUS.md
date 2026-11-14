@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M6 (files, shares, cloud) is done: the file manager (#25), share links and WebDAV (#31), and rclone cloud storage (#35). Next is M7, the AI assistant.
+**Current milestone:** M7, the AI assistant (§4.5). Part A (providers and chat) is in review on `feat/m7-assistant-providers`; parts B (actions with approval) and C (polish) follow.
 
 ## Done
 
@@ -155,6 +155,8 @@ _Shared handoff log for every coding agent. Update it at the end of each session
 
 ## In progress
 
+- **M7 part A** (branch `feat/m7-assistant-providers`): AI providers (12 kinds, keys encrypted with `athena/crypto.py`), live model lists with tool support, the `ai.ollama` capability, Settings → AI (providers, default and title model, spend limit), and `/assistant` with streaming chat over our own SSE and read-only tools (capabilities, stats, apps, logs, file locations, files). The UI uses shadcn's chat components, not the Vercel AI SDK. Verified: server tests (30 new), a real chat against local Ollama `qwen2.5` (tool call, streaming, Stop keeps the partial reply), and the browser check (one-click Ollama, a real Anthropic 401 shown as "refused the API key", "Unchanged" key, phone width, dark mode). Not tested against a real cloud model (no keys here), Bedrock or Azure. The title model setting is saved but titles are still the first message (generated titles are part C). The `shell_enabled` setting exists but has no UI or effect until part C.
+
 - Not yet verified for real: the Windows terminal (ConPTY plus PowerShell) beyond CI's pty tests, and the container shell through Docker in WSL.
 - Not yet verified for real: the other Linux system managers' install/uninstall (dnf, pacman, zypper, apk; apt is done, see below) and every Windows manager (hand-written fixtures; CI runs choco/winget reads on Windows).
 - E2E install testing (branch `ci/e2e-install`): the `E2E` workflow runs the real installers with a wheel built from the commit, on Ubuntu, macOS and Windows runners, then `scripts/e2e/smoke.py` (Playwright) and an uninstall check. New: `scripts/build-wheel.sh` (now also used by `release.yml`), and `--wheel` / `-Wheel` in the installers. Verified locally on 2026-11-14:
@@ -164,7 +166,7 @@ _Shared handoff log for every coding agent. Update it at the end of each session
 
 ## Next
 
-M7, the AI assistant (§4.5): agent with service tools, approval flow, provider settings, streaming chat UI. Settle the open question below (cloud provider or Ollama first) before starting.
+M7 part B: tools that change things (install apps, deploy, packages, file operations) as deferred tools with Approve/Deny cards and audit. Then part C: the opt-in shell, spend shown in the UI, the assistant side sheet on every page, generated titles, and the setup-wizard step.
 
 Later (cloud): mounts (FUSE; `rclone nfsmount` on macOS), scheduled or saved syncs, encrypting the rclone config with the OS keyring (§7), uploads to a remote without staging the whole file on the server first, Range requests for seeking in remote videos, and stopping an orphaned `rclone rcd` if Athena is killed (`SIGKILL` leaves it running).
 
@@ -182,7 +184,7 @@ Later: per-container stats, verifying temperatures on a real Linux host, importi
 
 ## Open questions
 
-- Should the first-run wizard suggest a cloud AI provider or local Ollama first? (`docs/mvp-design.md` §12)
+- None. (The first AI provider question was settled in M7: no default; Ollama is offered when detected.)
 
 ## Blockers
 

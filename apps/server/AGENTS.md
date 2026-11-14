@@ -31,9 +31,11 @@ Python 3.13 (uv), FastAPI, SQLModel and Alembic on SQLite. Package `athena`, CLI
 | `packages/` | `base.py`, then one class per manager in `linux.py`, `apps.py` (brew, flatpak, snap), `windows.py`; `MANAGERS` in `__init__.py` |
 | `files/` | `paths.py` (containment), `locations.py`, `ops.py`, `shares.py`, `webdav.py` |
 | `cloud/` | `rclone.py` (the `rclone rcd` sidecar and its client), `remotes.py` (backends, remotes, config questions, remote paths), `transfers.py` (copy, move and sync jobs with progress and cancel) |
+| `assistant/` | The AI assistant: `kinds.py` (provider forms), `providers.py` (pydantic-ai models per provider, live model lists), `settings.py` (Settings → AI), `tools.py` (read-only tools gated by capabilities), `chat.py` (turns streamed as SSE, history as pydantic-ai `Conversation` JSON) |
 | `terminal/` | `pty.py` (one async pty for POSIX and ConPTY), `shells.py` (host or container shell) |
 | `service/` | `athena service install` per OS (`platforms.py`, `plan.py`) |
 | `jobs.py`, `audit.py`, `monitor.py`, `system_settings.py` | Jobs over SSE, the audit log, host stats, host-wide settings |
+| `crypto.py` | `SecretBox`: Fernet encryption of stored secrets with `<data-dir>/secret.key` |
 
 ## Conventions
 
@@ -47,6 +49,7 @@ Python 3.13 (uv), FastAPI, SQLModel and Alembic on SQLite. Package `athena`, CLI
 - **Packages:** parsers are pure functions over recorded output. A new parser needs a fixture in `tests/fixtures/packages/` and a line in that folder's README saying how it was captured.
 - **Shares and WebDAV:** `api/shares.py` has the admin `router` plus the public `public_router`. `files/webdav.py` holds the wsgidav provider, sign-in and the `/dav` middleware. Location folders can never be deleted, moved or replaced over WebDAV (wsgidav would empty them).
 - **Cloud (rclone):** talk to rclone only through `app.state.rclone` (`Rclone.call`), never by running the `rclone` CLI. Check remote paths with `remotes.check_path` and build fs strings with `remotes.fs_of`. rclone itself lets `name:..` leave an alias's folder. Jobs that run rclone transfers use `transfers.run(job, rclone, steps)` and start with `cancellable=True`.
+- **Assistant:** tools are thin wrappers over Athena's own services, registered in `toolset_for(manifest)` only when their capability is ready. Provider HTTP goes through `httpx2` with `app.state.ai_transport` (tests set an `httpx2.MockTransport`). Never return a stored secret from the API; empty secrets on edit keep the stored value.
 - **Host access** always goes through a capability; never branch on `sys.platform` in a router. See the `athena-platform-feature` skill.
 
 ## Tests

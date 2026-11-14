@@ -102,6 +102,21 @@ class Probe:
         except ValueError:
             return 0
 
+    def getenv(self, name: str) -> str | None:
+        return os.environ.get(name)
+
+    def http_json(self, url: str, timeout: float = 2.0) -> object | None:
+        """GET `url` and parse JSON, or None on any failure. For local services (Ollama)."""
+        import urllib.request
+
+        if not url.startswith(("http://", "https://")):
+            return None
+        try:
+            with urllib.request.urlopen(url, timeout=timeout) as res:
+                return json.loads(res.read(1024 * 1024))
+        except (OSError, ValueError):
+            return None
+
     def docker_version(self, endpoint: str, timeout: float = 2.0) -> str | None:
         """Engine version from `GET /version` on a Docker-compatible API, or None.
 

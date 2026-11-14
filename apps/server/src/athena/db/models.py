@@ -126,3 +126,38 @@ class Share(SQLModel, table=True):
     created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
     downloads: int = 0
     uploads: int = 0
+
+
+class AiProvider(SQLModel, table=True):
+    """An AI provider the assistant can use (docs/mvp-design.md §4.5). Server-wide."""
+
+    __tablename__ = "ai_providers"
+
+    id: str = Field(primary_key=True, max_length=32)
+    kind: str = Field(max_length=32)
+    """One of athena.assistant.kinds.KINDS, e.g. "anthropic", "ollama"."""
+    name: str = Field(max_length=64)
+    config: str = "{}"
+    """Non-secret settings as JSON, e.g. {"base_url": "…"}."""
+    secrets: str | None = None
+    """Secret settings (API keys) as JSON, encrypted with athena.crypto.SecretBox."""
+    created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
+
+
+class AiConversation(SQLModel, table=True):
+    """An assistant chat. `history` is pydantic-ai's Conversation as JSON."""
+
+    __tablename__ = "ai_conversations"
+
+    id: str = Field(primary_key=True, max_length=32)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    title: str = Field(default="New chat", max_length=200)
+    provider_id: str | None = Field(default=None, max_length=32)
+    """The model picked last in this chat. Not a foreign key: removing a provider keeps
+    its chats, which then ask for another model."""
+    model: str | None = Field(default=None, max_length=255)
+    history: str | None = None
+    created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
+    updated_at: datetime = Field(
+        default_factory=utcnow, sa_type=DateTime(timezone=True), index=True
+    )

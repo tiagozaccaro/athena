@@ -8,6 +8,7 @@ import {
   LayoutGridIcon,
   PackageIcon,
   Settings2Icon,
+  SparklesIcon,
   SquareTerminalIcon,
   StoreIcon,
 } from "lucide-react"
@@ -83,6 +84,7 @@ export const navMain: NavItem[] = [
     icon: SquareTerminalIcon,
     capability: "terminal.host",
   },
+  { title: "Assistant", url: "/assistant/", icon: SparklesIcon },
 ]
 
 /** True when `pathname` is the item's page or below it ("/" only matches itself). */

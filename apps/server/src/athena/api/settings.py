@@ -9,7 +9,10 @@ from pydantic import BaseModel, Field, ValidationError
 
 from athena import audit, system_settings
 from athena.api.terminal import close_all as close_terminals
+from athena.assistant import settings as ai_settings
+from athena.assistant.settings import AiSettings
 from athena.auth.deps import Authed, DbSession
+from athena.db.models import AiProvider
 from athena.system_settings import SystemSettings
 
 log = logging.getLogger(__name__)
@@ -73,4 +76,25 @@ def set_system(
         audit.record(db, user.user.username, "settings.terminal", state)
         if not body.terminal_enabled:
             close_terminals(request.app)
+    return body
+
+
+@router.get("/ai", operation_id="getAiSettings")
+def get_ai(db: DbSession) -> AiSettings:
+    return ai_settings.load(db)
+
+
+@router.put("/ai", operation_id="setAiSettings")
+def set_ai(body: AiSettings, user: Authed, db: DbSession) -> AiSettings:
+    if not user.user.is_admin:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Only admins can change AI settings")
+    for ref in (body.default_model, body.title_model):
+        if ref is not None and db.get(AiProvider, ref.provider_id) is None:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "No such provider")
+    before = ai_settings.load(db)
+    ai_settings.save(db, body)
+    if before.shell_enabled != body.shell_enabled:
+        state = "on" if body.shell_enabled else "off"
+        audit.record(db, user.user.username, "settings.assistant_shell", state)
+        db.commit()
     return body

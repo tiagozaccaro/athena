@@ -153,6 +153,18 @@ CodeQL runs on every PR and its alerts can block a merge.
 - Links rendered from untrusted text (terminal output) must allow only `http(s)` and open in a new tab. A `javascript:` link was clickable once.
 - Next 16 proxying of the terminal WebSocket in `next dev` is unchecked. Use the release build for terminal work.
 
+- `InputGroup` has `has-disabled:opacity-50`: one disabled button inside (a Send button with no text) fades the whole prompt box. Use `aria-disabled` plus a guard in the submit handler.
+- `shadcn add code-block` also drops shiki helpers (`lib/highlighter.tsx`, `hooks/use-highlighted-code.ts`) into `apps/web` and adds `shiki`. `CodeBlock` doesn't need them; they were deleted. shadcn's Typeset is a CSS file from its online builder, not a registry item. <!-- docs-check: ignore -->
+- The chat UI reads the assistant's SSE with `fetch` and a stream reader (POST with the CSRF header), not `EventSource`, which can only GET. `TextDecoderStream` fails typecheck with this TS lib setup; use `TextDecoder` with `stream: true`. <!-- docs-check: ignore -->
+
+### Assistant (pydantic-ai)
+
+- pydantic-ai here is 2.x (`pydantic-ai-slim`): store chats with `ConversationTypeAdapter` (a `Conversation` carries usage for `UsageLimits` across turns), stop runs with a `CancellationToken` (`RunCancelled.all_messages()` keeps the partial reply), and pass the model per run. Read the installed source under `.venv/…/pydantic_ai/` before trusting older docs. <!-- docs-check: ignore -->
+- `FunctionModel` needs `stream_function=` for `run_stream_events()`; a plain function errors with "must receive a stream_function". Tool calls are yielded as `{0: DeltaToolCall(...)}`.
+- A route that starts an `asyncio` task must be `async def`: sync routes run in a thread with no running loop.
+- OpenRouter model ids must include the upstream (`openai/gpt-x`); `build_model` raises `UserError` otherwise, which the API returns as a 409.
+- Newer Ollama returns `capabilities` in `/api/tags`; older ones need `/api/show` per model. Both are handled. `ATHENA_OLLAMA_TESTS=1` runs a real Ollama test.
+
 ### Browser verification (`athena-ui-verify`)
 
 - Base UI checkboxes and switches render a hidden `<input>`. A click on it "works" but sends the wrong value, and only `browser_network_requests` showed that. Click the visible control and re-snapshot.

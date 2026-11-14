@@ -262,15 +262,30 @@ services:
 
 ### 4.5 AI assistant
 
-- `pydantic-ai` + `pydantic-ai-harness`. The model provider is configured in settings: Anthropic, OpenAI, or local **Ollama** for fully offline use.
-- **Tools are Athena's service layer, not raw shell by default.** Examples: `list_apps`, `app_logs`, `install_catalog_app`, `deploy_compose`, `search_packages`, `install_package`, `list_files`, `system_stats`, `capabilities`. They're registered from the capability manifest.
+- `pydantic-ai` (slim, with the OpenAI, Anthropic, Google, Groq, Mistral and Bedrock clients) plus, from part B, `pydantic-ai-harness`. The model is picked **per run**, so one agent serves every provider and a conversation can switch model halfway; the stored history doesn't depend on the provider.
+- **Providers**, OpenCode/Hermes style: set up once, then pick any model from any of them. Built-in kinds, each a form with an API key and, where it applies, a base URL:
+  - Cloud: Anthropic, OpenAI, Google Gemini, OpenRouter, Groq, Mistral, DeepSeek, xAI, Azure OpenAI, Amazon Bedrock.
+  - Local: Ollama, plus "OpenAI-compatible" for LM Studio, vLLM, llama.cpp or any other endpoint.
+  - A kind can be added more than once (two Ollama hosts, a work key and a home key). Providers belong to the whole server and only the admin manages them; per-user keys can come later. API keys only: subscription sign-ins (Claude Pro/Max, GitHub Copilot) are left for later (pydantic-ai has a `github-copilot` provider).
+  - xAI, DeepSeek, OpenRouter and Ollama go through the OpenAI client (xAI's own SDK pulls in gRPC). Azure takes an endpoint and API version; Bedrock takes an access key id, secret key and region.
+- **Keys at rest:** encrypted with Fernet (`cryptography`) using a key file `<data-dir>/secret.key` (0600, created on first use). That protects keys in database copies and backups, not against someone who can read the data folder. The API never returns a key; editing works like cloud remote passwords (an empty field keeps the stored value, shown as "Unchanged").
+- **Model list:** live from each provider (Anthropic's models API, OpenAI-style `/v1/models`, Gemini's model list, Ollama's `/api/tags` + `/api/show`, Bedrock's foundation models), cached for 10 minutes, and a model id can always be typed by hand (Azure deployments are only typed). Not models.dev: it needs internet and is an outside service.
+- **Tool support:** the assistant only works with models that can call tools. Where the provider reports it (Ollama's `capabilities`, OpenRouter's `supported_parameters`, Mistral's `function_calling`), models without it are marked "can't use tools" and can't be picked; elsewhere it's unknown and allowed.
+- **Ollama detection:** an `ai.ollama` capability on every OS, found like the container engine: `GET /api/version` on `$OLLAMA_HOST` or `http://127.0.0.1:11434`. `stopped` when the `ollama` binary exists but doesn't answer. When it's ready, an empty Settings → AI offers "Use Ollama on this server" (one click adds it); otherwise "Add a cloud provider". Neither is suggested by default (closes the old §12 question).
+- **Settings → AI** (admin only): providers (add, edit, test connection, remove), the default model, an optional small model for chat titles, the assistant-shell switch (off by default, part C) and a spend limit per conversation in USD (`UsageLimits.cost_limit`, enforced for models with known prices). Stored in the `system_settings` row.
+- **Tools are Athena's service layer, not raw shell by default.** Part A has read-only tools only: `get_capabilities`, `get_system_stats`, `list_apps`, `app_logs`, `list_file_locations`, `list_files`. They're registered from the capability manifest (no container tools without a ready `containers` capability).
 - **Safety:**
   - Read-only tools run freely.
-  - Mutating tools are *deferred tools* that need human approval: the UI shows an approve/deny card with the exact action.
+  - Mutating tools (part B) are *deferred tools* that need human approval: the UI shows an Approve/Deny card with the exact action, and the action is audited.
   - The harness's Shell capability is opt-in in settings. It uses an allowlist and still needs approval for every call.
-  - The harness's spend-limit and loop-detection capabilities are enabled.
-- **Transport:** Pydantic AI's Vercel AI SDK adapter streams to the frontend, and the chat UI uses AI SDK `useChat`.
-- **Persistence:** conversations are stored in SQLite.
+  - Spend limit and loop detection are on; prompt caching (`Caching()`) is on for providers that support it.
+- **Transport:** our own Server-Sent Events, not the Vercel AI SDK protocol. `POST /api/assistant/conversations/{id}/messages` streams typed events (`text`, `reasoning`, `tool-call`, `tool-result`, `usage`, `title`, `error`, `done`) built from pydantic-ai's `run_stream_events()`. The browser reads them with a small hook (`fetch` + a stream reader), so there's no `ai` / `@ai-sdk/react` dependency.
+- **Chat UI:** shadcn's own chat components (`message`, `bubble`, `message-scroller`, `marker`, `input-group`, …) and the AI Elements patterns from ui.shadcn.com/docs/ai-elements (Chat, Prompt Input, Model Selector, Tool, Confirmation), which are copied in and need no package. `/assistant` page in part A; a side sheet from any page in part C. The model picker in the prompt box remembers its choice per conversation.
+- **Persistence:** `ai_conversations` (owner, title, model, created/updated, the history as pydantic-ai's `Conversation` JSON, which also carries running usage and pending deferred calls) and `ai_providers` (kind, name, base URL, options, encrypted secret).
+- **Parts:**
+  - A, providers and chat: tables, Settings → AI, model listing, `ai.ollama` detection, streaming chat with the read-only tools.
+  - B, actions: tools that change things (install apps, deploy, packages, file operations) with approval cards and audit.
+  - C, polish: the opt-in shell, spend shown in the UI, the side sheet everywhere, generated titles, the setup-wizard step.
 
 ### 4.6 Dashboard
 
@@ -411,7 +426,8 @@ apps/server/
       storage/              # rclone.py (built as athena/cloud/: rclone.py, remotes.py, transfers.py)
     services/               # apps.py, catalog.py, compose_import.py, files.py,
                             # shares.py, monitor.py, jobs.py
-    assistant/              # agent.py, tools.py, approval.py
+    assistant/              # kinds.py, providers.py, settings.py, tools.py, chat.py
+    crypto.py               # Fernet SecretBox for stored keys
     api/                    # routers, one per service
   tests/                    # pytest; provider tests use recorded CLI fixtures
 catalog/                    # built-in app catalog
@@ -432,7 +448,9 @@ WS   /api/terminal/ws?target=host|container:{id}
 GET  /api/files?path=  POST /api/files/upload  …           (file ops)
 GET/POST/DELETE /api/shares          /dav/…  (WebDAV)       /s/{token}
 GET/POST/DELETE /api/cloud/remotes   POST /api/cloud/jobs
-POST /api/assistant/chat (stream)    POST /api/assistant/approve/{call_id}
+GET/POST /api/assistant/providers   PUT/DELETE /api/assistant/providers/{id}   POST …/{id}/test   GET …/{id}/models
+GET/POST /api/assistant/conversations   GET/PATCH/DELETE …/{id}   POST …/{id}/messages (SSE)
+GET /api/assistant/models (all providers)   GET/PUT /api/settings/ai
 GET  /api/jobs/{id}  GET /api/jobs/{id}/events (SSE)
 GET/PUT /api/settings/{appearance|ai|system}   POST /api/auth/password
 ```
@@ -445,7 +463,7 @@ GET/PUT /api/settings/{appearance|ai|system}   POST /api/auth/password
 - Session cookies are `HttpOnly` and `SameSite=Strict`, with CSRF tokens on mutating requests and login rate limiting.
 - The terminal, package installs and the assistant's shell are the most powerful features. They're admin-only, each can be toggled off, and every use is written to an audit log table.
 - The rclone rcd and container sockets are never exposed beyond localhost.
-- Secrets (AI keys, rclone config) are encrypted at rest with a key from the OS keyring (`keyring`) when one is available. Not done yet for rclone (M6): its config is a 0600 file in a 0700 folder, with passwords obscured by rclone (reversible, not encryption). See §11.
+- Secrets: AI provider keys are encrypted at rest (Fernet) with a key file `<data-dir>/secret.key` (0600), not the OS keyring, which headless Linux hosts usually lack (M7, see §4.5). The rclone config is a 0600 file in a 0700 folder, with passwords obscured by rclone (reversible, not encryption). See §11.
 
 ---
 
@@ -472,7 +490,11 @@ GET/PUT /api/settings/{appearance|ai|system}   POST /api/auth/password
 | Component | License |
 |---|---|
 | Next.js, React, shadcn/ui, Radix/Base UI, Tailwind, Recharts, TanStack Table | MIT |
-| AI Elements, Vercel AI SDK | Apache-2.0 |
+| shadcn chat components and AI Elements patterns (copied in) | MIT |
+| cryptography (Fernet for AI keys) | Apache-2.0 / BSD-3-Clause |
+| react-markdown, remark-gfm (assistant replies), @shadcn/react (Message Scroller) | MIT |
+| Provider SDKs pulled in by pydantic-ai-slim: openai, anthropic, google-genai, groq, mistralai | Apache-2.0 / MIT |
+| boto3 (Bedrock, via pydantic-ai-slim) | Apache-2.0 |
 | xterm.js, CodeMirror 6, next-themes, openapi-typescript | MIT |
 | shadcn CLI package (`shadcn/preset` used at runtime) | MIT |
 | Preset fonts via `next/font/google` (Inter, Geist, Lora, Roboto and the other 22) | SIL OFL 1.1 / Apache-2.0 |
@@ -549,8 +571,11 @@ M2–M4 can proceed in parallel once M1 lands, and so can M5 and M6. M7 depends 
 | WebDAV (M6) | wsgidav at `/dav/` through a2wsgi, off by default. Root = the file manager's locations; same path rules as the files API; location folders can't be deleted, moved or replaced. HTTP Basic with a generated WebDAV password, not the account password. Sandbox CSP on every response |
 | Cloud storage (M6) | rclone rcd as a sidecar started on first use, localhost only, random credentials, Athena's own config file. Remotes appear as sources in the existing file manager instead of a second browser. OAuth via `rclone authorize` and a pasted token, because the redirect to the server's 127.0.0.1 only works with a browser on the server itself. Sync always offers a preview of what it deletes first. Config encryption with the OS keyring is postponed: headless Linux hosts usually have no keyring, and rclone's own config password would have to live next to the config anyway |
 | Job progress and cancel (M6) | `JobOut` gained optional `progress` (fraction and text, also sent as SSE `progress` events) and `cancellable`; `POST /api/jobs/{id}/cancel` stops jobs started with `cancellable=True`. The job dialog shows a bar and a Cancel button when they're there |
+| AI providers (M7) | OpenCode/Hermes-style: any number of providers (10 cloud kinds, Ollama, OpenAI-compatible), the model picked per run and per conversation. Server-wide, admin-managed, API keys only. Keys encrypted with Fernet and a 0600 key file in the data dir (not the OS keyring). Model lists come live from each provider (cached), not models.dev; ids can be typed by hand |
+| AI chat transport (M7) | Own typed SSE events from `run_stream_events()`, read by a small hook. Not the Vercel AI SDK adapter / `useChat`: the UI uses shadcn's chat components and AI Elements patterns without the `ai` packages |
+| First AI provider (M7) | No default. An empty Settings → AI offers "Use Ollama on this server" when `ai.ollama` is ready, "Add a cloud provider" otherwise |
 | Database (M1) | SQLite at `<data-dir>/athena.db` (WAL, foreign keys on), SQLModel models, Alembic migrations run on every start from code. A test fails if models and migrations drift |
 
 ## 12. Open questions
 
-1. **Default AI provider:** the provider is configurable either way. Should the first-run wizard suggest a cloud provider (Anthropic/OpenAI key) or local Ollama first?
+None open. The default AI provider question was settled in M7 (§11, "First AI provider").
