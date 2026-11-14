@@ -1575,6 +1575,7 @@
         }
       }
     },
+<<<<<<< HEAD
     "/api/settings/system": {
       "get": {
         "tags": [
@@ -1635,6 +1636,8 @@
         }
       }
     },
+=======
+>>>>>>> origin/main
     "/api/packages": {
       "get": {
         "tags": [
