@@ -1,0 +1,5 @@
+   -    \                                                                                                                         Name                     Id                         Version  Match       Source
+---------------------------------------------------------------------------------
+jq                       jqlang.jq                  1.7.1                winget
+gojq                     itchyny.gojq               0.12.16  Tag: jq     winget
+JSON Query Language CLI  yamafaktory.jql            8.0.5    Tag: jq     winget

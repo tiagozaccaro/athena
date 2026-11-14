@@ -122,6 +122,24 @@ class PackageManager(Protocol):
 
 Use machine-readable output where it exists (`brew --json`, `winget --output json`…). Otherwise parse stable output formats, and pin those formats down in fixtures-based tests.
 
+**As built (M5 part A).** `athena/packages/` (`base.py`, `linux.py`, `apps.py`, `windows.py`; `MANAGERS` keyed by capability id). Reads go through an async runner (no shell, `LC_ALL=C.UTF-8`, 120 s timeout) into pure parsers; changes are argv lists run as jobs, one job per manager at a time. Package names must start with a letter or digit, so nothing reaches a CLI as an option.
+
+| Manager | Search | Installed | Upgradable | Notes |
+|---|---|---|---|---|
+| apt | `apt-cache search` (regex-escaped) | `dpkg-query -W -f` (tab format, `ii`/`hi` only) | `apt-get -s upgrade` `Inst` lines (`apt list` says its CLI isn't stable) | `DEBIAN_FRONTEND=noninteractive`, keeps existing conffiles; refresh = `apt-get update` |
+| dnf | `dnf repoquery --qf` with real tab/newline characters (dnf5 doesn't expand `\t`; dnf4 adds a blank line) | `rpm -qa --qf` | `repoquery --upgrades` | Works on dnf4 and dnf5; refresh = `makecache` |
+| zypper | `--xmlout search` (exit 104 = none) | `rpm -qa` | `--xmlout list-updates` | |
+| pacman | `pacman -Ss` (regex-escaped) | `pacman -Q` | `pacman -Qu` | Installs use `-Syu --needed` and there's no single-package upgrade: Arch doesn't support partial upgrades |
+| apk | `apk search -v` | `apk list --installed` (skips virtual `.deps`) | `apk list --upgradable` | |
+| brew | `brew search`, then `brew info --json=v2` for the top 30 (`--desc` takes ~10 s) | `brew info --json=v2 --installed` | `brew outdated --json=v2` | Casks install with `--cask`; refresh = `brew update` |
+| flatpak | `search --columns=…` (tabs) | `list --app --columns=…` | `remote-ls --updates` | Installs from the result's remote (default flathub) |
+| snap | `snap find` (column table) | `snap list` | `snap refresh --list` | |
+| winget | `winget search` (positional columns, so localized headers work) | `winget list` | `winget upgrade` | `--accept-*-agreements --disable-interactivity`; "no package found" isn't an error. Ids of locally installed apps contain spaces (`ARP\Machine\X64\Mozilla Firefox`); ids winget shortens with `…` can't be acted on, so the UI disables those rows |
+| scoop | `scoop search` (dash-row table) | `scoop export` (JSON) | `scoop status` | `.cmd` shim resolved with `shutil.which` |
+| choco | `--limit-output` (`name\|version`) | `choco list -r` | `choco outdated -r` | Machine-wide: needs an elevated Athena |
+
+Fixtures (`tests/fixtures/packages/`, README says how each was captured): brew, apt, apk, dnf (4 and 5), zypper, pacman and flatpak search are real recordings, made in throwaway containers from the distros' own registries; winget's list is a real recording from the Windows CI runner; snap, Scoop, Chocolatey and the other winget files are hand-written from documented formats. Read-only tests run the real tool where it exists (brew on macOS, apt on Ubuntu, choco and winget on Windows CI). The first CI run caught a wrong assumption (winget ids can contain spaces), which is how the real winget fixture was captured.
+
 ### Privilege model
 
 | OS | Athena runs as | Privileged ops |
@@ -355,8 +373,8 @@ GET  /api/apps                       POST /api/apps            (compose or catal
 POST /api/apps/{id}/{start|stop|restart|update}   DELETE /api/apps/{id}
 GET  /api/apps/{id}/logs (SSE)       POST /api/apps/import/docker-run
 GET  /api/catalogs   POST /api/catalogs   GET /api/catalogs/{id}/apps
-GET  /api/packages/{mgr}/search?q=   GET /api/packages/{mgr}/installed
-POST /api/packages/{mgr}/{install|uninstall|upgrade}
+GET  /api/packages                   GET /api/packages/{mgr}/{installed|upgradable}
+GET  /api/packages/{mgr}/search?q=   POST /api/packages/{mgr}/{install|uninstall|upgrade|refresh} (jobs)
 WS   /api/terminal/ws?target=host|container:{id}
 GET  /api/files?path=  POST /api/files/upload  …           (file ops)
 GET/POST/DELETE /api/shares          /dav/…  (WebDAV)       /s/{token}
@@ -462,6 +480,7 @@ M2–M4 can proceed in parallel once M1 lands, and so can M5 and M6. M7 depends 
 | Remote catalogs (M3) | Downloaded as an archive over HTTPS (no git): GitHub/Codeberg/GitLab repo URLs are turned into archive URLs; direct .tar.gz/.zip links work. Safe extraction (no traversal or links, 200 MB download, 50k files, 1 GB extracted). The folder holding `apps/` (Athena) or `Apps/` (CasaOS) is found up to 8 levels deep, normalized into `<data-dir>/catalogs/<id>/apps/*/compose.yaml`, and swapped in atomically; a failed refresh keeps the previous copy and records the error. Refresh runs as a job |
 | CasaOS import (M3) | `x-casaos` converted to `x-athena`: `/DATA/AppData/$AppID` becomes `${ATHENA_APP_DATA}`, `/DATA/<X>` becomes a path field, `port_map` becomes `WEB_PORT`, `$PUID/$PGID/$TZ` become default-token fields, and other variables become fields (secrets generated). Parsed with YAML 1.2 booleans like compose. The one-click source is the official CasaOS-AppStore release `main.zip` (182 apps, all pass `compose config`); the full repo is too large and the pruned `_appstore` mirror is unlicensed. Imported files keep upstream specifics (e.g. Raspberry Pi device mappings) |
 | Host stats (M4) | psutil sampled every 2 s into a 1 h ring buffer; JSON snapshot with history plus an SSE stream of `stats` events. No capability (psutil runs on all OSes); unavailable metrics are `null`. Disks are filtered and de-duplicated by (total, free) so APFS volumes show once |
+| Package managers (M5) | One class per manager over a shared async runner and pure parsers pinned by fixtures (real recordings where a container could produce them). Machine-readable output where it exists (brew JSON, zypper XML, scoop export, choco `-r`), otherwise stable formats (`dpkg-query`, `rpm --qf`, `apt-get -s`). One job per manager at a time; installs, uninstalls, upgrades and refreshes are audited as `package.<action>` with `<manager>:<name>`. The Packages nav item shows when any `packages.*` capability is present (`capability: "packages.*"`) |
 | Runtime appearance (M4) | Theme CSS generated from the shadcn registry's `/init` endpoint by `scripts/gen-theme-css.mjs` into committed `themes.css`/`themes.json`, verified against the registry when generated; data attributes on `<html>`, applied before paint by an inline script; saved per user in `users.appearance`; preset codes via `shadcn/preset` in the browser. Style, icons and menus stay b0's |
 | Password change (M4) | `POST /api/auth/password` needs the current password (wrong one is 400, not 401, so the UI doesn't sign out; failures count toward the login throttle), signs out the user's other sessions and keeps this one; audited as `auth.password` |
 | Server shutdown (M4) | `athena serve` sets uvicorn `timeout_graceful_shutdown` to 5 s. SSE streams never end on their own, so without it an open dashboard kept the server (and a service stop or restart) waiting forever |

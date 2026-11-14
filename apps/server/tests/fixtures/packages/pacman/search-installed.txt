@@ -1,0 +1,2 @@
+core/bash 5.3.20-1 [installed]
+    The GNU Bourne Again shell

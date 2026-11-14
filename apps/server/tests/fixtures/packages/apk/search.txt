@@ -1,0 +1,11 @@
+acf-jquery-0.4.3-r2 - jquery libraries for ACF
+gojq-0.12.19-r4 - Pure Go implementation of jq
+gojq-zsh-completion-0.12.19-r4 - Zsh completions for gojq
+jq-1.8.2-r0 - A lightweight and flexible command-line JSON processor
+jq-dev-1.8.2-r0 - A lightweight and flexible command-line JSON processor (development files)
+jq-doc-1.8.2-r0 - A lightweight and flexible command-line JSON processor (documentation)
+jql-8.0.5-r0 - A JSON Query Language CLI tool
+perl-jq-lite-2.45-r0 - Lightweight jq-like JSON query engine in Perl
+perl-jq-lite-doc-2.45-r0 - Lightweight jq-like JSON query engine in Perl (documentation)
+py3-sphinxcontrib-jquery-4.1-r4 - Sphinx jquery extension
+py3-sphinxcontrib-jquery-pyc-4.1-r4 - Precompiled Python bytecode for py3-sphinxcontrib-jquery

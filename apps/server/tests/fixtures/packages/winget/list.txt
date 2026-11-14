@@ -1,0 +1,14 @@
+
+   - 
+                                                                                                                        
+Name                                     Id                                       Version         Available      Source
+-----------------------------------------------------------------------------------------------------------------------
+7-Zip 26.05 (x64)                        7zip.7zip                                26.05           26.06          winget
+Git                                      Git.Git                                  2.56.0.4                       winget
+ImageMagick 7.1.2-25 Q16-HDRI (64-bit) � ImageMagick.ImageMagick                  7.1.2.25        7.1.2.34       winget
+Miniconda3 py314_26.9.4-0 (Python 3.14.� Anaconda.Miniconda3                      py314_26.9.4-0  py314_26.9.4-1 winget
+Mozilla Firefox (x64 en-US)              ARP\Machine\X64\Mozilla Firefox          159.0.1                        
+Mozilla Maintenance Service              ARP\Machine\X64\MozillaMaintenanceServi� 159.0.1                        
+OpenSSL 3.6.5 (64-bit)                   ShiningLight.OpenSSL.Dev                 3.6.5           4.1.0          winget
+PostgreSQL 17                            PostgreSQL.PostgreSQL.17                 17.11-5         17.12-1        winget
+CMake                                    Kitware.CMake                            4.4.5                          winget

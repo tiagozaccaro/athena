@@ -1,0 +1,297 @@
+{
+  "formulae": [
+    {
+      "name": "ca-certificates",
+      "full_name": "ca-certificates",
+      "tap": "homebrew/core",
+      "oldnames": [],
+      "aliases": [],
+      "versioned_formulae": [],
+      "desc": "Mozilla CA certificate store",
+      "license": "MPL-2.0",
+      "homepage": "https://curl.se/docs/caextract.html",
+      "versions": {
+        "stable": "2026-11-05",
+        "head": null,
+        "bottle": true
+      },
+      "urls": {
+        "stable": {
+          "url": "https://curl.se/ca/cacert-2026-11-05.pem",
+          "tag": null,
+          "revision": null,
+          "using": null,
+          "checksum": "427c064216761a1e72a8b30f0d954d08cb6e4435a82091fb865afd20c8497285"
+        }
+      },
+      "patches": [],
+      "local_patch_checksums": {},
+      "revision": 0,
+      "version_scheme": 0,
+      "compatibility_version": 1,
+      "autobump": true,
+      "no_autobump_message": null,
+      "skip_livecheck": false,
+      "bottle": {
+        "stable": {
+          "rebuild": 0,
+          "root_url": "https://ghcr.io/v2/homebrew/core",
+          "files": {
+            "all": {
+              "cellar": ":any_skip_relocation",
+              "url": "https://ghcr.io/v2/homebrew/core/ca-certificates/blobs/sha256:8a5a35e1a3223e6bc6ca7c853e0ac3d2568de2cc329b61688682bdf57165dab9",
+              "sha256": "8a5a35e1a3223e6bc6ca7c853e0ac3d2568de2cc329b61688682bdf57165dab9"
+            }
+          }
+        }
+      },
+      "pour_bottle_only_if": null,
+      "keg_only": false,
+      "keg_only_reason": null,
+      "options": [],
+      "build_dependencies": [],
+      "dependencies": [],
+      "test_dependencies": [],
+      "recommended_dependencies": [],
+      "optional_dependencies": [],
+      "no_linkage_dependencies": [],
+      "uses_from_macos": [],
+      "uses_from_macos_bounds": [],
+      "requirements": [],
+      "conflicts_with": [],
+      "conflicts_with_reasons": [],
+      "link_overwrite": [],
+      "caveats": null,
+      "installed": [
+        {
+          "sbom": "/opt/homebrew/Cellar/ca-certificates/2026-10-20/sbom.spdx.json",
+          "version": "2026-10-20",
+          "used_options": [],
+          "built_as_bottle": true,
+          "poured_from_bottle": true,
+          "time": 1793717276,
+          "runtime_dependencies": [],
+          "installed_on_request": false
+        }
+      ],
+      "linked_keg": "2026-10-20",
+      "pinned": false,
+      "outdated": true,
+      "deprecated": false,
+      "deprecation_date": null,
+      "deprecation_reason": null,
+      "deprecation_replacement_formula": null,
+      "deprecation_replacement_cask": null,
+      "deprecate_args": null,
+      "disabled": false,
+      "disable_date": null,
+      "disable_reason": null,
+      "disable_replacement_formula": null,
+      "disable_replacement_cask": null,
+      "disable_args": null,
+      "post_install_steps": [
+        {
+          "command": {
+            "base": "libexec",
+            "path": "post-install"
+          },
+          "type": "run",
+          "args": [
+            "{{pkgshare}}/cacert.pem",
+            "{{pkgetc}}/cert.pem"
+          ]
+        }
+      ],
+      "post_install_defined": false,
+      "service": null,
+      "tap_git_head": "3de2316a7a9b011fbb63b68efa8a884efd6783cd",
+      "ruby_source_path": "Formula/c/ca-certificates.rb",
+      "ruby_source_checksum": {
+        "sha256": "f91688b4ef39b7655316d645b9a3054e3a9a9e3a027226fb375911a1685c7cf3"
+      }
+    },
+    {
+      "name": "docker",
+      "full_name": "docker",
+      "tap": "homebrew/core",
+      "oldnames": [],
+      "aliases": [],
+      "versioned_formulae": [],
+      "desc": "Pack, ship and run any application as a lightweight container",
+      "license": "Apache-2.0",
+      "homepage": "https://www.docker.com/",
+      "versions": {
+        "stable": "29.9.3",
+        "head": "HEAD",
+        "bottle": true
+      },
+      "urls": {
+        "stable": {
+          "url": "https://github.com/docker/cli.git",
+          "tag": "v29.9.3",
+          "revision": "5457199aa57c45e990c59c89cab5f02b817238d7",
+          "using": null,
+          "checksum": null
+        },
+        "head": {
+          "url": "https://github.com/docker/cli.git",
+          "branch": "master",
+          "using": null
+        }
+      },
+      "patches": [],
+      "local_patch_checksums": {},
+      "revision": 0,
+      "version_scheme": 0,
+      "compatibility_version": 1,
+      "autobump": true,
+      "no_autobump_message": null,
+      "skip_livecheck": false,
+      "bottle": {
+        "stable": {
+          "rebuild": 0,
+          "root_url": "https://ghcr.io/v2/homebrew/core",
+          "files": {
+            "arm64_golden_gate": {
+              "cellar": ":any_skip_relocation",
+              "url": "https://ghcr.io/v2/homebrew/core/docker/blobs/sha256:39d0113e0e433d22fb070f13f25ad95f7a7c360918f12ca14d02ec680cebce74",
+              "sha256": "39d0113e0e433d22fb070f13f25ad95f7a7c360918f12ca14d02ec680cebce74"
+            }
+          }
+        }
+      },
+      "pour_bottle_only_if": null,
+      "keg_only": false,
+      "keg_only_reason": null,
+      "options": [],
+      "build_dependencies": [
+        "go",
+        "go-md2man"
+      ],
+      "dependencies": [],
+      "test_dependencies": [],
+      "recommended_dependencies": [],
+      "optional_dependencies": [],
+      "no_linkage_dependencies": [],
+      "uses_from_macos": [],
+      "uses_from_macos_bounds": [],
+      "requirements": [],
+      "conflicts_with": [],
+      "conflicts_with_reasons": [],
+      "link_overwrite": [],
+      "caveats": null,
+      "installed": [
+        {
+          "sbom": "/opt/homebrew/Cellar/docker/29.9.2/sbom.spdx.json",
+          "version": "29.9.2",
+          "used_options": [],
+          "built_as_bottle": true,
+          "poured_from_bottle": true,
+          "time": 1793716415,
+          "runtime_dependencies": [],
+          "installed_on_request": true
+        }
+      ],
+      "linked_keg": "29.9.2",
+      "pinned": false,
+      "outdated": true,
+      "deprecated": false,
+      "deprecation_date": null,
+      "deprecation_reason": null,
+      "deprecation_replacement_formula": null,
+      "deprecation_replacement_cask": null,
+      "deprecate_args": null,
+      "disabled": false,
+      "disable_date": null,
+      "disable_reason": null,
+      "disable_replacement_formula": null,
+      "disable_replacement_cask": null,
+      "disable_args": null,
+      "post_install_steps": [],
+      "post_install_defined": false,
+      "service": null,
+      "tap_git_head": "3de2316a7a9b011fbb63b68efa8a884efd6783cd",
+      "ruby_source_path": "Formula/d/docker.rb",
+      "ruby_source_checksum": {
+        "sha256": "d90ecb5069cf4eac8a6808c460c3598502171744a30811fb3d487cff9c0888a9"
+      }
+    }
+  ],
+  "casks": [
+    {
+      "token": "jquake",
+      "full_token": "jquake",
+      "old_tokens": [],
+      "tap": "homebrew/cask",
+      "name": [
+        "JQuake"
+      ],
+      "desc": "Real-time earthquake monitoring software for Japan",
+      "homepage": "https://jquake.net/",
+      "url": "https://fleneindre.github.io/downloads/JQuake_1.8.5_mac_arm64.dmg",
+      "url_specs": {},
+      "version": "1.8.5",
+      "autobump": true,
+      "no_autobump_message": null,
+      "skip_livecheck": false,
+      "installed": "1.8.4",
+      "installed_time": 1767225600,
+      "bundle_version": null,
+      "bundle_short_version": null,
+      "pinned": false,
+      "pinned_version": null,
+      "outdated": true,
+      "sha256": "e035c0b51ab1947719a20d54493ffea103e4e2d3c1dbf73d2de145cfe8f3223e",
+      "artifacts": [
+        {
+          "app": [
+            "JQuake.app"
+          ],
+          "target": "/Applications/JQuake.app"
+        },
+        {
+          "zap": [
+            {
+              "trash": [
+                "~/Library/Application Support/JQuake",
+                "~/Library/Saved Application State/net.jquake.java.savedState"
+              ]
+            }
+          ]
+        }
+      ],
+      "caveats": null,
+      "caveats_rosetta": null,
+      "depends_on": {
+        "macos": {}
+      },
+      "conflicts_with": null,
+      "container": null,
+      "rename": [],
+      "auto_updates": null,
+      "deprecated": false,
+      "deprecation_date": null,
+      "deprecation_reason": null,
+      "deprecation_replacement_formula": null,
+      "deprecation_replacement_cask": null,
+      "deprecate_args": null,
+      "disabled": true,
+      "disable_date": "2026-09-01",
+      "disable_reason": "fails_gatekeeper_check",
+      "disable_replacement_formula": null,
+      "disable_replacement_cask": null,
+      "disable_args": {
+        "date": "2026-09-01",
+        "because": "fails_gatekeeper_check",
+        "replacement_formula": null,
+        "replacement_cask": null
+      },
+      "tap_git_head": "7397801fbe3ada511d5ac422b78730f4735af8f9",
+      "languages": [],
+      "ruby_source_path": "Casks/j/jquake.rb",
+      "ruby_source_checksum": {
+        "sha256": "d1c76d77b1e5fbeb15a751ae782d9e9fcd96acf8c35da207ca2f23440d5b1027"
+      }
+    }
+  ]
+}

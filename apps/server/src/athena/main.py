@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from athena import __version__
 from athena.api import apps, auth, capabilities, containers, jobs, system
+from athena.api import packages as packages_api
 from athena.api import settings as settings_api
 from athena.api import store as store_api
 from athena.auth.deps import require_user
@@ -20,6 +21,7 @@ from athena.db import Database
 from athena.jobs import JobManager
 from athena.logging_setup import setup_logging
 from athena.monitor import HostMonitor
+from athena.packages.base import run_command
 from athena.platform.store import CapabilityStore
 
 
@@ -61,6 +63,8 @@ def create_app(
     app.state.jobs = JobManager()
     app.state.app_jobs = {}
     app.state.monitor = monitor or HostMonitor()
+    app.state.package_runner = run_command
+    app.state.package_jobs = {}
     app.state.catalogs = catalogs or CatalogRegistry(remote_root=settings.data_dir / "catalogs")
     # Public: /api/health and /api/auth/*. Everything else needs a signed-in session.
     app.include_router(system.router, prefix="/api")
@@ -73,6 +77,7 @@ def create_app(
     app.include_router(apps.router, prefix="/api", dependencies=[require_user])
     app.include_router(store_api.router, prefix="/api", dependencies=[require_user])
     app.include_router(settings_api.router, prefix="/api", dependencies=[require_user])
+    app.include_router(packages_api.router, prefix="/api", dependencies=[require_user])
 
     # Mounted last so /api routes win. In development the UI is served by `next dev`
     # instead, and this directory doesn't exist.

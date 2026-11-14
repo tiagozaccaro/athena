@@ -664,6 +664,151 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/packages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Managers
+         * @description The package managers found on this host (ready or not), in detection order.
+         */
+        get: operations["listPackageManagers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/packages/{manager}/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search */
+        get: operations["searchPackages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/packages/{manager}/installed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Installed */
+        get: operations["listInstalledPackages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/packages/{manager}/upgradable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Upgradable
+         * @description From the package lists as last refreshed (apt, dnf and others cache them).
+         */
+        get: operations["listUpgradablePackages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/packages/{manager}/install": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Install */
+        post: operations["installPackage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/packages/{manager}/uninstall": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Uninstall */
+        post: operations["uninstallPackage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/packages/{manager}/upgrade": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upgrade */
+        post: operations["upgradePackages"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/packages/{manager}/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh
+         * @description Update the package lists (apt update, dnf makecache…) so search and upgrades are current.
+         */
+        post: operations["refreshPackageLists"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -975,14 +1120,18 @@ export interface components {
             /** Version */
             version: string;
         };
-        /** InstallIn */
-        InstallIn: {
+        /** InstalledPackage */
+        InstalledPackage: {
             /** Name */
             name: string;
-            /** Values */
-            values?: {
-                [key: string]: string;
-            };
+            /** Title */
+            title?: string | null;
+            /** Version */
+            version?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Source */
+            source?: string | null;
         };
         /** JobOut */
         JobOut: {
@@ -1012,6 +1161,33 @@ export interface components {
             /** Lines */
             lines: string[];
         };
+        /** ManagerOut */
+        ManagerOut: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "stopped" | "missing" | "unsupported" | "needs_privilege";
+            /** Available */
+            available: boolean;
+            /** Detail */
+            detail?: string | null;
+            /** Can Upgrade One */
+            can_upgrade_one: boolean;
+            /** Can Refresh */
+            can_refresh: boolean;
+            /** Note */
+            note?: string | null;
+        };
+        /** NameIn */
+        NameIn: {
+            /** Name */
+            name: string;
+        };
         /** NewApp */
         NewApp: {
             /** Compose */
@@ -1037,6 +1213,27 @@ export interface components {
              * @enum {string}
              */
             kind: "auto" | "athena" | "casaos";
+        };
+        /**
+         * PackageRef
+         * @description A search result.
+         */
+        PackageRef: {
+            /** Name */
+            name: string;
+            /** Title */
+            title?: string | null;
+            /** Version */
+            version?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Source */
+            source?: string | null;
+            /**
+             * Installed
+             * @default false
+             */
+            installed: boolean;
         };
         /** PasswordChange */
         PasswordChange: {
@@ -1183,6 +1380,20 @@ export interface components {
             /** Critical */
             critical?: number | null;
         };
+        /** UpgradablePackage */
+        UpgradablePackage: {
+            /** Name */
+            name: string;
+            /** Version */
+            version?: string | null;
+            /** Latest */
+            latest?: string | null;
+        };
+        /** UpgradeIn */
+        UpgradeIn: {
+            /** Name */
+            name?: string | null;
+        };
         /** UserOut */
         UserOut: {
             /** Id */
@@ -1211,6 +1422,22 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** InstallIn */
+        athena__api__packages__InstallIn: {
+            /** Name */
+            name: string;
+            /** Source */
+            source?: string | null;
+        };
+        /** InstallIn */
+        athena__api__store__InstallIn: {
+            /** Name */
+            name: string;
+            /** Values */
+            values?: {
+                [key: string]: string;
+            };
         };
     };
     responses: never;
@@ -2182,7 +2409,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["InstallIn"];
+                "application/json": components["schemas"]["athena__api__store__InstallIn"];
             };
         };
         responses: {
@@ -2357,6 +2584,257 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Appearance"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listPackageManagers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagerOut"][];
+                };
+            };
+        };
+    };
+    searchPackages: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path: {
+                manager: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PackageRef"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listInstalledPackages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                manager: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstalledPackage"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listUpgradablePackages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                manager: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpgradablePackage"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    installPackage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                manager: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["athena__api__packages__InstallIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    uninstallPackage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                manager: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NameIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upgradePackages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                manager: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpgradeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refreshPackageLists: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                manager: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobOut"];
                 };
             };
             /** @description Validation Error */

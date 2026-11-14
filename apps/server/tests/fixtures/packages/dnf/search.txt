@@ -1,0 +1,12 @@
+R-jqr	1.4.0-6.fc45	Client for 'jq', a 'JSON' Processor
+R-jquerylib	0.1.4-24.fc45	Obtain jQuery as an HTML Dependency Object
+ghc-js-jquery	3.7.1-2.fc45	Obtain minified jQuery code
+ghc-js-jquery-devel	3.7.1-2.fc45	Haskell js-jquery library development files
+ghc-js-jquery-doc	3.7.1-2.fc45	Haskell js-jquery library documentation
+ghc-js-jquery-prof	3.7.1-2.fc45	Haskell js-jquery profiling library
+gojq	0.12.19-2.fc45	Pure Go implementation of jq
+jq	1.8.2-5.fc45	Command-line JSON processor
+jq-devel	1.8.2-5.fc45	Development files for jq
+jql	8.1.2-2.fc45	JQL is a fast and simple command-line tool to manipulate JSON data
+js-jquery	3.7.1-9.fc45	JavaScript DOM manipulation, event handling, and AJAX library
+js-jquery-mousewheel	3.1.13-21.fc45	A jQuery plugin that adds cross-browser mouse wheel support

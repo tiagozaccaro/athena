@@ -1,0 +1,23 @@
+<?xml version='1.0'?>
+<stream>
+<message type="info">Loading repository data...</message>
+<message type="info">Reading installed packages...</message>
+
+<search-result version="0.0">
+<solvable-list>
+<solvable status="not-installed" name="gojq" summary="Pure Go implementation of jq" kind="package"/>
+<solvable status="not-installed" name="jq" summary="A lightweight and flexible command-line JSON processor" kind="package"/>
+<solvable status="not-installed" name="libjq-devel" summary="Development files for jq" kind="package"/>
+<solvable status="not-installed" name="libjq1" summary="Library for a lightweight and flexible command-line JSON processor" kind="package"/>
+<solvable status="not-installed" name="python313-sphinxcontrib-jquery" summary="Extension to include jQuery on newer Sphinx releases" kind="package"/>
+<solvable status="not-installed" name="python313-XStatic-jQuery" summary="jQuery repackaged for the XStatic standard" kind="package"/>
+<solvable status="not-installed" name="python313-XStatic-jquery-ui" summary="jQuery UI repackaged for the XStatic standard" kind="package"/>
+<solvable status="not-installed" name="python314-sphinxcontrib-jquery" summary="Extension to include jQuery on newer Sphinx releases" kind="package"/>
+<solvable status="not-installed" name="python314-XStatic-jQuery" summary="jQuery repackaged for the XStatic standard" kind="package"/>
+<solvable status="not-installed" name="python314-XStatic-jquery-ui" summary="jQuery UI repackaged for the XStatic standard" kind="package"/>
+<solvable status="not-installed" name="ruby4.0-rubygem-jquery-rails" summary="Use jQuery with Rails 4+" kind="package"/>
+<solvable status="not-installed" name="texlive-ijqc" summary="BibTeX style file for the Intl. J. Quantum Chem" kind="package"/>
+<solvable status="not-installed" name="texlive-ijqc-doc" summary="Documentation for texlive-ijqc" kind="package"/>
+</solvable-list>
+</search-result>
+</stream>

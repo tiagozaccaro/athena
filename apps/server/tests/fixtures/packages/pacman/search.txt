@@ -1,0 +1,16 @@
+extra/haskell-js-dgtable 0.5.2-18
+    Obtain minified jquery.dgtable code
+extra/haskell-js-jquery 3.7.1-236
+    Obtain minified jQuery code
+extra/htmlq 0.4.0-3
+    Like jq, but for HTML
+extra/ijq 1.4.2-1
+    Interactive jq tool, like jqplay for the commandline
+extra/jaq 3.1.2-1
+    A jq clone focussed on correctness, speed, and simplicity
+extra/jnv 0.7.1-1
+    Interactive JSON filter using jq
+extra/jq 1.8.2-1
+    Command-line JSON processor
+extra/python-jq 1.13.0-1
+    Python bindings for jq

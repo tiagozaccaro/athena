@@ -1,0 +1,12 @@
+acl 2.4.0-1
+archlinux-keyring 20260909-1
+attr 2.6.0-1
+audit 4.2.1-1
+base 3-3
+bash 5.3.20-1
+binutils 2.47-4
+brotli 1.2.1-1
+bzip2 1.0.8-6
+ca-certificates 20240618-1
+ca-certificates-mozilla 3.133-1
+ca-certificates-utils 20240618-1
