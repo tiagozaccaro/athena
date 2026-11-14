@@ -13,9 +13,10 @@ Thanks for helping out! This guide covers how changes get into Athena. Read [doc
    ```
    Branch names are `<type>/<short-description>`, using the same types as commits (below).
 2. **Commit** in small, focused steps. Individual commit messages are free-form, because the PR is squashed.
-3. **Open a pull request** against `main`. Use the template and fill in the testing section.
-4. **CI must pass**, and all review conversations must be resolved.
-5. **Squash-merge.** The PR title becomes the commit on `main`, and the branch is deleted automatically.
+3. **Check before pushing.** Run `scripts/check.sh` (the same checks as CI), or turn on the pre-push hook once per clone with `git config core.hooksPath .githooks`.
+4. **Open a pull request** against `main`. Use the template and fill in the testing section.
+5. **CI must pass**, and all review conversations must be resolved.
+6. **Squash-merge.** The PR title becomes the commit on `main`, and the branch is deleted automatically.
 
 ## PR titles: Conventional Commits
 

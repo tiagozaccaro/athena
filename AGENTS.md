@@ -102,7 +102,8 @@ Agents that don't load skills automatically can read them directly: `.agents/ski
 - *Restore skills on a new machine:* `npx skills experimental_install`.
 
 **One-time setup per agent:**
-- **Claude Code:** nothing to do. On Windows, enable symlinks in git (`git config core.symlinks true` with Developer Mode on) so `.claude/skills` works.
+- **Every agent and person:** `git config core.hooksPath .githooks` turns on the pre-push check (see [Definition of done](#definition-of-done)).
+- **Claude Code:** nothing else to do. On Windows, enable symlinks in git (`git config core.symlinks true` with Developer Mode on) so `.claude/skills` works.
 - **OpenCode:** nothing to do. `opencode.json` is committed.
 - **Hermes Agent:** run `node scripts/agents-sync.mjs --hermes`. It trusts this repo's skills (`hermes skills trust`) and adds any missing MCP servers to `~/.hermes/config.yaml` through `hermes mcp add`. Then restart Hermes or run `/reload-mcp`. `--hermes-print` only prints the YAML block.
   - Known gap: Hermes's skill scanner rates `pydantic-ai-harness` as "dangerous" and hides it. That's a false positive from its docs mentioning `~/.ssh`, `os.environ` and command denylists. Hermes agents should read `.agents/skills/pydantic-ai-harness/SKILL.md` directly when working on the assistant.
@@ -110,6 +111,10 @@ Agents that don't load skills automatically can read them directly: `.agents/ski
 ## Definition of done
 
 Before pushing, run `scripts/check.sh` (the same checks as CI; `--quick` skips the web build). Windows-only failures still show up only in CI.
+
+Turn on the pre-push hook once per clone so this happens even when you forget: `git config core.hooksPath .githooks`. It runs only the parts the push touches: about 2 s for docs, under a minute with server changes. Skip it once with `git push --no-verify`.
+
+**Docs are checked too.** `node scripts/check-docs.mjs` (in CI and in `scripts/check.sh`) fails when AGENTS.md, `docs/AGENT-NOTES.md`, `catalog/README.md` or a project skill names a file, function, component or constant that doesn't exist. When you rename something, fix the docs in the same PR. To mention something on purpose that doesn't exist (an old name, an external API), end the line with `<!-- docs-check: ignore -->`.
 
 ### UI work
 
