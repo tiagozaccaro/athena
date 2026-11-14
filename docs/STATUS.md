@@ -11,6 +11,7 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - `AGENTS.md` holds the instructions.
   - `.agents/skills/` holds the skills.
   - `.mcp.json` lists the MCP servers, and `scripts/agents-sync.mjs` generates the other agents' configs from it.
+  - `docs/AGENT-NOTES.md` is the shared knowledge base: the maintainer's workflow, a command cheat sheet, patterns to copy and the gotchas collected from every session so far. Linked from AGENTS.md → Start here.
   - Verified on 2026-11-13: OpenCode 2.2.5 connects to shadcn and next-devtools. Hermes 0.23.1 has both servers enabled and loads 4 of 5 project skills; `pydantic-ai-harness` is quarantined by Hermes's scanner as a false positive (see AGENTS.md).
 - GitHub setup for the public repo `tiagozaccaro/athena`:
   - Apache-2.0 license, README, CONTRIBUTING, Code of Conduct, SECURITY, issue and PR templates, CODEOWNERS.

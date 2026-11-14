@@ -32,7 +32,7 @@ The design is in `docs/mvp-design.md` (§3 Platform layer, §4 Features). Read t
 7. **Tests.**
    - Provider parsing tests use recorded CLI output fixtures in `tests/fixtures/<manager>/`, so they run on every OS.
    - Detection tests mock `shutil.which` and subprocess.
-   - Mark tests that need the real tool with `@pytest.mark.requires("<capability>")` so CI skips them where it's absent.
+   - Tests that need the real tool use `pytest.mark.skipif` on `shutil.which(...)` (or `ATHENA_DOCKER_TESTS=1` for a container engine), so CI skips them where the tool is absent. See `tests/test_packages.py`.
 
 ## Rules
 
