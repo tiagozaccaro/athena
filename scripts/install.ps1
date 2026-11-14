@@ -75,16 +75,16 @@ function Assert-Windows {
 }
 
 function Resolve-AthenaVersion {
-    if ($script:Wheel) {
-        $name = Split-Path $script:Wheel -Leaf
+    if ($Wheel) {
+        $name = Split-Path $Wheel -Leaf
         if ($name -notmatch '^athena_server-([^-]+)-.*\.whl$') {
             throw '-Wheel must point to an athena_server-<version>-....whl file'
         }
         $script:Version = $Matches[1]
-        if ($script:Wheel -notmatch '^https?://') {
-            if (-not (Test-Path -PathType Leaf $script:Wheel)) { throw "Wheel not found: $($script:Wheel)" }
+        if ($Wheel -notmatch '^https?://') {
+            if (-not (Test-Path -PathType Leaf $Wheel)) { throw "Wheel not found: $Wheel" }
             # Absolute, because uv runs from another directory.
-            $script:Wheel = (Resolve-Path $script:Wheel).Path
+            $script:Wheel = (Resolve-Path $Wheel).Path
         }
         return
     }
@@ -150,7 +150,7 @@ function Use-UvEnvironment {
 }
 
 function Install-Athena {
-    $source = if ($script:Wheel) { $script:Wheel } else {
+    $source = if ($Wheel) { $Wheel } else {
         "https://github.com/$Repo/releases/download/v$Version/athena_server-$Version-py3-none-any.whl"
     }
     if ($source -match '^https?://') { $source = "athena-server @ $source" }

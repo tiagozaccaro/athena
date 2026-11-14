@@ -178,12 +178,37 @@ def windows_task_command(spec: ServiceSpec) -> str:
     return command
 
 
+# `schtasks /End` only kills the process the task started. In a venv that's CPython's
+# venv launcher, which runs the real interpreter as a child, so the server would keep
+# its port and lock the install directory. Stop every service interpreter and wait for
+# it to exit. Only the logon task runs under pythonw.exe; a dev server (athena.exe or
+# python.exe) is left alone.
+WINDOWS_STOP_SERVER = (
+    "$p = @(Get-CimInstance Win32_Process | Where-Object { "
+    "$_.Name -eq 'pythonw.exe' -and $_.CommandLine -like '*-m athena serve*' }); "
+    "$p | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; "
+    "$p | ForEach-Object { "
+    "Wait-Process -Id $_.ProcessId -Timeout 15 -ErrorAction SilentlyContinue }"
+)
+
+
+def _windows_stop() -> list[Run]:
+    return [
+        Run(["schtasks", "/End", "/TN", WINDOWS_TASK], ignore_errors=True),
+        Run(
+            ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", WINDOWS_STOP_SERVER],
+            ignore_errors=True,
+        ),
+    ]
+
+
 def _windows_install(spec: ServiceSpec) -> Plan:
     return Plan(
         f"Installing Scheduled Task '{WINDOWS_TASK}' (starts at logon)",
         [
             MakeDir(spec.data_dir),
-            Run(["schtasks", "/End", "/TN", WINDOWS_TASK], ignore_errors=True),
+            # A reinstall (upgrade) must free the port before the new server starts.
+            *_windows_stop(),
             Run(
                 [
                     "schtasks",
@@ -208,7 +233,7 @@ def _windows_uninstall() -> Plan:
     return Plan(
         f"Removing Scheduled Task '{WINDOWS_TASK}'",
         [
-            Run(["schtasks", "/End", "/TN", WINDOWS_TASK], ignore_errors=True),
+            *_windows_stop(),
             Run(["schtasks", "/Delete", "/TN", WINDOWS_TASK, "/F"], ignore_errors=True),
         ],
     )

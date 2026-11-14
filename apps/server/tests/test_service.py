@@ -78,6 +78,33 @@ def test_windows_task_uses_pythonw_and_skips_default_args() -> None:
     assert command.endswith("-m athena serve")
 
 
+def _windows_runs(plan: Plan) -> list[list[str]]:
+    return [s.argv for s in plan.steps if isinstance(s, Run)]
+
+
+@pytest.mark.parametrize(
+    "plan",
+    [
+        build_install(SPEC, platform="win32"),
+        build_uninstall(platform="win32"),
+    ],
+    ids=["install", "uninstall"],
+)
+def test_windows_stops_the_venv_launchers_child(plan: Plan) -> None:
+    # /End only kills the venv launcher; the real interpreter must be stopped too
+    # (seen on the first E2E run: the uninstall couldn't delete the install dir).
+    argvs = _windows_runs(plan)
+    end = argvs.index(["schtasks", "/End", "/TN", "Athena"])
+    stop = argvs[end + 1]
+    assert stop[0] == "powershell.exe"
+    assert "pythonw.exe" in stop[-1] and "-m athena serve" in stop[-1]
+    assert "Wait-Process" in stop[-1]
+    steps = [s for s in plan.steps if isinstance(s, Run)]
+    assert steps[end].ignore_errors and steps[end + 1].ignore_errors
+    # Stopped before the task is started again or deleted.
+    assert argvs[end + 2][:2] in (["schtasks", "/Create"], ["schtasks", "/Delete"])
+
+
 def test_windows_task_rejects_too_long_command() -> None:
     spec = ServiceSpec(
         python=Path("C:/" + "x" * 300 + "/python.exe"), data_dir=Path("C:/d"), port=1
