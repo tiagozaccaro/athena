@@ -343,6 +343,9 @@ export function ManagerPanel({ manager }: { manager: Manager }) {
                 <TableBody>
                   {filtered.slice(0, SHOWN).map((p) => {
                     const up = upgradeByName.get(p.name)
+                    // winget shortens long ids in its table; a shortened id can't be
+                    // passed back to it, so those rows can't be acted on here.
+                    const shortened = p.name.endsWith("…")
                     return (
                       <TableRow key={`${p.source ?? ""}/${p.name}`}>
                         <TableCell className="max-w-56">
@@ -363,7 +366,7 @@ export function ManagerPanel({ manager }: { manager: Manager }) {
                         </TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-1">
-                            {up && manager.can_upgrade_one ? (
+                            {up && manager.can_upgrade_one && !shortened ? (
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
@@ -378,7 +381,12 @@ export function ManagerPanel({ manager }: { manager: Manager }) {
                               variant="ghost"
                               size="icon-sm"
                               aria-label={`Uninstall ${p.name}`}
-                              title="Uninstall"
+                              disabled={shortened}
+                              title={
+                                shortened
+                                  ? `${manager.label} shortened this id, so it can't be uninstalled from here`
+                                  : "Uninstall"
+                              }
                               onClick={() =>
                                 setPending({ kind: "uninstall", name: p.name })
                               }

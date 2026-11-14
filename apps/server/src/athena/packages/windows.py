@@ -29,6 +29,9 @@ _WINGET_FLAGS = ["--accept-source-agreements", "--disable-interactivity"]
 def _winget_rows(text: str) -> list[list[str]]:
     if _WINGET_NONE in text:
         return []
+    # winget shortens long values with an ellipsis that doesn't survive decoding when its
+    # output isn't UTF-8; it arrives as U+FFFD either way, so put the ellipsis back.
+    text = text.replace("\ufffd", "…")
     # Footer lines ("1 upgrades available.") have no Id column.
     return [c for c in column_table(text, min_columns=4) if len(c) >= 3 and c[1]]
 

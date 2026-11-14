@@ -13,4 +13,6 @@ Parser tests in `tests/test_packages.py` run against these files on every OS.
 | zypper | Real `--xmlout` output, openSUSE Tumbleweed (zypper 1.14.102). |
 | pacman | Real output, Arch Linux (pacman 7.1.0) in a container. `upgradable.txt` is hand-written in the documented `pacman -Qu` format (`name old -> new`); the image had no updates. |
 | flatpak | `search*.txt` are real (Flatpak 1.16.6). `installed.txt` and `updates.txt` are hand-written in the same `--columns` tab format; a fresh container has nothing installed. |
-| snap, winget, scoop, choco | Hand-written from each tool's documented output (snapd can't run in a container, and the Windows tools need Windows). Replace them with real captures when a host is available. |
+| winget | `list.txt` is real output from the GitHub Actions `windows-latest` runner (printed by the real-tool test), trimmed. `search.txt`, `upgrade.txt` and `none.txt` are hand-written in the same table format. |
+| choco | Hand-written; the real-tool test on the Windows runner parses real `choco list -r` output with the same parser. |
+| snap, scoop | Hand-written from the documented output (snapd can't run in a container; Scoop isn't on the CI runners). Replace them with real captures when a host is available. |

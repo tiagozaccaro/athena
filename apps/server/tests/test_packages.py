@@ -273,14 +273,25 @@ def test_winget_search_strips_progress_and_reads_columns() -> None:
 
 
 def test_winget_list_and_upgrade() -> None:
+    # Real output from the GitHub Actions Windows runner (CRLF, progress spinner, a
+    # truncated name and id, ARP ids with spaces, rows without a source).
     installed, upgradable = pk_win.parse_winget_list(fx("winget/list.txt"))
     by = {p.name: p for p in installed}
-    assert by["Git.Git"].version == "2.45.1"
-    assert by["Microsoft.VCRedist.2015+.x64"].title == "Microsoft Visual C++ 2015-2…"
-    assert by["ARP\\Machine\\X64\\SomeLocalApp"].source is None
-    assert [(u.name, u.latest) for u in upgradable] == [("Git.Git", "2.46.0")]
-    _, ups = pk_win.parse_winget_list(fx("winget/upgrade.txt"))
-    assert [u.name for u in ups] == ["Git.Git"]  # footer line ignored
+    assert by["Git.Git"].version == "2.56.0.4" and by["Git.Git"].source == "winget"
+    assert by["ImageMagick.ImageMagick"].title == "ImageMagick 7.1.2-25 Q16-HDRI (64-bit) …"
+    firefox = by["ARP\\Machine\\X64\\Mozilla Firefox"]
+    assert (firefox.title, firefox.version, firefox.source) == (
+        "Mozilla Firefox (x64 en-US)",
+        "159.0.1",
+        None,
+    )
+    assert "ARP\\Machine\\X64\\MozillaMaintenanceServi…" in by
+    ups = {u.name: u for u in upgradable}
+    assert (ups["7zip.7zip"].version, ups["7zip.7zip"].latest) == ("26.05", "26.06")
+    assert ups["Anaconda.Miniconda3"].latest == "py314_26.9.4-1"
+    assert "Git.Git" not in ups
+    _, ups2 = pk_win.parse_winget_list(fx("winget/upgrade.txt"))
+    assert [u.name for u in ups2] == ["Git.Git"]  # footer line ignored
 
 
 def test_winget_no_match_exit_code_is_empty() -> None:
@@ -364,7 +375,12 @@ def test_real_tool_reads(manager_id: str) -> None:
     pm = MANAGERS[manager_id]()
     installed = asyncio.run(pm.installed())
     assert installed, f"{manager_id} reports nothing installed"
-    odd = [p for p in installed if not p.name or any(c.isspace() for c in p.name)]
+    # Names are single tokens, except winget's ids for locally installed apps
+    # ("ARP\\Machine\\X64\\Mozilla Firefox").
+    spaced_ok = manager_id == "winget"
+    odd = [
+        p for p in installed if not p.name or (not spaced_ok and any(c.isspace() for c in p.name))
+    ]
     if odd:
         raw = ""
         if manager_id == "winget":
