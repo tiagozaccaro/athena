@@ -30,6 +30,7 @@
     Show this help.
 #>
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '', Justification = 'Interactive installer output')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'Wheel', Justification = 'Read in Resolve-AthenaVersion and Install-Athena; the rule does not see uses inside functions')]
 [CmdletBinding()]
 param(
     [string]$Version = '',
