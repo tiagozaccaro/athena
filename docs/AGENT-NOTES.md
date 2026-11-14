@@ -29,6 +29,7 @@ Run pnpm from the repo root and Python with `uv run` inside `apps/server`.
 
 | Task | Command |
 |---|---|
+| **Everything CI runs** | `scripts/check.sh` (`--quick` skips the web build; `web`, `server` or `repo` runs one part) |
 | All web checks | `pnpm lint && pnpm typecheck && pnpm build` |
 | Server lint | `cd apps/server && uv run ruff check . && uv run ruff format --check .` |
 | Server tests | `cd apps/server && uv run pytest -q` (add `-k name` to narrow) |
@@ -159,6 +160,7 @@ CodeQL runs on every PR and its alerts can block a merge.
 - The maintainer's shell is zsh. `echo =====` fails there (`=word` expands to a command path), and unquoted `$VAR` lists don't word-split. Quote or use arrays.
 - Claude Code's safety check refuses `rm` with unguarded variables or globs (`rm -rf $S/*`). Use literal paths.
 - Hermes quarantines `pydantic-ai-harness` as "dangerous" (a false positive). Read its `SKILL.md` directly.
+- Hermes's scanner also hides **our own** skills when they contain `curl … | python3` (rated critical "supply chain"), even when Python only parses JSON. In skills, use `jq` or save to a file first. `sudo`, `uv run` and systemd mentions are only medium and don't hide a skill. To check a skill before committing: `PYTHONPATH=~/.hermes/hermes-agent ~/.hermes/tools/python-3.14*/bin/python3 -c "from pathlib import Path; from tools.skills_guard import scan_skill; print(scan_skill(Path('.agents/skills/<name>'), source='project').verdict)"` should print `safe`.
 - Another agent session may be working in the main checkout at the same time (uncommitted changes on its feature branch). For unrelated work, use `git worktree add ../athena-<topic> -b <branch> origin/main` instead of switching branches under it.
 - Port 8420 may be the maintainer's own Athena. Use 8421 or another spare port.
 - Act only on containers, apps and images named `athena-demo-*` / `athena-test-*`. The maintainer's own containers run on the same engine. Leave pulled images unless you know you pulled them, and say which ones are left.
