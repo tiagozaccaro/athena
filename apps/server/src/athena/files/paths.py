@@ -10,6 +10,7 @@ separators ("photos/2024/a.jpg", "" for the location itself). Two ways to resolv
   points to, even when that is outside the location.
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -105,8 +106,14 @@ def entry(root: Path, rel: str) -> Path:
     parts = split(rel)
     if not parts:
         raise BadPath("This can't be done to the location itself")
-    parent = resolve(root, "/".join(parts[:-1]))
-    return parent / parts[-1]
+    parent = str(resolve(root, "/".join(parts[:-1])))
+    # Normalize and check again: Windows drops trailing dots and spaces, so "..." or
+    # "a " would otherwise name the parent folder itself, or something else.
+    candidate = os.path.abspath(os.path.join(parent, parts[-1]))
+    prefix = parent if parent.endswith(os.sep) else parent + os.sep
+    if not candidate.startswith(prefix) or os.path.dirname(candidate) != parent:
+        raise BadPath(f"Invalid name: {parts[-1]!r}")
+    return Path(candidate)
 
 
 def existing_entry(root: Path, rel: str) -> Path:

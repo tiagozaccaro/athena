@@ -20,7 +20,7 @@ from athena.files.paths import BadPath, available_name, check_new_name, split
 def tree(tmp_path: Path) -> Path:
     root = tmp_path / "share"
     (root / "docs").mkdir(parents=True)
-    (root / "docs" / "notes.txt").write_text("hello\n")
+    (root / "docs" / "notes.txt").write_bytes(b"hello\n")
     (root / "photo.png").write_bytes(b"\x89PNG fake")
     (root / "page.html").write_text("<script>alert(1)</script>")
     (root / ".hidden").write_text("x")
@@ -332,6 +332,14 @@ def test_delete_to_trash_or_permanently(
     assert audit_actions(client)[-1] == ("file.delete", "Share:/", "permanently: docs")
     res = client.post("/api/files/delete", json={"location": loc, "paths": [""]})
     assert res.status_code == 422
+    # Windows drops trailing dots and spaces: "..." would name the location itself there.
+    for sneaky in ["...", "docs (1)/..", "Zeta/... "]:
+        res = client.post(
+            "/api/files/delete", json={"location": loc, "paths": [sneaky], "permanent": True}
+        )
+        assert res.status_code in (200, 422), res.text
+        assert res.json().get("deleted", []) == []
+    assert tree.is_dir() and (tree / "Zeta").is_dir()
 
 
 def test_copy_and_move(api: tuple[TestClient, int], tree: Path, tmp_path: Path) -> None:
