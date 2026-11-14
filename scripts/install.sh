@@ -3,6 +3,7 @@
 #
 #   curl -fsSL https://github.com/tiagozaccaro/athena/releases/latest/download/install.sh | bash
 #   curl -fsSL …/install.sh | bash -s -- --version 0.2.0
+#   sudo bash install.sh --wheel dist/athena_server-0.2.0-py3-none-any.whl   # unreleased build
 #
 # What it does:
 #   1. Linux: installs Docker Engine if missing (skip with --no-runtime).
@@ -19,6 +20,7 @@ REPO="tiagozaccaro/athena"
 PORT=8420
 
 VERSION=""
+WHEEL=""
 DRY_RUN=0
 NO_RUNTIME=0
 UNINSTALL=0
@@ -32,6 +34,8 @@ Usage: install.sh [options]
 
 Options:
   --version <x.y.z>  Install a specific version (default: latest release)
+  --wheel <path|url> Install this server wheel instead of a release
+                     (from scripts/build-wheel.sh; for testing unreleased code)
   --no-runtime       Don't install a container runtime (Docker Engine / Colima)
   --dry-run          Print what would be done without changing anything
   --uninstall        Remove Athena (keeps data unless --purge is given)
@@ -58,6 +62,7 @@ parse_args() {
   while [ $# -gt 0 ]; do
     case "$1" in
       --version) [ $# -ge 2 ] || die "--version needs a value"; VERSION="${2#v}"; shift 2 ;;
+      --wheel) [ $# -ge 2 ] || die "--wheel needs a path or URL"; WHEEL="$2"; shift 2 ;;
       --no-runtime) NO_RUNTIME=1; shift ;;
       --dry-run) DRY_RUN=1; shift ;;
       --uninstall) UNINSTALL=1; shift ;;
@@ -115,6 +120,20 @@ check_privileges() {
 }
 
 resolve_version() {
+  if [ -n "$WHEEL" ]; then
+    # athena_server-<version>-py3-none-any.whl
+    VERSION="$(basename "$WHEEL" | sed -n 's/^athena_server-\([^-]*\)-.*\.whl$/\1/p')"
+    [ -n "$VERSION" ] || die "--wheel must point to an athena_server-<version>-….whl file"
+    case "$WHEEL" in
+      http://*|https://*) ;;
+      *)
+        [ -f "$WHEEL" ] || die "wheel not found: $WHEEL"
+        # Absolute, because uv runs from another directory.
+        WHEEL="$(cd "$(dirname "$WHEEL")" && pwd)/$(basename "$WHEEL")"
+        ;;
+    esac
+    return
+  fi
   if [ -n "$VERSION" ]; then return; fi
   say "Looking up the latest Athena release"
   has curl || die "curl is required"
@@ -196,12 +215,14 @@ uv_env() {
 }
 
 install_athena() {
-  local wheel="athena_server-$VERSION-py3-none-any.whl"
-  local url="https://github.com/$REPO/releases/download/v$VERSION/$wheel"
+  local source="${WHEEL:-https://github.com/$REPO/releases/download/v$VERSION/athena_server-$VERSION-py3-none-any.whl}"
+  case "$source" in
+    http://*|https://*) source="athena-server @ $source" ;;
+  esac
   say "Installing Athena $VERSION"
   uv_env
   run mkdir -p "$BIN_DIR" "$DATA_DIR"
-  run "$UV" tool install --force --python 3.13 "athena-server @ $url"
+  run "$UV" tool install --force --python 3.13 "$source"
   say "Registering the Athena service"
   run "$BIN_DIR/athena" service install --data-dir "$DATA_DIR" --port "$PORT"
 }

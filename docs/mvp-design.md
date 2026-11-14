@@ -443,7 +443,8 @@ GET/PUT /api/settings/{appearance|ai|system}   POST /api/auth/password
   - Linux/macOS: `curl -fsSL https://github.com/tiagozaccaro/athena/releases/latest/download/install.sh | bash`. It needs `sudo` on Linux.
   - Windows: `irm …/install.ps1 | iex`.
   - The scripts install the runtime where the decisions allow it (Docker Engine on Linux, Colima on macOS; Windows is detect only), plus uv and the wheel through `uv tool install`, in Athena-owned directories.
-  - They support `--version`, `--dry-run`, `--no-runtime`, and `--uninstall [--purge]`.
+  - They support `--version`, `--dry-run`, `--no-runtime`, and `--uninstall [--purge]`, plus `--wheel <path|url>` (`-Wheel` on Windows) to install an unreleased build from `scripts/build-wheel.sh`.
+- **End-to-end check:** the `E2E` workflow builds the wheel from the commit and runs the real installers on Ubuntu, macOS and Windows runners. It checks the service starts, runs `scripts/e2e/smoke.py` (Playwright: setup, sign-in, every page, the host terminal, phone width and dark mode), then uninstalls with `--purge` and checks that nothing is left. Locally, the same steps run in a Lima VM (see CONTRIBUTING).
 - **Service install:** `athena service install --data-dir --port` registers a systemd unit on Linux, a launchd agent on macOS, or a Scheduled Task at logon on Windows.
 - **Later:** single-file binaries (PyInstaller/Nuitka) and native installers.
 
@@ -465,6 +466,7 @@ GET/PUT /api/settings/{appearance|ai|system}   POST /api/auth/password
 | CodeMirror 6, @uiw/react-codemirror | MIT |
 | dashboard-icons (catalog icons, loaded by URL) | Apache-2.0 |
 | httpx2 (test client) | BSD-3-Clause |
+| Playwright for Python (e2e smoke test only, not shipped) | Apache-2.0 |
 | FastAPI, SQLModel, Pydantic, pydantic-ai, pydantic-ai-harness, uvicorn | MIT / BSD |
 | Docker Engine (Moby), Docker CLI, Compose v2 | Apache-2.0 |
 | python-on-whales, psutil, platformdirs, pywinpty (Windows only), send2trash | MIT / BSD / ISC |
@@ -524,7 +526,7 @@ M2–M4 can proceed in parallel once M1 lands, and so can M5 and M6. M7 depends 
 | Terminal pty (M5) | Stdlib pty with `subprocess.Popen(start_new_session=True)` and a `TIOCSCTTY` exec shim on POSIX, instead of ptyprocess. `pty.fork()` in the multi-threaded server runs Python in the child (Python 3.12+ warns that this can deadlock). pywinpty (ConPTY) on Windows |
 | Terminal auth (M5) | The WebSocket checks the cookie itself (`require_user` can't apply to WebSockets), then requires the CSRF token in the first message. Admin only. Signing out closes open terminals within 60 s, and turning the terminal off closes them at once. Container shells use `docker exec -it` through the runtime CLI, not the Docker API, matching the M2 CLI decision |
 | System settings (M5) | One JSON row in the `system_settings` table (migration 0007), behind `GET/PUT /api/settings/system`. Only admins can change it. It holds `terminal_enabled` for now; the package-install and assistant-shell switches from §7 will join it |
-| File locations (M6) | The file manager reaches only configured locations (Home and App data by default, admin-managed). Real-path containment per request, with the last segment unresolved for acting on links themselves. Delete goes to the OS trash through send2trash unless permanent. Uploads are raw pieces with offsets (no multipart, no tus), so large files work through any proxy and failed pieces resend cleanly. Downloads are attachments with nosniff and a sandbox CSP; only images, audio and video are shown inline |
+| End-to-end install check | A separate `E2E` workflow, not part of `ci-ok`: it's slow and changes the runner's service manager. It runs on pushes to main, on PRs that touch the installers or the service code, and on demand. It installs a wheel built from the commit (`--wheel`), because waiting for a release would only test code that has already shipped. Hosted runners can't run Colima's VM (macOS) or WSL2 (Windows), so containers are only checked on Linux there. Docker in WSL still needs a real Windows machine |
 | Database (M1) | SQLite at `<data-dir>/athena.db` (WAL, foreign keys on), SQLModel models, Alembic migrations run on every start from code. A test fails if models and migrations drift |
 
 ## 12. Open questions

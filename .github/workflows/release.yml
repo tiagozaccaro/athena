@@ -50,30 +50,14 @@ jobs:
 
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
-      - name: Build the web UI (static export)
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm build
+      - name: Install
+        run: pnpm install --frozen-lockfile
 
-      # The wheel bundles the exported UI, so `athena serve` serves it at /.
+      # The wheel bundles the exported UI and the catalog, so `athena serve` serves them.
       # The install scripts download athena_server-<version>-py3-none-any.whl.
+      # The script also checks the wheel contains both.
       - name: Build the server wheel
-        run: |
-          cp -R apps/web/out apps/server/src/athena/web
-          cp -R catalog apps/server/src/athena/catalog_builtin
-          cd apps/server
-          uv build --wheel --out-dir ../../dist
-          ls -l ../../dist
-
-      - name: Check the wheel contains the UI and the catalog
-        run: |
-          python3 - <<'PY'
-          import glob, sys, zipfile
-          wheel = glob.glob("dist/*.whl")[0]
-          names = zipfile.ZipFile(wheel).namelist()
-          missing = [p for p in ("athena/web/index.html", "athena/catalog_builtin/apps/jellyfin/compose.yaml") if p not in names]
-          sys.exit(f"missing from {wheel}: {missing}" if missing else 0)
-          PY
+        run: bash scripts/build-wheel.sh
 
       - name: Upload release assets
         env:
