@@ -18,6 +18,8 @@ dependencies = [
     "psutil>=7",
     "pywinpty>=2.0 ; sys_platform == 'win32'",
     "send2trash>=1.8",
+    "wsgidav>=4.4.0",
+    "a2wsgi>=1.10.10",
 ]
 
 [project.scripts]

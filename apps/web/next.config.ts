@@ -20,7 +20,15 @@ export default function config(phase: string): NextConfig {
       // Otherwise trailingSlash would 308 every /api call before proxying it.
       skipTrailingSlashRedirect: true,
       async rewrites() {
-        return [{ source: "/api/:path*", destination: `${API_DEV_ORIGIN}/api/:path*` }]
+        return [
+          {
+            source: "/api/:path*",
+            destination: `${API_DEV_ORIGIN}/api/:path*`,
+          },
+          // Share links: the server serves the /s/ page for any /s/<token> (main.py).
+          { source: "/s/:token", destination: "/s/" },
+          { source: "/s/:token/", destination: "/s/" },
+        ]
       },
     }
   }
