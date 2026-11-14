@@ -29,6 +29,9 @@ Run pnpm from the repo root and Python with `uv run` inside `apps/server`.
 
 | Task | Command |
 |---|---|
+| **Everything CI runs** | `scripts/check.sh` (`--quick` skips the web build; `web`, `server` or `repo` runs one part) |
+| Pre-push hook (once per clone) | `git config core.hooksPath .githooks`; skip once with `git push --no-verify` |
+| Docs name real things | `node scripts/check-docs.mjs` (`--list` prints everything it verified) |
 | All web checks | `pnpm lint && pnpm typecheck && pnpm build` |
 | Server lint | `cd apps/server && uv run ruff check . && uv run ruff format --check .` |
 | Server tests | `cd apps/server && uv run pytest -q` (add `-k name` to narrow) |
@@ -98,7 +101,7 @@ When adding something, start from the closest existing feature instead of invent
 
 CodeQL runs on every PR and its alerts can block a merge.
 
-- Any identifier containing "password" is treated as a secret. A constant named `MIN_PASSWORD_LENGTH` was flagged as "clear-text logging of password"; it's now `MIN_PW_LENGTH`.
+- Any identifier containing "password" is treated as a secret. A constant named `MIN_PASSWORD_LENGTH` was flagged as "clear-text logging of password"; it's now `MIN_PW_LENGTH`. <!-- docs-check: ignore -->
 - A fast hash (SHA-256) over anything derived from a password is flagged as weak password hashing, even as an in-memory cache key. Don't hash passwords for keys or caches; compare against what argon2 already produced.
 - `hmac.compare_digest` on `str` raises on non-ASCII. Compare bytes.
 - Regexes over URLs get flagged (ReDoS / incomplete sanitization). Prefer `urllib.parse` plus plain string checks.
@@ -111,7 +114,7 @@ CodeQL runs on every PR and its alerts can block a merge.
 - SQLite runs in WAL mode. A test that reads `athena.db` directly misses rows still in `athena.db-wal`, so query through SQLAlchemy.
 - `ruff --fix` can delete an import it thinks is unused when the name is shadowed. Use an aliased import.
 - Mutable class attributes trip RUF012. Use tuples or `ClassVar`.
-- The capability status type is `Status` (`athena/platform/`), not `CapabilityStatus`.
+- The capability status type is `Status` (`athena/platform/`), not `CapabilityStatus`. <!-- docs-check: ignore -->
 - Open SSE streams never end on their own. uvicorn's `timeout_graceful_shutdown` (5 s, `SHUTDOWN_GRACE_SECONDS` in `cli.py`) is what lets the service stop with a dashboard open. Keep it.
 - Every compose command needs `env=store.env(name)`, not only deploy. Stop, restart and remove once failed for apps using `${ATHENA_APP_DATA}`.
 - Compose YAML is YAML 1.2: `yes` is a string, not `true`. The CasaOS importer parses it the same way (one of 182 apps broke on this).
@@ -159,6 +162,7 @@ CodeQL runs on every PR and its alerts can block a merge.
 - The maintainer's shell is zsh. `echo =====` fails there (`=word` expands to a command path), and unquoted `$VAR` lists don't word-split. Quote or use arrays.
 - Claude Code's safety check refuses `rm` with unguarded variables or globs (`rm -rf $S/*`). Use literal paths.
 - Hermes quarantines `pydantic-ai-harness` as "dangerous" (a false positive). Read its `SKILL.md` directly.
+- Hermes's scanner also hides **our own** skills when they contain `curl … | python3` (rated critical "supply chain"), even when Python only parses JSON. In skills, use `jq` or save to a file first. `sudo`, `uv run` and systemd mentions are only medium and don't hide a skill. To check a skill before committing: `PYTHONPATH=~/.hermes/hermes-agent ~/.hermes/tools/python-3.14*/bin/python3 -c "from pathlib import Path; from tools.skills_guard import scan_skill; print(scan_skill(Path('.agents/skills/<name>'), source='project').verdict)"` should print `safe`.
 - Another agent session may be working in the main checkout at the same time (uncommitted changes on its feature branch). For unrelated work, use `git worktree add ../athena-<topic> -b <branch> origin/main` instead of switching branches under it.
 - Port 8420 may be the maintainer's own Athena. Use 8421 or another spare port.
 - Act only on containers, apps and images named `athena-demo-*` / `athena-test-*`. The maintainer's own containers run on the same engine. Leave pulled images unless you know you pulled them, and say which ones are left.

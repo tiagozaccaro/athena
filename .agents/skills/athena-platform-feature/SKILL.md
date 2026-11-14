@@ -21,11 +21,11 @@ The design is in `docs/mvp-design.md` (§3 Platform layer, §4 Features). Read t
    - Probe with `shutil.which`, socket or HTTP checks, and a version command with a short timeout.
    - Return `status` as one of `ready | stopped | missing | unsupported | needs_privilege`, plus `actions` the UI can offer (`start`, `setup`).
    - Never raise from detection; a failed probe means `missing` with a `detail` string.
-2. **Provider.** Implement the shared Protocol in `providers/<area>/base.py` in its own module (`providers/packages/winget.py`).
+2. **Provider.** Each area is a package under `apps/server/src/athena/<area>/`. Its shared base class goes in `base.py`, with one class per tool, grouped by OS family (see `athena/packages/`: `base.py`, `linux.py`, `apps.py`, `windows.py`; or `athena/containers/runtime.py` for runtimes).
    - Use subprocess with argument lists, never `shell=True`. Prefer machine-readable output (`--json`, `--output json`).
    - Long operations take a `Job` and stream progress lines; they must be cancellable.
-   - Paths go through `platform/paths.py` (platformdirs, WSL path translation on Windows, Colima-shared mounts on macOS).
-3. **Register** the provider in the area's registry keyed by capability id, so services and the assistant look it up from the manifest instead of branching on `sys.platform`.
+   - The data dir comes from `athena/config.py` (platformdirs). Paths a user supplies go through the containment checks in `athena/files/paths.py`. On macOS, Colima only mounts `$HOME`. WSL path translation for bind mounts isn't built yet (STATUS → Next).
+3. **Register** the provider in the area's registry keyed by capability id (`MANAGERS` in `athena/packages/__init__.py`; `runtime_from(capability)` for containers), so services and the assistant look it up from the manifest instead of branching on `sys.platform`.
 4. **Service + router.** Services hold logic; routers stay thin. Mutating endpoints return a `job_id`.
 5. **Assistant tool** (if useful). Register it only when the capability is `ready`. Read-only tools run freely. Mutating tools must be deferred tools that need user approval.
 6. **UI.** Gate the nav item, page and buttons on the capability via the `useCapability(id)` hook. A missing capability renders shadcn `empty` with the `detail` and any setup action, never a broken page.
