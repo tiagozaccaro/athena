@@ -89,3 +89,16 @@ class SystemSetting(SQLModel, table=True):
 
     key: str = Field(primary_key=True, max_length=64)
     value: str
+
+
+class FileLocation(SQLModel, table=True):
+    """A folder the file manager may browse (docs/mvp-design.md §4.3). Nothing outside
+    the configured locations is reachable through the files API."""
+
+    __tablename__ = "file_locations"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(unique=True, max_length=64)
+    path: str = Field(max_length=1024)
+    """Absolute path on the host."""
+    created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))

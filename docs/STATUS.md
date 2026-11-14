@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M5 (packages + terminal). M4 is done (#20, #21, #22). Part A, package managers, merged in #23. Part B, the terminal, is in a PR from `feat/m5-terminal`.
+**Current milestone:** M6 (files, shares, cloud). M5 is done (#23, #24). Part A, the file manager, is in a PR from `feat/m6-files`; part B is share links and WebDAV, part C rclone cloud storage.
 
 ## Done
 
@@ -116,7 +116,7 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - Fixtures: real recordings for brew, apt, apk, dnf4/dnf5, zypper, pacman and flatpak search (throwaway containers, images removed afterwards) and winget list (Windows CI runner); hand-written for snap, scoop, choco and the rest of winget (README says which). CI's real reads: apt (Ubuntu), brew (macOS), choco and winget (Windows) all parse; the first Windows run showed winget ids can contain spaces, now handled. Read-only real-tool tests run where the tool exists (brew passes locally).
   - Web: Packages page (tab per manager; Installed with filter, inline update badges, uninstall; Updates with upgrade one/all; Search with install), confirm dialogs, job dialog, notes (pacman, choco). Nav item via `capability: "packages.*"`.
   - 238 server tests pass (49 new); the real-tool tests for apt, choco and winget skip on this Mac and run in CI on their OS. Verified in the browser on macOS with real Homebrew reads and a stub for changes (nothing installed or removed on the host): installed list (49) and updates (12) match `brew`, filter, search with descriptions, install (stub), a failing install (exit code and Homebrew's error in the dialog), upgrade all and uninstall with confirmations (cancel sends nothing), refresh, audit rows, phone width (fixed: row actions were pushed off-screen), dark mode, no console errors; a host without Homebrew hides the nav item and the page says so.
-- **M5 part B, terminal** (branch `feat/m5-terminal`):
+- **M5 part B, terminal** (#24):
   - `athena/terminal/`: `PtySession` (stdlib pty plus a `TIOCSCTTY` exec shim on POSIX instead of `pty.fork()`, which can deadlock a threaded server; pywinpty on Windows) and the host and container shells.
   - `WS /api/terminal/ws?target=host|container:<id>`: cookie, then the CSRF token in the first frame, admin only, gated by `terminal.host` and the new system setting. Signing out closes open terminals within 60 s, and turning the terminal off closes them at once. A limit of 10 sessions. Every open and close is audited (with the exit code or reason, and the duration).
   - System settings: `system_settings` table (migration 0007), `GET/PUT /api/settings/system` (`terminal_enabled`, admin-only PUT, audited).
@@ -130,14 +130,20 @@ _Shared handoff log for every coding agent. Update it at the end of each session
 
 ## In progress
 
-- Review and merge of M5 part B (terminal). M5 is complete once it merges.
+- **M6 part A, file manager** (branch `feat/m6-files`, PR open):
+  - `athena/files/` (`paths.py` containment and portable names, `locations.py` with default Home and App data seeded once, `ops.py` list, text read/write, rename, delete via send2trash, copy/move, uploads, streamed folder zips) and `athena/api/files.py` (`/api/files/*`, see `docs/mvp-design.md` §4.3). `file_locations` table (migration 0008). New dependency: send2trash (BSD-3).
+  - Web: `/files` (nav gated by `files`), `components/files/` (view, chunked upload queue and panel, preview and text editor sheet, copy/move folder picker, locations dialog). Shared fixes: toasts now sit above sheets and dialogs (`z-[100]`; a save error was hidden behind the preview sheet), and `Checkbox` shows a minus when indeterminate.
+  - 276 server tests (19 new). Verified in the browser on macOS (release build, fresh data dir, `HOME` pointed at a scratch folder): browse and breadcrumbs, text edit and save (checked on disk) and the 409 when the file changed underneath, a 20 MB upload in three 8 MB pieces (byte-identical) plus a second upload with the same name (error, then Replace sends `overwrite=true`), image preview, New folder with a taken name (inline error), multi-select move (job), copy to another location (byte-identical), rename (selects the name without its extension), delete to trash (macOS trash works), add location with a bad path (inline error) and a good one, a location whose folder vanished (Missing badge and a clear error), remove location, hidden files toggle, folder zip download, audit rows, phone width, dark mode, no console errors besides the deliberate 409s.
+  - Next: merge, then part B (share links `/s/<token>`, WebDAV through wsgidav over the same locations).
 - Not yet verified for real: the Windows terminal (ConPTY plus PowerShell) beyond CI's pty tests, and the container shell through Docker in WSL.
 - Not yet verified for real: the Linux system managers' install/uninstall (only recorded reads and fakes) and every Windows manager (hand-written fixtures; CI runs choco/winget reads on Windows).
-- Not yet verified: a real `athena service install` on any OS (only dry runs), and real capability detection on Linux and Windows hosts (only CI and fakes).
+- Not yet verified: a real `athena service install` on any OS (only dry runs), and real capability detection on Linux and Windows hosts (only CI and fakes). The file manager's trash on Linux (root service) and Windows is covered only by the fallback message.
 
 ## Next
 
-M6: files, shares and cloud (`docs/mvp-design.md` §4.3, §4.4).
+M6 part B: share links and WebDAV (§4.3); part C: rclone remotes and copy/sync (§4.4).
+
+Later (files): folder uploads (drag a folder), resumable uploads across page reloads, search, and SMB/NFS shares.
 
 Later: switches for package installs and the assistant's shell in system settings (§7), next to the terminal's. Proxying the terminal WebSocket in `next dev` hasn't been checked; use the release build to work on it.
 

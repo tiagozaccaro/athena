@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from athena import __version__
 from athena.api import apps, auth, capabilities, containers, jobs, system
+from athena.api import files as files_api
 from athena.api import packages as packages_api
 from athena.api import settings as settings_api
 from athena.api import store as store_api
@@ -19,6 +20,7 @@ from athena.auth.service import LoginThrottle
 from athena.catalog.registry import CatalogRegistry
 from athena.config import Settings
 from athena.db import Database
+from athena.files.locations import seed_defaults
 from athena.jobs import JobManager
 from athena.logging_setup import setup_logging
 from athena.monitor import HostMonitor
@@ -39,6 +41,8 @@ def create_app(
     store = capability_store or CapabilityStore()
     db = Database(settings.data_dir / "athena.db")
     db.migrate()
+    for session in db.session():
+        seed_defaults(session, settings.data_dir)
 
     @contextlib.asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -83,6 +87,7 @@ def create_app(
     app.include_router(store_api.router, prefix="/api", dependencies=[require_user])
     app.include_router(settings_api.router, prefix="/api", dependencies=[require_user])
     app.include_router(packages_api.router, prefix="/api", dependencies=[require_user])
+    app.include_router(files_api.router, prefix="/api", dependencies=[require_user])
     # A WebSocket can't use require_user; the route checks the session and CSRF itself.
     app.include_router(terminal_api.router, prefix="/api")
 
