@@ -102,3 +102,27 @@ class FileLocation(SQLModel, table=True):
     path: str = Field(max_length=1024)
     """Absolute path on the host."""
     created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
+
+
+class Share(SQLModel, table=True):
+    """A public link to a file or folder in a location (docs/mvp-design.md §4.3).
+
+    The token is the link, so it's stored as is: the admin can copy the link again
+    later. Removing the location removes its links.
+    """
+
+    __tablename__ = "shares"
+
+    id: int | None = Field(default=None, primary_key=True)
+    token: str = Field(unique=True, index=True, max_length=64)
+    location_id: int = Field(foreign_key="file_locations.id", index=True, ondelete="CASCADE")
+    path: str = Field(max_length=4096)
+    """Relative to the location, with `/` separators; "" is the location itself."""
+    mode: str = Field(default="read", max_length=16)
+    """"read": view and download. "upload": a drop box that can't be listed."""
+    password_hash: str | None = None
+    expires_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
+    created_by: str = Field(max_length=64)
+    created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
+    downloads: int = 0
+    uploads: int = 0
