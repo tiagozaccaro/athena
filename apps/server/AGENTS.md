@@ -30,6 +30,7 @@ Python 3.13 (uv), FastAPI, SQLModel and Alembic on SQLite. Package `athena`, CLI
 | `catalog/` | `model.py` (`x-athena` format), `loader.py` (load and resolve install values), `registry.py` (built-in plus downloaded catalogs), `remote.py` (fetch and extract archives), `casaos.py` (CasaOS import) |
 | `packages/` | `base.py`, then one class per manager in `linux.py`, `apps.py` (brew, flatpak, snap), `windows.py`; `MANAGERS` in `__init__.py` |
 | `files/` | `paths.py` (containment), `locations.py`, `ops.py`, `shares.py`, `webdav.py` |
+| `cloud/` | `rclone.py` (the `rclone rcd` sidecar and its client), `remotes.py` (backends, remotes, config questions, remote paths), `transfers.py` (copy, move and sync jobs with progress and cancel) |
 | `terminal/` | `pty.py` (one async pty for POSIX and ConPTY), `shells.py` (host or container shell) |
 | `service/` | `athena service install` per OS (`platforms.py`, `plan.py`) |
 | `jobs.py`, `audit.py`, `monitor.py`, `system_settings.py` | Jobs over SSE, the audit log, host stats, host-wide settings |
@@ -45,6 +46,7 @@ Python 3.13 (uv), FastAPI, SQLModel and Alembic on SQLite. Package `athena`, CLI
 - **Catalog:** apps live in `catalog/apps/<id>/compose.yaml` at the repo root (see `catalog/README.md` and the `athena-catalog-app` skill). `tests/test_catalog.py` checks every one. Remote fetches are stubbed in tests (`remote.download`).
 - **Packages:** parsers are pure functions over recorded output. A new parser needs a fixture in `tests/fixtures/packages/` and a line in that folder's README saying how it was captured.
 - **Shares and WebDAV:** `api/shares.py` has the admin `router` plus the public `public_router`. `files/webdav.py` holds the wsgidav provider, sign-in and the `/dav` middleware. Location folders can never be deleted, moved or replaced over WebDAV (wsgidav would empty them).
+- **Cloud (rclone):** talk to rclone only through `app.state.rclone` (`Rclone.call`), never by running the `rclone` CLI. Check remote paths with `remotes.check_path` and build fs strings with `remotes.fs_of`. rclone itself lets `name:..` leave an alias's folder. Jobs that run rclone transfers use `transfers.run(job, rclone, steps)` and start with `cancellable=True`.
 - **Host access** always goes through a capability; never branch on `sys.platform` in a router. See the `athena-platform-feature` skill.
 
 ## Tests
@@ -52,6 +54,7 @@ Python 3.13 (uv), FastAPI, SQLModel and Alembic on SQLite. Package `athena`, CLI
 - **Apps for tests:** `conftest.make_app(tmp_path)` builds an app on a fake macOS host. Pass `store=` with a `FakeProbe` from `tests/fake_probe.py` to simulate another OS. `signed_in(client)` creates the admin and sets the CSRF header.
 - **Tests that start jobs** must hold the `TestClient` open as a context manager for the whole test (see `client_for` in `tests/test_packages_api.py`), or the job's event loop closes.
 - **Real-tool tests** use `pytest.mark.skipif` when the tool or engine is missing, so each CI OS runs its own (apt on Ubuntu, brew on macOS, winget and choco on Windows).
+- **Cloud tests** (`tests/test_cloud.py`) run a real `rclone rcd` (CI installs rclone on all three OSes) with `alias` remotes over temporary folders, plus a `FakeRclone` for things rclone can't easily produce, like a transfer that's still running when it's cancelled.
 - **Write code that passes on Windows:**
   - Open text with `encoding="utf-8"`, and write fixtures with `write_bytes`.
   - Compare `Path` objects, not strings with `/`.

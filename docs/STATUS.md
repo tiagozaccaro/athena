@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M6 (files, shares, cloud). Part A, the file manager, is merged (#25). Part B, share links and WebDAV, is in a PR from `feat/m6-shares`; part C is rclone cloud storage.
+**Current milestone:** M6 (files, shares, cloud). Part A, the file manager, is merged (#25), and part B, share links and WebDAV (#31). Part C, rclone cloud storage, is in a PR from `feat/m6-cloud`.
 
 ## Done
 
@@ -137,15 +137,23 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - Web: `/files` (nav gated by `files`), `components/files/` (view, chunked upload queue and panel, preview and text editor sheet, copy/move folder picker, locations dialog). Shared fixes: toasts now sit above sheets and dialogs (`z-[100]`; a save error was hidden behind the preview sheet), and `Checkbox` shows a minus when indeterminate.
   - 276 server tests (19 new). Verified in the browser on macOS (release build, fresh data dir, `HOME` pointed at a scratch folder): browse and breadcrumbs, text edit and save (checked on disk) and the 409 when the file changed underneath, a 20 MB upload in three 8 MB pieces (byte-identical) plus a second upload with the same name (error, then Replace sends `overwrite=true`), image preview, New folder with a taken name (inline error), multi-select move (job), copy to another location (byte-identical), rename (selects the name without its extension), delete to trash (macOS trash works), add location with a bad path (inline error) and a good one, a location whose folder vanished (Missing badge and a clear error), remove location, hidden files toggle, folder zip download, audit rows, phone width, dark mode, no console errors besides the deliberate 409s.
 
-## In progress
-
-- **M6 part B, share links and WebDAV** (branch `feat/m6-shares`, PR open). Design in `docs/mvp-design.md` §4.3.
+- **M6 part B, share links and WebDAV** (#31). Design in `docs/mvp-design.md` §4.3.
   - Share links: `shares` table (migration 0009), `athena/files/shares.py`, `athena/api/shares.py` (`/api/shares` for the admin, public `/api/public/shares/{token}`), `/s/<token>` served from the static `/s/` page. Read links (file or folder, previews, zip) and upload-only drop boxes; optional password (path-scoped HMAC cookie, throttled), expiry. `receive_chunk` and `file_response` in `api/files.py` are now shared by both APIs.
   - WebDAV: `athena/files/webdav.py` (wsgidav via a2wsgi at `/dav/`, locations as the root, off by default, a generated WebDAV password), `athena/api/webdav.py`. New dependencies: wsgidav (MIT), a2wsgi (Apache-2.0).
   - Web: Share… in the Files row menu, a Links button and `/files/shares/`, the visitor page `/s/`, Settings → System → Network share. `useUploads` takes a transport, so the drop box reuses the upload queue.
   - 297 server tests (21 new). Found by a test: wsgidav's DELETE on a collection whose `delete()` refuses falls back to deleting every item inside, so `DELETE /dav/<location>/` emptied the location. It's now refused in `handle_delete` (and copies/moves onto a location in `handle_copy`/`handle_move`).
   - Verified in the browser (release build, fresh data dir, `HOME` pointed at a scratch folder): a password link with 7-day expiry created from Pictures' menu (copied, badges right), opened in a separate browser context with no session: wrong password (inline error), right password, image preview, a text download and the folder zip byte-checked, `../` refused (400), referrer meta `no-referrer`; an upload-only link from Inbox: two 20 MB uploads of the same name arrived byte-identical as `report.bin` and `report (1).bin`, counters and `share.upload` audit rows right; Links page and visitor page at phone width in dark mode; removing a link (the visitor then sees "This link doesn't work"); WebDAV switch and Make password in Settings. WebDAV was driven with curl through Finder's sequence (OPTIONS shows Class 1,2; PROPFIND; LOCK, a PUT refused without the lock token and accepted with it; PROPPATCH; UNLOCK; MOVE across locations; sandbox headers on GET; DELETE of a location 403 with nothing removed; 401 without credentials).
-  - Not verified: a real Finder or Windows Explorer mount. `mount_webdav` fails in the agent's sandbox before reaching the server. Next: mount from Finder and Windows Explorer by hand (Windows over plain HTTP needs `BasicAuthLevel` 2), then merge and start part C.
+  - Not verified: a real Finder or Windows Explorer mount (`mount_webdav` fails in the agent's sandbox). Mount by hand to check (Windows over plain HTTP needs `BasicAuthLevel` 2).
+
+## In progress
+
+- **M6 part C, cloud storage with rclone** (#35, branch `feat/m6-cloud`). Design in `docs/mvp-design.md` §4.4.
+  - Server: `athena/cloud/` (`rclone.py` sidecar: `rclone rcd --rc-serve` on 127.0.0.1, random port and password, Athena's own 0600 config, started on first use, restarted if it dies, stopped on shutdown; `remotes.py`; `transfers.py`) and `athena/api/cloud.py` (`/api/cloud/*`, gated by `cloud.rclone`). Jobs gained `progress`, `cancellable` and `POST /api/jobs/{id}/cancel`. No new dependencies (stdlib HTTP).
+  - Web: `/cloud` (remotes, Add/Edit with rclone's questions, Sync folders with a preview of deletions, install steps without rclone), remotes in Files' picker and in Copy/Move, `FolderPicker`, the job dialog's progress bar and Cancel. shadcn `combobox` added.
+  - 314 server tests (16 new in `tests/test_cloud.py`, most against a real rclone); CI now installs rclone on all three OSes (apt's older one on Ubuntu, on purpose).
+  - Verified in the browser (release build, fresh data dir, scratch `HOME`, a real WebDAV remote from `rclone serve webdav`): add a WebDAV remote (password obscured in the config), edit with secrets kept, browse, 30 MB upload in pieces (byte-identical), image preview, Copy to… a remote with progress, a slow copy with "finishing…" and Cancel, sync preview and sync (deletes what it listed), Google Drive up to the `rclone authorize` paste (bad token: error under the same question; Cancel removes the half-made remote), the page without rclone, phone width, dark mode, audit rows, no console errors (only Next's CSS preload warning). The same flows also passed through an API script.
+  - Fixed during verification: the sync dialog's destination defaulted to Home (it read the remotes before they loaded); rclone's refused answers came back as an empty question; option labels were raw names (`client_id` → "Client ID"); help text ran lines together; audit said "location 1" instead of the name.
+  - Not verified: a real cloud account (no credentials here; the OAuth step stops at the paste), Windows and Linux beyond CI's tests, and rclone versions older than CI's Ubuntu one.
 - Not yet verified for real: the Windows terminal (ConPTY plus PowerShell) beyond CI's pty tests, and the container shell through Docker in WSL.
 - Not yet verified for real: the other Linux system managers' install/uninstall (dnf, pacman, zypper, apk; apt is done, see below) and every Windows manager (hand-written fixtures; CI runs choco/winget reads on Windows).
 - E2E install testing (branch `ci/e2e-install`): the `E2E` workflow runs the real installers with a wheel built from the commit, on Ubuntu, macOS and Windows runners, then `scripts/e2e/smoke.py` (Playwright) and an uninstall check. New: `scripts/build-wheel.sh` (now also used by `release.yml`), and `--wheel` / `-Wheel` in the installers. Verified locally on 2026-11-14:
@@ -155,7 +163,9 @@ _Shared handoff log for every coding agent. Update it at the end of each session
 
 ## Next
 
-M6 part C: rclone remotes and copy/sync (§4.4).
+After part C merges, M6 is done: next is M7, the AI assistant (§4.5).
+
+Later (cloud): mounts (FUSE; `rclone nfsmount` on macOS), scheduled or saved syncs, encrypting the rclone config with the OS keyring (§7), uploads to a remote without staging the whole file on the server first, Range requests for seeking in remote videos, and stopping an orphaned `rclone rcd` if Athena is killed (`SIGKILL` leaves it running).
 
 Later (shares): a size limit for upload links, per-file audit of WebDAV changes, locks that survive a restart, WebDAV for more than one account.
 

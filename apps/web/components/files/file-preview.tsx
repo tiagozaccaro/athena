@@ -27,7 +27,9 @@ import {
   downloadUrl,
   extension,
   type FileEntry,
+  isRemote,
   previewOf,
+  type Source,
 } from "@/components/files/file-utils"
 import { formatBytes } from "@/lib/format"
 
@@ -128,20 +130,22 @@ function TextPreview({
   )
 }
 
-/** Shows an image, video, audio or text file; text files can be edited and saved. */
+/** Shows an image, video, audio or text file; text files in a location can be edited
+ * and saved. On a remote, text files are only downloaded. */
 export function FilePreview({
-  location,
+  source,
   entry,
   onClose,
   onSaved,
 }: {
-  location: number
+  source: Source
   entry: FileEntry | null
   onClose: () => void
   onSaved: () => void
 }) {
-  const kind = entry ? previewOf(entry) : null
-  const inline = entry ? downloadUrl(location, entry.path, true) : ""
+  const previewed = entry ? previewOf(entry) : null
+  const kind = previewed === "text" && isRemote(source) ? null : previewed
+  const inline = entry ? downloadUrl(source, entry.path, true) : ""
   return (
     <Sheet open={entry !== null} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
@@ -173,10 +177,10 @@ export function FilePreview({
           {entry && kind === "audio" ? (
             <audio src={inline} controls className="w-full" />
           ) : null}
-          {entry && kind === "text" ? (
+          {entry && kind === "text" && !isRemote(source) ? (
             <TextPreview
               key={entry.path}
-              location={location}
+              location={source.location}
               entry={entry}
               onSaved={onSaved}
             />
@@ -192,7 +196,7 @@ export function FilePreview({
             <Button
               variant="outline"
               nativeButton={false}
-              render={<a href={downloadUrl(location, entry.path)} download />}
+              render={<a href={downloadUrl(source, entry.path)} download />}
             >
               <DownloadIcon />
               Download

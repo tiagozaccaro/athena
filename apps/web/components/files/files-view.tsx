@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
+  CloudIcon,
   CopyIcon,
   DownloadIcon,
   EllipsisVerticalIcon,
@@ -79,6 +80,7 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select"
@@ -97,6 +99,7 @@ import { Toggle } from "@workspace/ui/components/toggle"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useAuth } from "@/components/auth-provider"
+import { useRemotes } from "@/components/cloud/use-remotes"
 import { FilePreview } from "@/components/files/file-preview"
 import {
   downloadUrl,
@@ -104,14 +107,19 @@ import {
   folderHref,
   formatModified,
   iconOf,
-  joinPath,
+  isRemote,
   type Location,
+  sameSource,
+  type Source,
+  sourceFromKey,
+  sourceKey,
 } from "@/components/files/file-utils"
 import { LocationsDialog } from "@/components/files/locations-dialog"
 import { ShareDialog, type ShareTarget } from "@/components/files/share-dialog"
 import {
   TransferDialog,
   type TransferRequest,
+  type TransferStart,
 } from "@/components/files/transfer-dialog"
 import { UploadsPanel } from "@/components/files/uploads-panel"
 import { useUploads } from "@/components/files/use-uploads"
@@ -211,10 +219,13 @@ function NameDialog({
 
 function DeleteDialog({
   names,
+  remote,
   onClose,
   onConfirm,
 }: {
   names: string[] | null
+  /** On a remote there's no trash: deletes are permanent. */
+  remote: boolean
   onClose: () => void
   onConfirm: (permanent: boolean) => void
 }) {
@@ -227,19 +238,23 @@ function DeleteDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete {what}?</AlertDialogTitle>
           <AlertDialogDescription>
-            {permanent
-              ? "This can't be undone."
-              : "It goes to the server's trash, where you can restore it from the desktop."}
+            {remote
+              ? "It's deleted from the remote. Some services keep their own trash; Athena can't restore it."
+              : permanent
+                ? "This can't be undone."
+                : "It goes to the server's trash, where you can restore it from the desktop."}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="delete-permanent"
-            checked={permanent}
-            onCheckedChange={(c) => setPermanent(c === true)}
-          />
-          <Label htmlFor="delete-permanent">Delete permanently</Label>
-        </div>
+        {remote ? null : (
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="delete-permanent"
+              checked={permanent}
+              onCheckedChange={(c) => setPermanent(c === true)}
+            />
+            <Label htmlFor="delete-permanent">Delete permanently</Label>
+          </div>
+        )}
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
@@ -254,11 +269,13 @@ function DeleteDialog({
   )
 }
 
-/** The file manager: one location at a time, a folder per URL (?loc=&path=). */
+/** The file manager: one location or cloud remote at a time, a folder per URL
+ * (?loc=&path= or ?remote=&path=). */
 export function FilesView() {
   const router = useRouter()
   const params = useSearchParams()
   const { user } = useAuth()
+  const { remotes } = useRemotes()
   const [locations, setLocations] = React.useState<Location[] | null>(null)
   const [locationsOpen, setLocationsOpen] = React.useState(false)
   const [list, setList] = React.useState<ListState>({ status: "loading" })
@@ -285,20 +302,36 @@ export function FilesView() {
     void loadLocations()
   }, [loadLocations])
 
+  const remoteName = params.get("remote")
   const requested = Number(params.get("loc")) || null
   const path = params.get("path") ?? ""
-  const location =
-    locations?.find((l) => l.id === requested) ??
-    (requested === null
-      ? (locations?.find((l) => l.available) ?? locations?.[0])
-      : undefined)
+  const remote = remoteName
+    ? remotes?.find((r) => r.name === remoteName)
+    : undefined
+  const location = remoteName
+    ? undefined
+    : (locations?.find((l) => l.id === requested) ??
+      (requested === null
+        ? (locations?.find((l) => l.available) ?? locations?.[0])
+        : undefined))
   const locId = location?.id ?? 0
+  const source: Source = remoteName ? { remote: remoteName } : { location: locId }
+  const key = sourceKey(source)
+  // What the toolbar shows for the current location or remote.
+  const place = remote
+    ? { name: remote.name, available: true, writable: true }
+    : location
 
   const load = React.useCallback(async () => {
-    if (!locId) return
-    const { data, error, response } = await api.GET("/api/files/list", {
-      params: { query: { location: locId, path } },
-    })
+    const current = sourceFromKey(key)
+    if (!isRemote(current) && !current.location) return
+    const { data, error, response } = isRemote(current)
+      ? await api.GET("/api/cloud/files/list", {
+          params: { query: { remote: current.remote, path } },
+        })
+      : await api.GET("/api/files/list", {
+          params: { query: { location: current.location, path } },
+        })
     if (data) setList({ status: "ok", data })
     else
       setList({
@@ -306,7 +339,7 @@ export function FilesView() {
         error: errorMessage(error),
         code: response.status,
       })
-  }, [locId, path])
+  }, [key, path])
 
   React.useEffect(() => {
     setList({ status: "loading" })
@@ -314,12 +347,12 @@ export function FilesView() {
     void load()
   }, [load])
 
-  const uploads = useUploads((loc, folder) => {
-    if (loc === locId && folder === path) void load()
+  const uploads = useUploads((src, folder) => {
+    if (sameSource(src, source) && folder === path) void load()
   })
 
-  const go = (target: string, loc = locId) =>
-    router.push(folderHref(loc, target))
+  const go = (target: string, to: Source = source) =>
+    router.push(folderHref(to, target))
 
   const entries =
     list.status === "ok"
@@ -343,15 +376,22 @@ export function FilesView() {
   }
 
   function startUpload(files: FileList | File[] | null) {
-    if (!files || !locId) return
+    if (!files || !place) return
     const all = Array.from(files)
-    if (all.length) uploads.add(all, locId, path)
+    if (all.length) uploads.add(all, source, path)
   }
 
   async function submitName(name: string): Promise<string | null> {
     if (!naming) return null
-    const result =
-      naming.kind === "folder"
+    const result = isRemote(source)
+      ? naming.kind === "folder"
+        ? await api.POST("/api/cloud/files/folder", {
+            body: { remote: source.remote, path, name },
+          })
+        : await api.POST("/api/cloud/files/rename", {
+            body: { remote: source.remote, path: naming.entry.path, name },
+          })
+      : naming.kind === "folder"
         ? await api.POST("/api/files/folder", {
             body: { location: locId, path, name },
           })
@@ -366,9 +406,13 @@ export function FilesView() {
 
   async function remove(paths: string[], permanent: boolean) {
     setDeleting(null)
-    const { data, error } = await api.POST("/api/files/delete", {
-      body: { location: locId, paths, permanent },
-    })
+    const { data, error } = isRemote(source)
+      ? await api.POST("/api/cloud/files/delete", {
+          body: { remote: source.remote, paths },
+        })
+      : await api.POST("/api/files/delete", {
+          body: { location: locId, paths, permanent },
+        })
     void load()
     if (!data) {
       toast.add({
@@ -396,21 +440,48 @@ export function FilesView() {
     }
   }
 
-  async function startTransfer(body: Schemas["TransferIn"]) {
+  async function startTransfer(start: TransferStart) {
     setTransfer(null)
-    const { data, error } = await api.POST("/api/files/transfer", { body })
+    const { data, error } =
+      start.kind === "files"
+        ? await api.POST("/api/files/transfer", { body: start.body })
+        : await api.POST("/api/cloud/transfer", { body: start.body })
     if (data) setJob(data)
     else
       toast.add({
         type: "error",
-        title: `Couldn't ${body.op}`,
+        title: `Couldn't ${start.body.op}`,
         description: errorMessage(error),
       })
   }
 
-  if (locations === null) return <Skeleton className="h-96 w-full" />
+  if (locations === null || (remoteName && remotes === null)) {
+    return <Skeleton className="h-96 w-full" />
+  }
 
-  if (!location) {
+  if (remoteName && !remote) {
+    return (
+      <Empty className="border">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CloudIcon />
+          </EmptyMedia>
+          <EmptyTitle>No such remote</EmptyTitle>
+          <EmptyDescription>
+            There&apos;s no cloud remote called {remoteName}, or rclone isn&apos;t
+            available on this host.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button render={<Link href="/cloud/" />} nativeButton={false}>
+            Go to Cloud
+          </Button>
+        </EmptyContent>
+      </Empty>
+    )
+  }
+
+  if (!place) {
     return (
       <>
         <Empty className="border">
@@ -448,8 +519,16 @@ export function FilesView() {
   }
 
   const crumbs = path ? path.split("/") : []
-  const items = locations.map((l) => ({ value: String(l.id), label: l.name }))
-  const readOnly = !location.writable
+  const localItems = locations.map((l) => ({
+    value: sourceKey({ location: l.id }),
+    label: l.name,
+  }))
+  const remoteItems = (remotes ?? []).map((r) => ({
+    value: sourceKey({ remote: r.name }),
+    label: r.name,
+  }))
+  const onRemote = isRemote(source)
+  const readOnly = !place.writable
 
   const rowMenu = (entry: FileEntry) => (
     <DropdownMenu>
@@ -463,26 +542,30 @@ export function FilesView() {
             {entry.kind === "dir" ? <FolderOpenIcon /> : <EyeIcon />}
             Open
           </DropdownMenuItem>
-          <DropdownMenuItem
-            render={<a href={downloadUrl(locId, entry.path)} download />}
-          >
-            <DownloadIcon />
-            {entry.kind === "dir" ? "Download as zip" : "Download"}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={entry.kind === "other"}
-            onClick={() =>
-              setSharing({
-                location: locId,
-                path: entry.path,
-                name: entry.name,
-                kind: entry.kind,
-              })
-            }
-          >
-            <Share2Icon />
-            Share…
-          </DropdownMenuItem>
+          {onRemote && entry.kind === "dir" ? null : (
+            <DropdownMenuItem
+              render={<a href={downloadUrl(source, entry.path)} download />}
+            >
+              <DownloadIcon />
+              {entry.kind === "dir" ? "Download as zip" : "Download"}
+            </DropdownMenuItem>
+          )}
+          {onRemote ? null : (
+            <DropdownMenuItem
+              disabled={entry.kind === "other"}
+              onClick={() =>
+                setSharing({
+                  location: locId,
+                  path: entry.path,
+                  name: entry.name,
+                  kind: entry.kind,
+                })
+              }
+            >
+              <Share2Icon />
+              Share…
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
@@ -495,7 +578,7 @@ export function FilesView() {
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() =>
-              setTransfer({ op: "copy", location: locId, paths: [entry.path] })
+              setTransfer({ op: "copy", source, paths: [entry.path] })
             }
           >
             <CopyIcon />
@@ -504,7 +587,7 @@ export function FilesView() {
           <DropdownMenuItem
             disabled={readOnly}
             onClick={() =>
-              setTransfer({ op: "move", location: locId, paths: [entry.path] })
+              setTransfer({ op: "move", source, paths: [entry.path] })
             }
           >
             <FolderInputIcon />
@@ -530,22 +613,33 @@ export function FilesView() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <Select
-          items={items}
-          value={String(locId)}
-          onValueChange={(v) => v && go("", Number(v))}
+          items={[...localItems, ...remoteItems]}
+          value={key}
+          onValueChange={(v) => v && go("", sourceFromKey(v))}
         >
           <SelectTrigger className="w-full sm:w-56" aria-label="Location">
-            <HardDriveIcon />
+            {onRemote ? <CloudIcon /> : <HardDriveIcon />}
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              {items.map((item) => (
+              {remoteItems.length ? <SelectLabel>Locations</SelectLabel> : null}
+              {localItems.map((item) => (
                 <SelectItem key={item.value} value={item.value}>
                   {item.label}
                 </SelectItem>
               ))}
             </SelectGroup>
+            {remoteItems.length ? (
+              <SelectGroup>
+                <SelectLabel>Cloud</SelectLabel>
+                {remoteItems.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            ) : null}
           </SelectContent>
         </Select>
         {user.is_admin ? (
@@ -558,7 +652,9 @@ export function FilesView() {
             <Settings2Icon />
           </Button>
         ) : null}
-        {!location.available ? (
+        {onRemote ? (
+          <Badge variant="outline">{remote?.description}</Badge>
+        ) : !place.available ? (
           <Badge variant="destructive">Missing</Badge>
         ) : readOnly ? (
           <Badge variant="secondary">Read-only</Badge>
@@ -628,11 +724,11 @@ export function FilesView() {
         <BreadcrumbList>
           <BreadcrumbItem>
             {crumbs.length ? (
-              <BreadcrumbLink render={<Link href={folderHref(locId, "")} />}>
-                {location.name}
+              <BreadcrumbLink render={<Link href={folderHref(source, "")} />}>
+                {place.name}
               </BreadcrumbLink>
             ) : (
-              <BreadcrumbPage>{location.name}</BreadcrumbPage>
+              <BreadcrumbPage>{place.name}</BreadcrumbPage>
             )}
           </BreadcrumbItem>
           {crumbs.map((name, i) => {
@@ -647,7 +743,7 @@ export function FilesView() {
                   ) : (
                     <BreadcrumbLink
                       className="truncate"
-                      render={<Link href={folderHref(locId, target)} />}
+                      render={<Link href={folderHref(source, target)} />}
                     >
                       {name}
                     </BreadcrumbLink>
@@ -663,13 +759,13 @@ export function FilesView() {
         <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2">
           <span className="text-sm font-medium">{chosen.length} selected</span>
           <div className="ml-auto flex flex-wrap gap-2">
-            {chosen.length === 1 ? (
+            {chosen.length === 1 && !(onRemote && chosen[0]!.kind === "dir") ? (
               <Button
                 variant="outline"
                 size="sm"
                 nativeButton={false}
                 render={
-                  <a href={downloadUrl(locId, chosen[0]!.path)} download />
+                  <a href={downloadUrl(source, chosen[0]!.path)} download />
                 }
               >
                 <DownloadIcon />
@@ -682,7 +778,7 @@ export function FilesView() {
               onClick={() =>
                 setTransfer({
                   op: "copy",
-                  location: locId,
+                  source,
                   paths: chosen.map((e) => e.path),
                 })
               }
@@ -697,7 +793,7 @@ export function FilesView() {
               onClick={() =>
                 setTransfer({
                   op: "move",
-                  location: locId,
+                  source,
                   paths: chosen.map((e) => e.path),
                 })
               }
@@ -748,7 +844,7 @@ export function FilesView() {
       >
         {dragging ? (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 text-sm font-medium">
-            Drop to upload to {path.split("/").pop() || location.name}
+            Drop to upload to {path.split("/").pop() || place.name}
           </div>
         ) : null}
         {list.status === "loading" ? (
@@ -769,10 +865,10 @@ export function FilesView() {
                   <Button
                     variant="link"
                     className="h-auto p-0"
-                    render={<Link href={folderHref(locId, "")} />}
+                    render={<Link href={folderHref(source, "")} />}
                     nativeButton={false}
                   >
-                    Back to {location.name}
+                    Back to {place.name}
                   </Button>
                 ) : null}
               </AlertDescription>
@@ -900,12 +996,14 @@ export function FilesView() {
       />
       <DeleteDialog
         names={deleting?.map((p) => p.split("/").pop() ?? p) ?? null}
+        remote={onRemote}
         onClose={() => setDeleting(null)}
         onConfirm={(permanent) => deleting && void remove(deleting, permanent)}
       />
       <TransferDialog
         request={transfer}
         locations={locations.filter((l) => l.available)}
+        remotes={remotes ?? []}
         onClose={() => setTransfer(null)}
         onStart={startTransfer}
       />
@@ -918,7 +1016,7 @@ export function FilesView() {
         }}
       />
       <FilePreview
-        location={locId}
+        source={source}
         // The listing's copy, so the size follows a save.
         entry={
           (preview && entries.find((e) => e.path === preview.path)) ?? preview

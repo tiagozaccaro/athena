@@ -31,6 +31,16 @@ def get_job(job_id: str, request: Request) -> JobOut:
     responses={200: {"content": {"text/event-stream": {}}}},
 )
 def job_events(job_id: str, request: Request) -> StreamingResponse:
-    """Server-Sent Events: `log` (one output line, JSON string) and a final `status`."""
+    """Server-Sent Events: `log` (one output line, JSON string), `progress` (a
+    JobProgress, for jobs that report it) and a final `status`."""
     job = _job(request, job_id)
     return StreamingResponse(job.events(), media_type="text/event-stream", headers=SSE_HEADERS)
+
+
+@router.post("/{job_id}/cancel", operation_id="cancelJob", status_code=status.HTTP_202_ACCEPTED)
+async def cancel_job(job_id: str, request: Request) -> JobOut:
+    """Stop a job that says it's `cancellable`. It ends as failed, with "Cancelled"."""
+    job = _job(request, job_id)
+    if not await job.cancel():
+        raise HTTPException(status.HTTP_409_CONFLICT, "This job can't be stopped")
+    return job.out()

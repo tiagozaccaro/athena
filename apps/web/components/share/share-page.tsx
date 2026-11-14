@@ -231,7 +231,7 @@ function DropBox({ token, share }: { token: string; share: PublicShare }) {
   const [dragging, setDragging] = React.useState(false)
 
   function add(files: FileList | File[] | null) {
-    if (files?.length) uploads.add(Array.from(files), 0, "")
+    if (files?.length) uploads.add(Array.from(files), { location: 0 }, "")
   }
 
   return (

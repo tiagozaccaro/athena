@@ -94,7 +94,7 @@ export function SharesView() {
                   <TableRow key={link.id}>
                     <TableCell className="max-w-0 min-w-40">
                       <Link
-                        href={folderHref(link.location, folder)}
+                        href={folderHref({ location: link.location }, folder)}
                         className="flex min-w-0 items-center gap-2 font-medium hover:underline"
                       >
                         <Icon className="size-4 shrink-0 text-muted-foreground" />

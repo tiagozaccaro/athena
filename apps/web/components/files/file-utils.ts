@@ -15,6 +15,36 @@ import type { Schemas } from "@workspace/api-client"
 
 export type FileEntry = Schemas["FileEntry"]
 export type Location = Schemas["LocationOut"]
+export type Remote = Schemas["RemoteOut"]
+
+/** Where files live: a location (by id) or a cloud remote (by name). */
+export type Source = { location: number } | { remote: string }
+
+export function isRemote(source: Source): source is { remote: string } {
+  return "remote" in source
+}
+
+/** A string that identifies a source, for Select values and React keys. */
+export function sourceKey(source: Source): string {
+  return isRemote(source) ? `r:${source.remote}` : `l:${source.location}`
+}
+
+export function sourceFromKey(key: string): Source {
+  return key.startsWith("r:")
+    ? { remote: key.slice(2) }
+    : { location: Number(key.slice(2)) }
+}
+
+export function sameSource(a: Source, b: Source): boolean {
+  return sourceKey(a) === sourceKey(b)
+}
+
+/** The source as API query parameters ({location} or {remote}). */
+export function sourceQuery(source: Source): Record<string, string> {
+  return isRemote(source)
+    ? { remote: source.remote }
+    : { location: String(source.location) }
+}
 
 /** How a file opens in the preview sheet. Matches the server's inline types. */
 export type Preview = "image" | "video" | "audio" | "text" | null
@@ -108,20 +138,27 @@ export function joinPath(folder: string, name: string): string {
   return folder ? `${folder}/${name}` : name
 }
 
-/** URL of a file or folder download (`inline` shows media in the browser). */
+/** URL of a file or folder download (`inline` shows media in the browser). Folders
+ * on a remote can't be downloaded. */
 export function downloadUrl(
-  location: number,
+  source: Source,
   path: string,
   inline = false
 ): string {
-  const q = new URLSearchParams({ location: String(location), path })
+  const q = new URLSearchParams({ ...sourceQuery(source), path })
   if (inline) q.set("inline", "true")
-  return `/api/files/download?${q}`
+  return isRemote(source)
+    ? `/api/cloud/files/download?${q}`
+    : `/api/files/download?${q}`
 }
 
-/** Address bar URL for a folder in the file manager. */
-export function folderHref(location: number, path: string): string {
-  const q = new URLSearchParams({ loc: String(location) })
+/** Address bar URL for a folder in the file manager (?loc= or ?remote=). */
+export function folderHref(source: Source, path: string): string {
+  const q = new URLSearchParams(
+    isRemote(source)
+      ? { remote: source.remote }
+      : { loc: String(source.location) }
+  )
   if (path) q.set("path", path)
   return `/files/?${q}`
 }

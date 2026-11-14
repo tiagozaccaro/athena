@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from athena import __version__
 from athena.api import apps, auth, capabilities, containers, jobs, system
+from athena.api import cloud as cloud_api
 from athena.api import files as files_api
 from athena.api import packages as packages_api
 from athena.api import settings as settings_api
@@ -20,6 +21,7 @@ from athena.api import webdav as webdav_api
 from athena.auth.deps import require_user
 from athena.auth.service import LoginThrottle
 from athena.catalog.registry import CatalogRegistry
+from athena.cloud.rclone import Rclone
 from athena.config import Settings
 from athena.db import Database
 from athena.files.locations import seed_defaults
@@ -37,6 +39,7 @@ def create_app(
     capability_store: CapabilityStore | None = None,
     catalogs: CatalogRegistry | None = None,
     monitor: HostMonitor | None = None,
+    rclone: Rclone | None = None,
 ) -> FastAPI:
     settings = settings or Settings()
     if settings.log_to_file:
@@ -56,6 +59,7 @@ def create_app(
         yield
         task.cancel()
         await app.state.monitor.stop()
+        await asyncio.to_thread(app.state.rclone.stop)
 
     app = FastAPI(
         title="Athena",
@@ -78,6 +82,8 @@ def create_app(
     app.state.terminal_shell = shells.host_shell
     app.state.terminal_sessions = {}
     app.state.terminal_session_check = terminal_api.SESSION_CHECK_SECONDS
+    # Started on the first cloud call, so hosts that never use it don't run rclone.
+    app.state.rclone = rclone or Rclone(settings.data_dir)
     app.state.catalogs = catalogs or CatalogRegistry(remote_root=settings.data_dir / "catalogs")
     # Public: /api/health, /api/auth/* and /api/public/shares/{token} (a share link's
     # visitor). Everything else needs a signed-in session. /dav/ has its own sign-in.
@@ -96,6 +102,7 @@ def create_app(
     app.include_router(shares_api.router, prefix="/api", dependencies=[require_user])
     app.include_router(shares_api.public_router, prefix="/api")
     app.include_router(webdav_api.router, prefix="/api", dependencies=[require_user])
+    app.include_router(cloud_api.router, prefix="/api", dependencies=[require_user])
     # A WebSocket can't use require_user; the route checks the session and CSRF itself.
     app.include_router(terminal_api.router, prefix="/api")
 

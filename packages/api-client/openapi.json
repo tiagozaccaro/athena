@@ -333,7 +333,7 @@
           "jobs"
         ],
         "summary": "Job Events",
-        "description": "Server-Sent Events: `log` (one output line, JSON string) and a final `status`.",
+        "description": "Server-Sent Events: `log` (one output line, JSON string), `progress` (a\nJobProgress, for jobs that report it) and a final `status`.",
         "operationId": "streamJobEvents",
         "parameters": [
           {
@@ -351,6 +351,49 @@
             "description": "Successful Response",
             "content": {
               "text/event-stream": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs/{job_id}/cancel": {
+      "post": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Cancel Job",
+        "description": "Stop a job that says it's `cancellable`. It ends as failed, with \"Cancelled\".",
+        "operationId": "cancelJob",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
             }
           },
           "422": {
@@ -3332,10 +3375,817 @@
           }
         }
       }
+    },
+    "/api/cloud/providers": {
+      "get": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "List Providers",
+        "operationId": "listCloudProviders",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Provider"
+                  },
+                  "type": "array",
+                  "title": "Response Listcloudproviders"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cloud/remotes": {
+      "get": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "List Remotes",
+        "operationId": "listCloudRemotes",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RemoteOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listcloudremotes"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "Create Remote",
+        "description": "Creates the remote, then returns rclone's first follow-up question, if any.",
+        "operationId": "createCloudRemote",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigStep"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cloud/remotes/{name}": {
+      "get": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "Get Remote",
+        "operationId": "getCloudRemote",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "Update Remote",
+        "operationId": "updateCloudRemote",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoteUpdateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigStep"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "Delete Remote",
+        "description": "Athena forgets the remote; nothing stored on it is touched.",
+        "operationId": "deleteCloudRemote",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cloud/remotes/{name}/answer": {
+      "post": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "Answer Remote",
+        "description": "Answer the question a create or update returned.",
+        "operationId": "answerCloudRemote",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnswerIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigStep"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cloud/files/list": {
+      "get": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "List Files",
+        "operationId": "listCloudFiles",
+        "parameters": [
+          {
+            "name": "remote",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "title": "Remote"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096,
+              "default": "",
+              "title": "Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Listing"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cloud/files/download": {
+      "get": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "Download",
+        "description": "A file from the remote, streamed. Folders can't be downloaded: copy them to a\nlocation first. Like the file manager, only images, audio and video show inline.",
+        "operationId": "downloadCloudFile",
+        "parameters": [
+          {
+            "name": "remote",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "title": "Remote"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096,
+              "title": "Path"
+            }
+          },
+          {
+            "name": "inline",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Inline"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/octet-stream": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cloud/files/folder": {
+      "post": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "Create Folder",
+        "operationId": "createCloudFolder",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloudFolderIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileEntry"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cloud/files/rename": {
+      "post": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "Rename",
+        "operationId": "renameCloudFile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloudRenameIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileEntry"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cloud/files/delete": {
+      "post": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "Delete",
+        "operationId": "deleteCloudFiles",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloudDeleteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cloud/files/upload": {
+      "post": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "Upload Chunk",
+        "description": "Like /api/files/upload: pieces in order. They're kept on the server, and the file\nis sent to the remote after the last one, so that request takes longer.",
+        "operationId": "uploadCloudChunk",
+        "parameters": [
+          {
+            "name": "remote",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "title": "Remote"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "title": "Name"
+            }
+          },
+          {
+            "name": "upload_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{8,64}$",
+              "title": "Upload Id"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "total",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "title": "Total"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096,
+              "default": "",
+              "title": "Path"
+            }
+          },
+          {
+            "name": "overwrite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Overwrite"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "Cancel Upload",
+        "operationId": "cancelCloudUpload",
+        "parameters": [
+          {
+            "name": "upload_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{8,64}$",
+              "title": "Upload Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cloud/transfer": {
+      "post": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "Transfer",
+        "description": "Copy or move items between a location and a remote, or between remotes, as a\njob that reports progress and can be cancelled. Location to location copies use\n/api/files/transfer.",
+        "operationId": "transferCloudFiles",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloudTransferIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cloud/sync/preview": {
+      "post": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "Preview Sync",
+        "description": "What a sync would do: how many files it copies, and which ones it deletes.",
+        "operationId": "previewCloudSync",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncPreview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cloud/sync": {
+      "post": {
+        "tags": [
+          "cloud"
+        ],
+        "summary": "Sync",
+        "description": "Make `dest` match `source`: copies new and changed files and **deletes** files\nthat aren't at the source. Run the preview first.",
+        "operationId": "syncCloudFolders",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AnswerIn": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "State"
+          },
+          "answer": {
+            "type": "string",
+            "maxLength": 65536,
+            "title": "Answer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "state",
+          "answer"
+        ],
+        "title": "AnswerIn"
+      },
       "AppDetail": {
         "properties": {
           "name": {
@@ -3871,6 +4721,117 @@
         ],
         "title": "Category"
       },
+      "CloudDeleteIn": {
+        "properties": {
+          "remote": {
+            "type": "string",
+            "title": "Remote"
+          },
+          "paths": {
+            "items": {
+              "type": "string",
+              "maxLength": 4096,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 1000,
+            "minItems": 1,
+            "title": "Paths"
+          }
+        },
+        "type": "object",
+        "required": [
+          "remote",
+          "paths"
+        ],
+        "title": "CloudDeleteIn"
+      },
+      "CloudFolderIn": {
+        "properties": {
+          "remote": {
+            "type": "string",
+            "title": "Remote"
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 4096,
+            "title": "Path",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "remote",
+          "name"
+        ],
+        "title": "CloudFolderIn"
+      },
+      "CloudRenameIn": {
+        "properties": {
+          "remote": {
+            "type": "string",
+            "title": "Remote"
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "Path"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "remote",
+          "path",
+          "name"
+        ],
+        "title": "CloudRenameIn"
+      },
+      "CloudTransferIn": {
+        "properties": {
+          "op": {
+            "type": "string",
+            "enum": [
+              "copy",
+              "move"
+            ],
+            "title": "Op"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Place"
+          },
+          "paths": {
+            "items": {
+              "type": "string",
+              "maxLength": 4096,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 1000,
+            "minItems": 1,
+            "title": "Paths"
+          },
+          "dest": {
+            "$ref": "#/components/schemas/Place"
+          }
+        },
+        "type": "object",
+        "required": [
+          "op",
+          "source",
+          "paths",
+          "dest"
+        ],
+        "title": "CloudTransferIn"
+      },
       "ComposeIn": {
         "properties": {
           "compose": {
@@ -3884,6 +4845,61 @@
           "compose"
         ],
         "title": "ComposeIn"
+      },
+      "ConfigQuestion": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "option": {
+            "$ref": "#/components/schemas/ProviderOption"
+          },
+          "error": {
+            "type": "string",
+            "title": "Error",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "state",
+          "option"
+        ],
+        "title": "ConfigQuestion"
+      },
+      "ConfigStep": {
+        "properties": {
+          "remote": {
+            "type": "string",
+            "title": "Remote"
+          },
+          "done": {
+            "type": "boolean",
+            "title": "Done"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConfigQuestion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "type": "string",
+            "title": "Error",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "remote",
+          "done"
+        ],
+        "title": "ConfigStep"
       },
       "ContainerOut": {
         "properties": {
@@ -4453,6 +5469,21 @@
               }
             ],
             "title": "Finished At"
+          },
+          "progress": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobProgress"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cancellable": {
+            "type": "boolean",
+            "title": "Cancellable",
+            "default": false
           }
         },
         "type": "object",
@@ -4463,6 +5494,28 @@
           "started_at"
         ],
         "title": "JobOut"
+      },
+      "JobProgress": {
+        "properties": {
+          "fraction": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fraction"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "JobProgress"
       },
       "Listing": {
         "properties": {
@@ -4728,6 +5781,24 @@
         ],
         "title": "NewFolderIn"
       },
+      "OptionExample": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "help": {
+            "type": "string",
+            "title": "Help",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "title": "OptionExample"
+      },
       "PackageRef": {
         "properties": {
           "name": {
@@ -4812,6 +5883,139 @@
         ],
         "title": "PasswordChange"
       },
+      "Place": {
+        "properties": {
+          "location": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "remote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote"
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 4096,
+            "title": "Path",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Place",
+        "description": "A folder in a location or on a remote: exactly one of `location` and `remote`."
+      },
+      "Provider": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/ProviderOption"
+            },
+            "type": "array",
+            "title": "Options"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "options"
+        ],
+        "title": "Provider"
+      },
+      "ProviderOption": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "help": {
+            "type": "string",
+            "title": "Help",
+            "default": ""
+          },
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "default": "string"
+          },
+          "required": {
+            "type": "boolean",
+            "title": "Required",
+            "default": false
+          },
+          "password": {
+            "type": "boolean",
+            "title": "Password",
+            "default": false
+          },
+          "sensitive": {
+            "type": "boolean",
+            "title": "Sensitive",
+            "default": false
+          },
+          "advanced": {
+            "type": "boolean",
+            "title": "Advanced",
+            "default": false
+          },
+          "default": {
+            "type": "string",
+            "title": "Default",
+            "default": ""
+          },
+          "examples": {
+            "items": {
+              "$ref": "#/components/schemas/OptionExample"
+            },
+            "type": "array",
+            "title": "Examples",
+            "default": []
+          },
+          "exclusive": {
+            "type": "boolean",
+            "title": "Exclusive",
+            "default": false
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ProviderOption"
+      },
       "PublicShare": {
         "properties": {
           "mode": {
@@ -4895,6 +6099,114 @@
           "locked"
         ],
         "title": "PublicShare"
+      },
+      "RemoteDetail": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "values": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Values"
+          },
+          "secrets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Secrets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "description",
+          "values",
+          "secrets"
+        ],
+        "title": "RemoteDetail"
+      },
+      "RemoteIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "type": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Type"
+          },
+          "parameters": {
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 65536
+            },
+            "type": "object",
+            "title": "Parameters",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "type"
+        ],
+        "title": "RemoteIn"
+      },
+      "RemoteOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "description"
+        ],
+        "title": "RemoteOut"
+      },
+      "RemoteUpdateIn": {
+        "properties": {
+          "parameters": {
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 65536
+            },
+            "type": "object",
+            "title": "Parameters",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "title": "RemoteUpdateIn"
       },
       "RenameIn": {
         "properties": {
@@ -5519,6 +6831,48 @@
           "compose"
         ],
         "title": "StoreAppDetail"
+      },
+      "SyncIn": {
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/Place"
+          },
+          "dest": {
+            "$ref": "#/components/schemas/Place"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "dest"
+        ],
+        "title": "SyncIn"
+      },
+      "SyncPreview": {
+        "properties": {
+          "copy_count": {
+            "type": "integer",
+            "title": "Copy Count"
+          },
+          "delete_count": {
+            "type": "integer",
+            "title": "Delete Count"
+          },
+          "deletes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Deletes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "copy_count",
+          "delete_count",
+          "deletes"
+        ],
+        "title": "SyncPreview"
       },
       "SystemInfo": {
         "properties": {
