@@ -640,6 +640,10 @@ export interface components {
             catalog_id?: string | null;
             /** Web Port */
             web_port?: number | null;
+            /** Title */
+            title?: string | null;
+            /** Icon */
+            icon?: string | null;
             /**
              * Status
              * @enum {string}
@@ -678,6 +682,10 @@ export interface components {
             catalog_id?: string | null;
             /** Web Port */
             web_port?: number | null;
+            /** Title */
+            title?: string | null;
+            /** Icon */
+            icon?: string | null;
             /**
              * Status
              * @enum {string}

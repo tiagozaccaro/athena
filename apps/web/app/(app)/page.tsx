@@ -1,3 +1,4 @@
+import { DashboardApps } from "@/components/dashboard/dashboard-apps"
 import { HostStatsCards } from "@/components/dashboard/host-stats-cards"
 import { HostStatsProvider } from "@/components/dashboard/host-stats-provider"
 import {
@@ -11,6 +12,7 @@ export default function DashboardPage() {
   return (
     <HostStatsProvider>
       <HostStatsCards />
+      <DashboardApps />
       <div className="grid gap-4 md:gap-6 xl:grid-cols-2">
         <StorageCard />
         <ServerOverview />
