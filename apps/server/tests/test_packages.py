@@ -364,7 +364,15 @@ def test_real_tool_reads(manager_id: str) -> None:
     pm = MANAGERS[manager_id]()
     installed = asyncio.run(pm.installed())
     assert installed, f"{manager_id} reports nothing installed"
-    assert all(p.name and not any(c.isspace() for c in p.name) for p in installed)
+    odd = [p for p in installed if not p.name or any(c.isspace() for c in p.name)]
+    if odd:
+        raw = ""
+        if manager_id == "winget":
+            from athena.packages.base import run_command
+
+            raw = asyncio.run(run_command(["winget", "list", *pk_win._WINGET_FLAGS], None)).stdout
+        lines = "\n".join(repr(line) for line in raw.splitlines()[:25])
+        pytest.fail(f"{manager_id}: odd names {[(p.name, p.title) for p in odd][:5]}\n{lines}")
     if manager_id in ("apt", "brew"):  # searches that work from local package data
         found = asyncio.run(pm.search("jq"))
         assert any(r.name == "jq" for r in found), [r.name for r in found][:10]
