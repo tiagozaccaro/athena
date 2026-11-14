@@ -7,9 +7,10 @@ This file is the single source of instructions for every coding agent working he
 ## Start here (every session, every agent)
 
 1. Read `docs/STATUS.md`: the current milestone, what's done, what's in progress, and what's next.
-2. Read `docs/AGENT-NOTES.md`: how the maintainer works, the command cheat sheet, patterns to copy, and the gotchas earlier sessions already hit (Windows CI, CodeQL, Base UI, wsgidav, …).
-3. Read the parts of `docs/mvp-design.md` that the task touches. It holds the design and the decisions log (§11).
-4. Before ending a session, update `docs/STATUS.md` (see [Handoff](#handoff)). The next agent may be a different tool with no memory of yours.
+2. Read the rules file of the app you'll touch: `apps/server/AGENTS.md` or `apps/web/AGENTS.md`.
+3. Read `docs/AGENT-NOTES.md`: how the maintainer works, the command cheat sheet, patterns to copy, and the gotchas earlier sessions already hit (Windows CI, CodeQL, Base UI, wsgidav, …).
+4. Read the parts of `docs/mvp-design.md` that the task touches. It holds the design and the decisions log (§11).
+5. Before ending a session, update `docs/STATUS.md` (see [Handoff](#handoff)). The next agent may be a different tool with no memory of yours.
 
 ## Git workflow (mandatory)
 
@@ -25,32 +26,15 @@ Full details are in `CONTRIBUTING.md`.
 
 ## Layout
 
-- `apps/web`: Next.js 16, static export, shadcn/ui on Base UI (`base-nova` style, preset `b0`, lucide icons). Served by the Python server in production.
-  - `next.config.ts` exports statically for `next build` and proxies `/api` to `http://localhost:8420` only in `next dev`, because rewrites aren't allowed with static export.
-  - All data loads client-side through `@workspace/api-client`. It adds the CSRF header and redirects to `/login/` on 401. There are no server actions and no dynamic routes; use query params for detail pages.
-  - Signed-in pages live under `app/(app)/`, inside `AuthProvider` and then `CapabilitiesProvider`. Use `useAuth()` and `useCapability(id)`. `/setup` and `/login` live under `app/(auth)/`.
-  - Code editing: `CodeEditor` from `@workspace/ui/components/athena/code-editor` (CodeMirror 6, themed from CSS variables).
-  - Pages that need containers wrap their content in `<RequireContainers>`, which shows Start or setup when the runtime isn't ready.
-  - Live output: `useEventStream(url)` (SSE), `<LogView>`, and `<JobDialog job>` for job progress. Notifications use `toast.add({ type, title, description })` from `@workspace/ui/components/toast` (Base UI), not sonner.
-  - Next.js 16 differs from older versions. Read `apps/web/AGENTS.md` and the docs in `apps/web/node_modules/next/dist/docs/` before writing Next code.
-  - Sidebar entries live in `apps/web/components/nav.ts`. Add a section only when its page exists.
+Each app has its own rules file. **Read it before working there**: some agents load it automatically, others won't.
+
+- `apps/server`: Python 3.13 (uv), FastAPI, package and CLI `athena`. Rules, module map and test conventions are in **`apps/server/AGENTS.md`**.
+- `apps/web`: Next.js 16 static export, shadcn/ui on Base UI (preset `b0`), served by the Python server in production. Rules, layout and UI conventions are in **`apps/web/AGENTS.md`**.
 - `packages/ui`: shadcn components (`pnpm dlx shadcn@latest add <name> -c apps/web`). Athena-made components go in `packages/ui/src/components/athena/`.
 - `packages/api-client`: generated from the server's OpenAPI schema with `pnpm gen:api`. Never hand-write request types; CI fails if the client is out of date.
-- `apps/server`: Python 3.13 (uv), FastAPI, package `athena`, CLI `athena` (`serve`, `openapi`, `service install|uninstall|status`). Tests are in `apps/server/tests`.
-  - API routes go under `/api`, each with an explicit `operation_id`. New routers must require a session: `include_router(..., dependencies=[require_user])`. Only health, `/api/auth/*` and a share link's `/api/public/shares/{token}` are public (WebDAV at `/dav/` has its own sign-in). Writes are CSRF-checked automatically by `require_user`.
-  - Database changes need a new Alembic migration in `athena/db/migrations/versions/`. `tests/test_db.py` fails if the models and migrations differ.
-  - Host detection lives in `athena/platform/`. Test new detectors with `tests/fake_probe.py`.
-  - Containers: `athena/containers/` (`runtime_from(capability)` gives the CLI prefix and client; `service.py` holds the operations). Validate container refs with `check_ref`. Real-engine tests only run with `ATHENA_DOCKER_TESTS=1` (on in Linux CI). Locally they would touch the developer's runtime, so they're opt-in.
-  - Apps: `athena/apps/` (`store.py` for the on-disk layout and compose checks, `docker_run.py` for the converter) and `athena/api/apps.py`. Compose commands go through `store.compose(...)` with `env=store.env(name)` so `${ATHENA_APP_DATA}` resolves.
-  - Store: `athena/catalog/` (`model.py` is the `x-athena` format, `loader.py` loads catalogs and resolves install values, `registry.py` holds the built-in plus downloaded catalogs, `remote.py` fetches and extracts archives, `casaos.py` converts CasaOS apps) and `athena/api/store.py`. Remote fetches are stubbed in tests (`remote.download`). Installs go through `deploy_new_app()` in `athena/api/apps.py`. Catalog apps live in `catalog/apps/<id>/compose.yaml` (see `catalog/README.md`), and `tests/test_catalog.py` checks every one.
-  - Packages: `athena/packages/` (one class per manager, pure parsers, `MANAGERS` by capability id) and `athena/api/packages.py`. New parsers need a fixture in `tests/fixtures/packages/` and a line in its README saying how it was captured.
-  - Shares: `athena/files/shares.py` and `athena/api/shares.py` (admin `router` plus the public `public_router`); WebDAV: `athena/files/webdav.py` (wsgidav provider, sign-in, the `/dav` middleware) and `athena/api/webdav.py`. Web: `components/files/share-*.tsx`, `components/share/` (the public `/s/` page) and `components/settings/webdav-card.tsx`.
-  - Terminal: `athena/terminal/` (`pty.py` is the one async pty for POSIX and ConPTY; `shells.py` chooses host or container shells) and `athena/api/terminal.py` (WebSocket with its own session, CSRF and admin checks, documented at the top of the file). System settings are in `athena/system_settings.py`. Web: `<Terminal>` in `packages/ui/src/components/athena/` and `components/terminal/` (`TerminalSession`, `ShellSheet`, `useTerminalAccess`).
-  - Long operations run as jobs (`request.app.state.jobs.start(title, body)`) and stream over SSE. Record privileged actions with `athena.audit.record(...)`.
-  - Tests use `conftest.make_app()` and `signed_in(client)`.
-- `catalog/`: built-in app store (compose + `x-athena` metadata).
-- `scripts/install.sh`, `scripts/install.ps1`: the one-line installers. They're attached to every GitHub release. Keep them in sync with the server's `athena service` CLI.
-- `.github/`: CI (`ci.yml`), PR title check, release-please (`release.yml`), Dependabot, templates.
+- `catalog/`: built-in app store (compose + `x-athena` metadata, see `catalog/README.md`).
+- `scripts/`: `install.sh` and `install.ps1` (the one-line installers, attached to every GitHub release; keep them in sync with the server's `athena service` CLI), `check.sh` (CI's checks locally), `check-docs.mjs`, `build-wheel.sh`, `agents-sync.mjs`, `gen-theme-css.mjs`, and `scripts/e2e/` (the browser smoke test).
+- `.github/`: CI (`ci.yml`), E2E (`e2e.yml`), PR title check, release-please (`release.yml`), Dependabot, templates.
 
 ## Rules
 
