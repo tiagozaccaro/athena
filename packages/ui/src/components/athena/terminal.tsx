@@ -7,8 +7,11 @@ import "@xterm/xterm/css/xterm.css"
 import { cn } from "@workspace/ui/lib/utils"
 
 export type TerminalHandle = {
-  /** Program output: raw bytes (UTF-8 split across chunks is fine) or text. */
-  write: (data: Uint8Array | string) => void
+  /**
+   * Shows program output: raw bytes (UTF-8 split across chunks is fine) or text.
+   * xterm.js renders it as terminal text and never as HTML.
+   */
+  output: (data: Uint8Array | string) => void
   focus: () => void
   cols: () => number
   rows: () => number
@@ -134,7 +137,7 @@ function Terminal({
   React.useImperativeHandle(
     ref,
     () => ({
-      write: (data) => termRef.current?.write(data),
+      output: (data) => termRef.current?.write(data),
       focus: () => termRef.current?.focus(),
       cols: () => termRef.current?.cols ?? 80,
       rows: () => termRef.current?.rows ?? 24,

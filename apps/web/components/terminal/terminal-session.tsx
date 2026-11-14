@@ -16,7 +16,10 @@ export type SessionState =
 
 /** Why the server closed the socket, in words (codes from athena/api/terminal.py). */
 function closeReason(event: CloseEvent): string {
-  if (event.reason) return event.reason
+  // Plain text only: no escape codes from the close frame reach the terminal.
+  // eslint-disable-next-line no-control-regex
+  const reason = event.reason.replace(/[\u0000-\u001f\u007f-\u009f]/g, "")
+  if (reason) return reason
   if (event.code === 1006) return "The connection to Athena was lost"
   return `Disconnected (code ${event.code})`
 }
@@ -69,7 +72,7 @@ export function TerminalSession({
       }
       ws.onmessage = (event) => {
         if (event.data instanceof ArrayBuffer) {
-          termRef.current?.write(new Uint8Array(event.data))
+          termRef.current?.output(new Uint8Array(event.data))
           return
         }
         const message = JSON.parse(String(event.data)) as
@@ -79,16 +82,20 @@ export function TerminalSession({
           termRef.current?.focus()
         } else if (message.type === "exit") {
           exited = true
-          termRef.current?.write(
-            `\r\n\x1b[2m[Exited with code ${message.code}]\x1b[0m\r\n`
+          // Only ever an integer, so a malformed message can't inject escape codes.
+          const code = Number.isInteger(message.code)
+            ? Number(message.code)
+            : -1
+          termRef.current?.output(
+            `\r\n\x1b[2m[Exited with code ${code}]\x1b[0m\r\n`
           )
-          notify.current?.({ phase: "exited", code: message.code })
+          notify.current?.({ phase: "exited", code })
         }
       }
       ws.onclose = (event) => {
         if (wsRef.current !== ws || exited) return
         const reason = closeReason(event)
-        termRef.current?.write(`\r\n\x1b[2m[${reason}]\x1b[0m\r\n`)
+        termRef.current?.output(`\r\n\x1b[2m[${reason}]\x1b[0m\r\n`)
         notify.current?.({ phase: "closed", reason })
       }
     },
