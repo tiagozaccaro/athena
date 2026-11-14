@@ -121,6 +121,25 @@ export const DEFAULT_ATTRIBUTES = Object.fromEntries(
   Object.entries(attributes(DEFAULT_APPEARANCE)).filter(([, v]) => v !== null)
 ) as Record<string, string>
 
+const INLINE_SCRIPT_ESCAPE_MAP: Record<string, string> = {
+  "<": "\\u003C",
+  ">": "\\u003E",
+  "/": "\\u002F",
+  "\\": "\\\\",
+  "\b": "\\b",
+  "\f": "\\f",
+  "\n": "\\n",
+  "\r": "\\r",
+  "\t": "\\t",
+  "\0": "\\0",
+  "\u2028": "\\u2028",
+  "\u2029": "\\u2029",
+}
+
+function escapeForInlineScript(str: string): string {
+  return str.replace(/[<>\/\\\b\f\n\r\t\0\u2028\u2029]/g, (x) => INLINE_SCRIPT_ESCAPE_MAP[x] ?? x)
+}
+
 /** Set the attributes on <html> and remember them for the next page load. */
 export function applyAppearance(a: Appearance): void {
   const root = document.documentElement
@@ -149,9 +168,9 @@ export function storedAppearance(): Appearance | null {
  * Values are checked against the same id pattern the server enforces, so a tampered
  * localStorage can't inject anything; unknown-but-valid ids just match no CSS.
  */
-export const APPEARANCE_SCRIPT = `(function(){try{var a=JSON.parse(localStorage.getItem(${JSON.stringify(
+export const APPEARANCE_SCRIPT = `(function(){try{var a=JSON.parse(localStorage.getItem(${escapeForInlineScript(JSON.stringify(
   STORAGE_KEY
-)})||"null");if(!a)return;var r=document.documentElement,ok=/^[a-z0-9-]{1,32}$/,m={"data-base":a.base_color,"data-theme":a.theme,"data-chart":a.chart_color,"data-radius":a.radius,"data-font":a.font,"data-font-heading":a.font_heading};for(var k in m){var v=m[k];if(k==="data-chart"&&v==="neutral"){r.removeAttribute(k);continue}if(typeof v==="string"&&ok.test(v))r.setAttribute(k,v)}}catch(e){}})()`
+))})||"null");if(!a)return;var r=document.documentElement,ok=/^[a-z0-9-]{1,32}$/,m={"data-base":a.base_color,"data-theme":a.theme,"data-chart":a.chart_color,"data-radius":a.radius,"data-font":a.font,"data-font-heading":a.font_heading};for(var k in m){var v=m[k];if(k==="data-chart"&&v==="neutral"){r.removeAttribute(k);continue}if(typeof v==="string"&&ok.test(v))r.setAttribute(k,v)}}catch(e){}})()`
 
 // ------------------------------------------------------------------ preset codes
 
