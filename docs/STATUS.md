@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M6 (files, shares, cloud). Part A, the file manager, is merged (#25), and part B, share links and WebDAV (#31). Part C, rclone cloud storage, is in a PR from `feat/m6-cloud`.
+**Current milestone:** M6 (files, shares, cloud) is done: the file manager (#25), share links and WebDAV (#31), and rclone cloud storage (#35). Next is M7, the AI assistant.
 
 ## Done
 
@@ -145,15 +145,16 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - Verified in the browser (release build, fresh data dir, `HOME` pointed at a scratch folder): a password link with 7-day expiry created from Pictures' menu (copied, badges right), opened in a separate browser context with no session: wrong password (inline error), right password, image preview, a text download and the folder zip byte-checked, `../` refused (400), referrer meta `no-referrer`; an upload-only link from Inbox: two 20 MB uploads of the same name arrived byte-identical as `report.bin` and `report (1).bin`, counters and `share.upload` audit rows right; Links page and visitor page at phone width in dark mode; removing a link (the visitor then sees "This link doesn't work"); WebDAV switch and Make password in Settings. WebDAV was driven with curl through Finder's sequence (OPTIONS shows Class 1,2; PROPFIND; LOCK, a PUT refused without the lock token and accepted with it; PROPPATCH; UNLOCK; MOVE across locations; sandbox headers on GET; DELETE of a location 403 with nothing removed; 401 without credentials).
   - Not verified: a real Finder or Windows Explorer mount (`mount_webdav` fails in the agent's sandbox). Mount by hand to check (Windows over plain HTTP needs `BasicAuthLevel` 2).
 
-## In progress
-
-- **M6 part C, cloud storage with rclone** (#35, branch `feat/m6-cloud`). Design in `docs/mvp-design.md` §4.4.
+- **M6 part C, cloud storage with rclone** (#35). Design in `docs/mvp-design.md` §4.4.
   - Server: `athena/cloud/` (`rclone.py` sidecar: `rclone rcd --rc-serve` on 127.0.0.1, random port and password, Athena's own 0600 config, started on first use, restarted if it dies, stopped on shutdown; `remotes.py`; `transfers.py`) and `athena/api/cloud.py` (`/api/cloud/*`, gated by `cloud.rclone`). Jobs gained `progress`, `cancellable` and `POST /api/jobs/{id}/cancel`. No new dependencies (stdlib HTTP).
   - Web: `/cloud` (remotes, Add/Edit with rclone's questions, Sync folders with a preview of deletions, install steps without rclone), remotes in Files' picker and in Copy/Move, `FolderPicker`, the job dialog's progress bar and Cancel. shadcn `combobox` added.
-  - 314 server tests (16 new in `tests/test_cloud.py`, most against a real rclone); CI now installs rclone on all three OSes (apt's older one on Ubuntu, on purpose).
+  - 314 server tests (16 new in `tests/test_cloud.py`, most against a real rclone); CI installs rclone on all three OSes. Ubuntu's apt rclone 1.60 found a real bug: its `operations/check` returns no file lists, so the sync preview would have said nothing gets deleted. The preview now compares listings itself.
   - Verified in the browser (release build, fresh data dir, scratch `HOME`, a real WebDAV remote from `rclone serve webdav`): add a WebDAV remote (password obscured in the config), edit with secrets kept, browse, 30 MB upload in pieces (byte-identical), image preview, Copy to… a remote with progress, a slow copy with "finishing…" and Cancel, sync preview and sync (deletes what it listed), Google Drive up to the `rclone authorize` paste (bad token: error under the same question; Cancel removes the half-made remote), the page without rclone, phone width, dark mode, audit rows, no console errors (only Next's CSS preload warning). The same flows also passed through an API script.
   - Fixed during verification: the sync dialog's destination defaulted to Home (it read the remotes before they loaded); rclone's refused answers came back as an empty question; option labels were raw names (`client_id` → "Client ID"); help text ran lines together; audit said "location 1" instead of the name.
   - Not verified: a real cloud account (no credentials here; the OAuth step stops at the paste), Windows and Linux beyond CI's tests, and rclone versions older than CI's Ubuntu one.
+
+## In progress
+
 - Not yet verified for real: the Windows terminal (ConPTY plus PowerShell) beyond CI's pty tests, and the container shell through Docker in WSL.
 - Not yet verified for real: the other Linux system managers' install/uninstall (dnf, pacman, zypper, apk; apt is done, see below) and every Windows manager (hand-written fixtures; CI runs choco/winget reads on Windows).
 - E2E install testing (branch `ci/e2e-install`): the `E2E` workflow runs the real installers with a wheel built from the commit, on Ubuntu, macOS and Windows runners, then `scripts/e2e/smoke.py` (Playwright) and an uninstall check. New: `scripts/build-wheel.sh` (now also used by `release.yml`), and `--wheel` / `-Wheel` in the installers. Verified locally on 2026-11-14:
@@ -163,7 +164,7 @@ _Shared handoff log for every coding agent. Update it at the end of each session
 
 ## Next
 
-After part C merges, M6 is done: next is M7, the AI assistant (§4.5).
+M7, the AI assistant (§4.5): agent with service tools, approval flow, provider settings, streaming chat UI. Settle the open question below (cloud provider or Ollama first) before starting.
 
 Later (cloud): mounts (FUSE; `rclone nfsmount` on macOS), scheduled or saved syncs, encrypting the rclone config with the OS keyring (§7), uploads to a remote without staging the whole file on the server first, Range requests for seeking in remote videos, and stopping an orphaned `rclone rcd` if Athena is killed (`SIGKILL` leaves it running).
 
