@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M7, the AI assistant (§4.5). Part A (providers and chat) is in review on `feat/m7-assistant-providers`; parts B (actions with approval) and C (polish) follow.
+**Current milestone:** M7, the AI assistant (§4.5). Part A (providers and chat) is done (#37); parts B (actions with approval) and C (polish) follow.
 
 ## Done
 
@@ -153,9 +153,9 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - Fixed during verification: the sync dialog's destination defaulted to Home (it read the remotes before they loaded); rclone's refused answers came back as an empty question; option labels were raw names (`client_id` → "Client ID"); help text ran lines together; audit said "location 1" instead of the name.
   - Not verified: a real cloud account (no credentials here; the OAuth step stops at the paste), Windows and Linux beyond CI's tests, and rclone versions older than CI's Ubuntu one.
 
-## In progress
+- M7 part A, AI providers and chat (#37): AI providers (12 kinds, keys encrypted with `athena/crypto.py`), live model lists with tool support, the `ai.ollama` capability, Settings → AI (providers, default and title model, spend limit), and `/assistant` with streaming chat over our own SSE and read-only tools (capabilities, stats, apps, logs, file locations, files). The UI uses shadcn's chat components, not the Vercel AI SDK. Verified: server tests (30 new), a real chat against local Ollama `qwen2.5` (tool call, streaming, Stop keeps the partial reply), and the browser check (one-click Ollama, a real Anthropic 401 shown as "refused the API key", "Unchanged" key, phone width, dark mode). Not tested against a real cloud model (no keys here), Bedrock or Azure. The title model setting is saved but titles are still the first message (generated titles are part C). The `shell_enabled` setting exists but has no UI or effect until part C.
 
-- **M7 part A** (branch `feat/m7-assistant-providers`): AI providers (12 kinds, keys encrypted with `athena/crypto.py`), live model lists with tool support, the `ai.ollama` capability, Settings → AI (providers, default and title model, spend limit), and `/assistant` with streaming chat over our own SSE and read-only tools (capabilities, stats, apps, logs, file locations, files). The UI uses shadcn's chat components, not the Vercel AI SDK. Verified: server tests (30 new), a real chat against local Ollama `qwen2.5` (tool call, streaming, Stop keeps the partial reply), and the browser check (one-click Ollama, a real Anthropic 401 shown as "refused the API key", "Unchanged" key, phone width, dark mode). Not tested against a real cloud model (no keys here), Bedrock or Azure. The title model setting is saved but titles are still the first message (generated titles are part C). The `shell_enabled` setting exists but has no UI or effect until part C.
+## In progress
 
 - Not yet verified for real: the Windows terminal (ConPTY plus PowerShell) beyond CI's pty tests, and the container shell through Docker in WSL.
 - Not yet verified for real: the other Linux system managers' install/uninstall (dnf, pacman, zypper, apk; apt is done, see below) and every Windows manager (hand-written fixtures; CI runs choco/winget reads on Windows).
