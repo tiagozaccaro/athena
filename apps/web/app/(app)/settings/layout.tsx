@@ -8,6 +8,7 @@ import { Button } from "@workspace/ui/components/button"
 const SECTIONS = [
   { title: "Appearance", url: "/settings/appearance/" },
   { title: "Account", url: "/settings/account/" },
+  { title: "System", url: "/settings/system/" },
 ]
 
 export default function SettingsLayout({

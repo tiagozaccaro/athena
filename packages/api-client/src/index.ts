@@ -28,6 +28,14 @@ export function setCsrfToken(token: string | null): void {
   csrfToken = token
 }
 
+/**
+ * The session's CSRF token, for requests that can't carry the header (the terminal's
+ * WebSocket sends it in its first message).
+ */
+export function getCsrfToken(): string | null {
+  return csrfToken
+}
+
 /** Called when a non-auth request comes back 401 (session expired or signed out elsewhere). */
 export function onUnauthorized(handler: (() => void) | null): void {
   unauthorizedHandler = handler
