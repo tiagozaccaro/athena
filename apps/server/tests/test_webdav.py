@@ -169,3 +169,11 @@ def test_settings_need_an_admin_session(dav) -> None:
     other = TestClient(client.app)
     assert other.get("/api/webdav").status_code == 401
     assert other.post("/api/webdav/password").status_code == 401
+
+
+def test_cached_sign_ins_still_check_the_password(dav) -> None:
+    client, auth, _, _ = dav
+    assert propfind(client, "/dav/", auth).status_code == 207  # now cached
+    assert propfind(client, "/dav/", (auth[0], auth[1] + "x")).status_code == 401
+    assert propfind(client, "/dav/", ("ädmin", "pässword")).status_code == 401
+    assert propfind(client, "/dav/", auth).status_code == 207

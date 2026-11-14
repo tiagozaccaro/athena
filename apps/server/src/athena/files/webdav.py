@@ -12,14 +12,13 @@ them is reachable. Paths go through athena.files.paths like the files API:
 It's off until an admin turns it on. Clients sign in with HTTP Basic, using the admin's
 username and a separate WebDAV password that Athena generates, so the account password
 (which also opens the terminal) is never sent on every request. Successful checks are
-cached for a few minutes, because argon2 is slow on purpose and clients send many
+cached in memory for a few minutes, because argon2 is slow on purpose and clients send many
 requests; failures are throttled per client like logins.
 
 Every response gets a sandboxing CSP and `nosniff`: files are served from Athena's
 origin, so an HTML file opened in a browser must never run as part of the app.
 """
 
-import hashlib
 import logging
 import os
 import secrets
@@ -251,13 +250,29 @@ class LocationsProvider(FilesystemProvider):
 
 
 class Credentials:
-    """Checks WebDAV sign-ins against the stored config, with a short-lived cache."""
+    """Checks WebDAV sign-ins against the stored config, with a short-lived cache.
+
+    There is one WebDAV password, so the cache is one entry: the last sign-in that
+    argon2 accepted, for that exact password hash. It lives only in memory and is
+    compared in constant time; a new password changes the hash, so it applies at once.
+    """
 
     def __init__(self, db: Database) -> None:
         self.db = db
         self.throttle = LoginThrottle(limit=10)
-        self._ok: dict[str, float] = {}
+        self._ok: tuple[str, str, str, float] | None = None
+        """(password hash, username, password, valid until)."""
         self._lock = threading.Lock()
+
+    def _cached(self, password_hash: str, username: str, password: str, now: float) -> bool:
+        with self._lock:
+            ok = self._ok
+        if ok is None or ok[3] <= now or ok[0] != password_hash:
+            return False
+        # Both comparisons always run, so timing doesn't tell which one failed.
+        same_user = secrets.compare_digest(ok[1].encode(), username.encode())
+        same_password = secrets.compare_digest(ok[2].encode(), password.encode())
+        return same_user and same_password
 
     def check(self, username: str, password: str, client: str) -> bool:
         if self.throttle.retry_after(client):
@@ -266,20 +281,17 @@ class Credentials:
             config = load(session)
         if not (config.enabled and config.username and config.password_hash):
             return False
-        key = hashlib.sha256(f"{config.password_hash}\0{username}\0{password}".encode()).hexdigest()
         now = time.monotonic()
-        with self._lock:
-            if self._ok.get(key, 0) > now:
-                return True
-        good = secrets.compare_digest(username, config.username) and verify_password(
-            config.password_hash, password
-        )
+        if self._cached(config.password_hash, username, password, now):
+            return True
+        good = secrets.compare_digest(
+            username.encode(), config.username.encode()
+        ) and verify_password(config.password_hash, password)
         if not good:
             self.throttle.fail(client)
             return False
         with self._lock:
-            self._ok = {k: t for k, t in self._ok.items() if t > now}
-            self._ok[key] = now + CACHE_SECONDS
+            self._ok = (config.password_hash, username, password, now + CACHE_SECONDS)
         return True
 
 
