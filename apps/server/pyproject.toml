@@ -20,6 +20,9 @@ dependencies = [
     "send2trash>=1.8",
     "wsgidav>=4.4.0",
     "a2wsgi>=1.10.10",
+    "pydantic-ai-slim[anthropic,bedrock,google,groq,mistral,openai]>=2.68.0",
+    "cryptography>=50.0.2",
+    "httpx2>=2.16.0",
 ]
 
 [project.scripts]
@@ -27,7 +30,6 @@ athena = "athena.cli:main"
 
 [dependency-groups]
 dev = [
-    "httpx2>=2.16.0",
     "pytest>=9.2",
     "ruff>=0.17",
 ]

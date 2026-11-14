@@ -20,6 +20,9 @@ class FakeProbe(Probe):
     root: bool = False
     home_dir: Path = Path("/home/me")
     build: int = 26100
+    http: dict[str, object] = field(default_factory=dict)
+    """URL -> parsed JSON answer, for `http_json`."""
+    env: dict[str, str] = field(default_factory=dict)
 
     def which(self, name: str) -> str | None:
         return self.binaries.get(name)
@@ -38,6 +41,12 @@ class FakeProbe(Probe):
 
     def windows_build(self) -> int:
         return self.build
+
+    def http_json(self, url: str, timeout: float = 2.0) -> object | None:
+        return self.http.get(url)
+
+    def getenv(self, name: str) -> str | None:
+        return self.env.get(name)
 
     def docker_version(self, endpoint: str, timeout: float = 2.0) -> str | None:
         return self.engines.get(endpoint)

@@ -9,6 +9,7 @@ const SECTIONS = [
   { title: "Appearance", url: "/settings/appearance/" },
   { title: "Account", url: "/settings/account/" },
   { title: "System", url: "/settings/system/" },
+  { title: "AI", url: "/settings/ai/" },
 ]
 
 export default function SettingsLayout({

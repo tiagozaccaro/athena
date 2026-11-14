@@ -239,6 +239,54 @@ def detect_rclone(probe: Probe) -> Capability:
     )
 
 
+OLLAMA_DEFAULT = "http://127.0.0.1:11434"
+
+
+def ollama_url(probe: Probe) -> str:
+    """Where Ollama listens: $OLLAMA_HOST (as Ollama reads it) or its default."""
+    host = (probe.getenv("OLLAMA_HOST") or "").strip().rstrip("/")
+    if not host:
+        return OLLAMA_DEFAULT
+    if "://" not in host:
+        host = f"http://{host}"
+    scheme, _, rest = host.partition("://")
+    if rest.startswith("0.0.0.0"):  # a listen address, not one to connect to
+        rest = "127.0.0.1" + rest.removeprefix("0.0.0.0")
+    if ":" not in rest.rsplit("]", 1)[-1]:
+        rest = f"{rest}:11434"
+    return f"{scheme}://{rest}"
+
+
+def detect_ollama(probe: Probe) -> Capability:
+    url = ollama_url(probe)
+    answer = probe.http_json(f"{url}/api/version")
+    if isinstance(answer, dict) and answer.get("version"):
+        return Capability(
+            id="ai.ollama",
+            label="Ollama",
+            status="ready",
+            provider="ollama",
+            detail=f"Ollama {answer['version']}",
+            endpoint=url,
+        )
+    if probe.which("ollama"):
+        return Capability(
+            id="ai.ollama",
+            label="Ollama",
+            status="stopped",
+            provider="ollama",
+            detail=f"Ollama is installed but not answering at {url} (run: ollama serve)",
+            endpoint=url,
+        )
+    return Capability(
+        id="ai.ollama",
+        label="Ollama",
+        status="missing",
+        provider="ollama",
+        detail="Ollama not found. Install it from ollama.com to run models on this server.",
+    )
+
+
 def detect_builtin(probe: Probe) -> list[Capability]:
     return [
         Capability(id="files", label="Files", status="ready", provider="builtin"),
@@ -263,7 +311,7 @@ def detectors_for(probe: Probe) -> list[Detector]:
     package_detectors: list[Detector] = [
         (lambda p, spec=spec: detect_package_manager(spec, p)) for spec in managers
     ]
-    return [containers, *package_detectors, detect_terminal, detect_rclone]
+    return [containers, *package_detectors, detect_terminal, detect_rclone, detect_ollama]
 
 
 def _safe(detector: Detector, probe: Probe) -> Capability | None:
