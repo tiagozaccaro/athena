@@ -32,12 +32,79 @@ function uploadId(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")
 }
 
+type PieceResult = {
+  data?: { received: number }
+  error?: unknown
+  response: Response
+}
+
+/** Where the pieces go. The default is the file manager's /api/files/upload. */
+export type UploadTransport = {
+  send: (u: Upload, offset: number, piece: Blob) => Promise<PieceResult>
+  cancel: (u: Upload) => Promise<unknown>
+}
+
+const binary = {
+  bodySerializer: (b: unknown) => b as Blob,
+  headers: { "Content-Type": "application/octet-stream" },
+}
+
+const filesTransport: UploadTransport = {
+  send: (u, offset, piece) =>
+    api.POST("/api/files/upload", {
+      params: {
+        query: {
+          location: u.location,
+          path: u.folder,
+          name: u.file.name,
+          upload_id: u.id,
+          offset,
+          total: u.file.size,
+          overwrite: u.overwrite ?? false,
+        },
+      },
+      body: piece as unknown as string,
+      ...binary,
+    }),
+  cancel: (u) =>
+    api.DELETE("/api/files/upload", {
+      params: {
+        query: { location: u.location, path: u.folder, upload_id: u.id },
+      },
+    }),
+}
+
+/** Uploads through a share link (POST /api/public/shares/{token}/upload). */
+export function shareTransport(token: string): UploadTransport {
+  return {
+    send: (u, offset, piece) =>
+      api.POST("/api/public/shares/{token}/upload", {
+        params: {
+          path: { token },
+          query: {
+            name: u.file.name,
+            upload_id: u.id,
+            offset,
+            total: u.file.size,
+          },
+        },
+        body: piece as unknown as string,
+        ...binary,
+      }),
+    cancel: (u) =>
+      api.DELETE("/api/public/shares/{token}/upload", {
+        params: { path: { token }, query: { upload_id: u.id } },
+      }),
+  }
+}
+
 /**
- * A queue of chunked uploads (POST /api/files/upload), one file at a time.
- * `onUploaded` runs after each finished file so the listing can refresh.
+ * A queue of chunked uploads, one file at a time. `onUploaded` runs after each
+ * finished file so the listing can refresh.
  */
 export function useUploads(
-  onUploaded: (location: number, folder: string) => void
+  onUploaded: (location: number, folder: string) => void,
+  transport: UploadTransport = filesTransport
 ) {
   const [uploads, setUploads] = React.useState<Upload[]>([])
   const queue = React.useRef<Upload[]>([])
@@ -45,6 +112,8 @@ export function useUploads(
   const cancelled = React.useRef(new Set<string>())
   const onUploadedRef = React.useRef(onUploaded)
   onUploadedRef.current = onUploaded
+  const transportRef = React.useRef(transport)
+  transportRef.current = transport
   const listRef = React.useRef<Upload[]>([])
   listRef.current = uploads
 
@@ -61,31 +130,16 @@ export function useUploads(
       let offset = 0
       do {
         if (cancelled.current.has(u.id)) {
-          await api.DELETE("/api/files/upload", {
-            params: {
-              query: { location: u.location, path: u.folder, upload_id: u.id },
-            },
-          })
+          await transportRef.current.cancel(u)
           update(u.id, { status: "cancelled" })
           return
         }
         const piece = u.file.slice(offset, offset + CHUNK)
-        const { data, error, response } = await api.POST("/api/files/upload", {
-          params: {
-            query: {
-              location: u.location,
-              path: u.folder,
-              name: u.file.name,
-              upload_id: u.id,
-              offset,
-              total: size,
-              overwrite: u.overwrite ?? false,
-            },
-          },
-          body: piece as unknown as string,
-          bodySerializer: (b: unknown) => b as Blob,
-          headers: { "Content-Type": "application/octet-stream" },
-        })
+        const { data, error, response } = await transportRef.current.send(
+          u,
+          offset,
+          piece
+        )
         if (!data) {
           update(u.id, {
             status: "error",

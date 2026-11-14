@@ -15,6 +15,7 @@ import {
   PencilIcon,
   RefreshCwIcon,
   Settings2Icon,
+  Share2Icon,
   Trash2Icon,
   UploadIcon,
   XIcon,
@@ -107,6 +108,7 @@ import {
   type Location,
 } from "@/components/files/file-utils"
 import { LocationsDialog } from "@/components/files/locations-dialog"
+import { ShareDialog, type ShareTarget } from "@/components/files/share-dialog"
 import {
   TransferDialog,
   type TransferRequest,
@@ -269,6 +271,7 @@ export function FilesView() {
   const [deleting, setDeleting] = React.useState<string[] | null>(null)
   const [transfer, setTransfer] = React.useState<TransferRequest | null>(null)
   const [job, setJob] = React.useState<Job | null>(null)
+  const [sharing, setSharing] = React.useState<ShareTarget | null>(null)
   const [dragging, setDragging] = React.useState(false)
   const fileInput = React.useRef<HTMLInputElement>(null)
 
@@ -466,6 +469,20 @@ export function FilesView() {
             <DownloadIcon />
             {entry.kind === "dir" ? "Download as zip" : "Download"}
           </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={entry.kind === "other"}
+            onClick={() =>
+              setSharing({
+                location: locId,
+                path: entry.path,
+                name: entry.name,
+                kind: entry.kind,
+              })
+            }
+          >
+            <Share2Icon />
+            Share…
+          </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
@@ -561,6 +578,15 @@ export function FilesView() {
             <EyeIcon />
             <span className="hidden sm:inline">Hidden</span>
           </Toggle>
+          <Button
+            variant="outline"
+            render={<Link href="/files/shares/" />}
+            nativeButton={false}
+            aria-label="Share links"
+          >
+            <Share2Icon />
+            <span className="hidden sm:inline">Links</span>
+          </Button>
           <Button
             variant="outline"
             size="icon"
@@ -906,6 +932,7 @@ export function FilesView() {
         onOpenChange={setLocationsOpen}
         onChanged={loadLocations}
       />
+      <ShareDialog target={sharing} onClose={() => setSharing(null)} />
       <UploadsPanel
         uploads={uploads.uploads}
         onCancel={uploads.cancel}

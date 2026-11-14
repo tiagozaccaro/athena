@@ -27,6 +27,7 @@ from athena.files.paths import (
     BadPath,
     Conflict,
     FileError,
+    available_name,
     check_new_name,
     existing_entry,
     resolve,
@@ -271,8 +272,14 @@ async def download(
     the browser; everything else is always an attachment."""
     loc, root = _location(db, location)
     target = _check(lambda: resolve(root, path))
+    return file_response(root, target, loc.name, inline)
+
+
+def file_response(root: Path, target: Path, root_name: str, inline: bool) -> Response:
+    """`target` as a download: a file, or a folder as a streamed zip (named `root_name`
+    when it's `root` itself). Shared with the public share links."""
     if target.is_dir():
-        base = target.name if target != root else loc.name
+        base = target.name if target != root else root_name
         return StreamingResponse(
             ops.zip_folder(root, target, base),
             media_type="application/zip",
@@ -425,16 +432,33 @@ async def upload_chunk(
     their `offset`; the file appears under its name after the last one. A piece at
     offset 0 starts over."""
     _, root = _location(db, location)
+    folder = _check(lambda: resolve(root, path))
+    return await receive_chunk(
+        request, root, folder, name, upload_id, offset, total, "overwrite" if overwrite else "fail"
+    )
+
+
+async def receive_chunk(
+    request: Request,
+    root: Path,
+    folder: Path,
+    name: str,
+    upload_id: str,
+    offset: int,
+    total: int,
+    on_conflict: Literal["fail", "overwrite", "rename"],
+) -> UploadOut:
+    """Store one piece of an upload into `folder`. With "rename", a taken name gets
+    " (1)" added when the file is finished. Shared with the public share links."""
 
     def prepare() -> tuple[Path, Path]:
-        folder = resolve(root, path)
         if not folder.is_dir():
             raise BadPath("The folder to upload to doesn't exist")
         target = folder / check_new_name(name)
         part = ops.upload_part(folder, upload_id)
         if offset == 0:
             ops.clear_stale_uploads(folder)
-            if target.exists(follow_symlinks=False) and not overwrite:
+            if target.exists(follow_symlinks=False) and on_conflict == "fail":
                 raise Conflict(f"{name} already exists")
             if shutil.disk_usage(folder).free < total:
                 raise FileError("There isn't enough free space for this file")
@@ -464,8 +488,16 @@ async def upload_chunk(
         raise _fail(exc) from exc
     if received < total:
         return UploadOut(received=received)
-    await _run(lambda: ops.finish_upload(part, target, overwrite))
-    return UploadOut(received=received, entry=ops.describe(root, target))
+
+    def finish() -> Path:
+        placed = target
+        if on_conflict == "rename":
+            placed = folder / available_name(folder, target.name)
+        ops.finish_upload(part, placed, on_conflict == "overwrite")
+        return placed
+
+    placed = await _run(finish)
+    return UploadOut(received=received, entry=ops.describe(root, placed))
 
 
 @router.delete("/upload", operation_id="cancelUpload", status_code=status.HTTP_204_NO_CONTENT)

@@ -235,8 +235,19 @@ services:
   - **Operations (M6).** `/api/files`: `locations` (CRUD), `list` (folders first, `hidden` flag, capped at 10,000 entries), `text` (read/write UTF-8 up to 2 MB, with a version check against concurrent edits), `download` (files; folders as a streamed, uncompressed zip that skips links leaving the location), `folder`, `rename`, `delete` (trash by default, `permanent` optional, per-item results), `transfer` (copy or move, also across locations, as a job; on a name clash: keep both as "name (1)", skip, or replace files but never folders; links copied as links), and `upload` (raw 8 MB pieces with `offset`/`total` into `.athena-upload-<id>` in the target folder, renamed into place after the last piece; hidden from listings; stale pieces cleared after a day; free space checked first). Deletes, moves and location changes are audited.
   - **Downloads never run as the app.** Everything is `Content-Disposition: attachment` with `nosniff` and a sandboxing CSP, except images, audio and video with `inline=true` for the preview. HTML, SVG and PDF are never inline.
   - **Web (M6).** `/files/?loc=&path=`: location picker, breadcrumbs, table with multi-select, row menu, drag and drop upload with a progress panel (Replace on a name clash), New folder, rename, copy/move with a folder picker, delete (trash or permanent), hidden files toggle, and a preview sheet (images, audio, video; text opens in the CodeMirror editor with Save). Admins manage locations from a dialog.
-- **Share links:** a token, an optional password, expiry and read-only or upload-only modes. Served by `/s/<token>`.
-- **Network share:** WebDAV via `wsgidav`, mounted inside the server. It's one implementation that works on all three OSes and is mountable from Finder, Windows Explorer and Linux file managers. SMB and NFS are post-MVP and only offered where the OS has them, through the capability manifest.
+- **Share links (M6):** a token, an optional password, expiry and read-only or upload-only modes. Served by `/s/<token>`.
+  - `shares` table (migration 0009, cascades with its location). The token (24 random bytes, URL-safe) is the link and is stored as is, so the admin can copy it again later. Passwords are argon2 hashes.
+  - `/api/shares` (admin, signed in): list (all, or by location and path), create, `PUT` (mode, expiry, new or removed password), delete. All audited as `share.create|edit|remove`.
+  - `/api/public/shares/{token}` is the only public API besides health and `/api/auth`: info, `unlock`, `list`, `download` and, for upload links, `upload` (the same 8 MB pieces as the file manager). Every path resolves against the **shared item itself**, not its location, so a symlink inside a shared folder pointing elsewhere in the location is refused too. Expired links are 410, removed ones 404; a wrong password is 403 (not 401, which the UI treats as "signed out") and is throttled to 10 per client and link per 5 minutes.
+  - Unlocking sets an HttpOnly, SameSite=Strict cookie scoped to `/api/public/shares/<token>`, valid 7 days, whose value is HMAC-SHA256(key = the password hash, token). No server state; changing or removing the password invalidates it.
+  - Read links show the item: a file (with media preview) or a folder (browse, preview media, download files or a streamed zip). Downloads count in `downloads` (previews don't). Upload links are drop boxes: visitors can't list or download, a taken name gets " (1)" and nothing is ever replaced; each upload is counted and audited as `share.upload` by `link #<id>` with the client address.
+  - The page is the static `/s/` export, served by FastAPI for any `/s/<token>` with `Referrer-Policy: no-referrer` (the page also sets the referrer meta). It reads the token from the address.
+  - Web: Share… in a file or folder's menu (existing links, plus mode, optional password, expiry Never/1/7/30 days; the new link is copied), `/files/shares/` lists every link, and `/s/` is the visitor's page.
+- **Network share (M6):** WebDAV via `wsgidav`, mounted inside the server at `/dav/` (through `a2wsgi`, as an ASGI middleware in front of the app). It's one implementation that works on all three OSes and is mountable from Finder, Windows Explorer and Linux file managers. SMB and NFS are post-MVP and only offered where the OS has them, through the capability manifest.
+  - The root lists the file manager's locations as folders; nothing else is reachable or can be created there. Paths go through `athena.files.paths` (no `..`, no names that normalizing changes, real path inside the location), and symlinks are neither listed nor followed. A location's own folder can't be deleted, moved or replaced; this is checked in `handle_delete`/`handle_copy`/`handle_move`, because when a collection's `delete()` refuses, wsgidav falls back to deleting everything inside it item by item (found in testing: `DELETE /dav/One/` emptied the location).
+  - Off by default (`webdav` row in `system_settings`); `/dav` is 404 while it's off. HTTP Basic with the admin's username and a **separate, generated WebDAV password** (argon2, shown once, `POST /api/webdav/password`), so the account password, which also opens the terminal, isn't sent on every request. Successful checks are cached for 5 minutes (keyed by the password hash, so a new password applies at once); failures are throttled per client. Settings → System says when it's plain HTTP.
+  - Every `/dav` response carries `Content-Security-Policy: default-src 'none'; sandbox` and `nosniff`, because the files are served from Athena's origin. wsgidav's HTML directory browser is off. Locks and dead properties are kept in memory (Finder needs Class 2 to mount read-write).
+  - WebDAV changes aren't audited per file; turning it on or off and new passwords are (`settings.webdav`).
 
 ### 4.4 Cloud storage
 
@@ -364,7 +375,8 @@ shadcn presets are applied at *init/build time* by the CLI. Athena needs them sw
 /apps/new                 custom app (compose / docker run import)
 /packages                 tabs per detected manager
 /files                    file manager (locations + cloud remotes)
-/shares                   share links + WebDAV
+/files/shares             share links (WebDAV is in Settings → System)
+/s/<token>                a share link's public page (the /s/ export, served for any token)
 /cloud                    rclone remotes + sync jobs
 /terminal                 host terminal
 /assistant                full-page chat (also available as a sheet everywhere)
@@ -470,7 +482,8 @@ GET/PUT /api/settings/{appearance|ai|system}   POST /api/auth/password
 | FastAPI, SQLModel, Pydantic, pydantic-ai, pydantic-ai-harness, uvicorn | MIT / BSD |
 | Docker Engine (Moby), Docker CLI, Compose v2 | Apache-2.0 |
 | python-on-whales, psutil, platformdirs, pywinpty (Windows only), send2trash | MIT / BSD / ISC |
-| wsgidav | MIT |
+| wsgidav (with defusedxml, Jinja2, json5) | MIT / PSF / BSD-3 / Apache-2.0 |
+| a2wsgi | Apache-2.0 |
 | Colima, Lima | MIT / Apache-2.0 |
 | Podman | Apache-2.0 |
 | rclone | MIT |
@@ -527,6 +540,8 @@ M2–M4 can proceed in parallel once M1 lands, and so can M5 and M6. M7 depends 
 | Terminal auth (M5) | The WebSocket checks the cookie itself (`require_user` can't apply to WebSockets), then requires the CSRF token in the first message. Admin only. Signing out closes open terminals within 60 s, and turning the terminal off closes them at once. Container shells use `docker exec -it` through the runtime CLI, not the Docker API, matching the M2 CLI decision |
 | System settings (M5) | One JSON row in the `system_settings` table (migration 0007), behind `GET/PUT /api/settings/system`. Only admins can change it. It holds `terminal_enabled` for now; the package-install and assistant-shell switches from §7 will join it |
 | End-to-end install check | A separate `E2E` workflow, not part of `ci-ok`: it's slow and changes the runner's service manager. It runs on pushes to main, on PRs that touch the installers or the service code, and on demand. It installs a wheel built from the commit (`--wheel`), because waiting for a release would only test code that has already shipped. Hosted runners can't run Colima's VM (macOS) or WSL2 (Windows), so containers are only checked on Linux there. Docker in WSL still needs a real Windows machine |
+| Share links (M6) | `shares` table, token stored as is (it's the link). Public API `/api/public/shares/{token}` limited to the shared item. Passwords unlock with a path-scoped cookie holding HMAC(password hash, token), so there's no server state and a new password signs everyone out. Upload links never replace files. The page is the static `/s/` export served for any `/s/<token>` |
+| WebDAV (M6) | wsgidav at `/dav/` through a2wsgi, off by default. Root = the file manager's locations; same path rules as the files API; location folders can't be deleted, moved or replaced. HTTP Basic with a generated WebDAV password, not the account password. Sandbox CSP on every response |
 | Database (M1) | SQLite at `<data-dir>/athena.db` (WAL, foreign keys on), SQLModel models, Alembic migrations run on every start from code. A test fails if models and migrations drift |
 
 ## 12. Open questions
