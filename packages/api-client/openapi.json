@@ -1575,7 +1575,6 @@
         }
       }
     },
-<<<<<<< HEAD
     "/api/settings/system": {
       "get": {
         "tags": [
@@ -1601,6 +1600,7 @@
           "settings"
         ],
         "summary": "Set System",
+        "description": "Turning the terminal off also closes the terminals that are open.",
         "operationId": "setSystemSettings",
         "requestBody": {
           "content": {
@@ -1636,8 +1636,6 @@
         }
       }
     },
-=======
->>>>>>> origin/main
     "/api/packages": {
       "get": {
         "tags": [

@@ -673,7 +673,10 @@ export interface paths {
         };
         /** Get System */
         get: operations["getSystemSettings"];
-        /** Set System */
+        /**
+         * Set System
+         * @description Turning the terminal off also closes the terminals that are open.
+         */
         put: operations["setSystemSettings"];
         post?: never;
         delete?: never;

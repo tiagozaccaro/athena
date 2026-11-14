@@ -225,7 +225,7 @@ services:
   - `/terminal` (nav item gated by `terminal.host`) with a status badge and New session.
   - A **Shell** action on running containers, both on the Containers page and in app detail, opening a sheet.
   - Settings → System holds the switch.
-  - `<Terminal>` in `packages/ui/.../athena/terminal.tsx` themes xterm.js from the CSS variables (converted to rgba through a canvas so oklch works) and re-themes when `<html>` attributes change. The ANSI hues are two fixed palettes, chosen by background lightness.
+  - `<Terminal>` in `packages/ui/.../athena/terminal.tsx` themes xterm.js from the CSS variables (converted to rgba through a canvas so oklch works) and re-themes when `<html>` attributes change. The ANSI hues are two fixed palettes, chosen by background lightness. Links in output (OSC 8 and plain URLs) open only if they're http(s), in a new tab with no opener; program output is untrusted, and xterm's default OSC 8 handler would also follow `javascript:`.
 
 ### 4.3 Files and sharing
 

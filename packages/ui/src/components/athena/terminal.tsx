@@ -60,6 +60,22 @@ const HUES_LIGHT = {
   brightCyan: "#0891b2",
 }
 
+/**
+ * Opens a link from terminal output, but only http(s), in a new tab with no opener.
+ * Program output is untrusted (a file being `cat`, a container's logs), and xterm's
+ * default OSC 8 handler would also follow `javascript:` URIs in a same-origin window.
+ */
+function openLink(_event: MouseEvent, uri: string) {
+  let url: URL
+  try {
+    url = new URL(uri)
+  } catch {
+    return
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") return
+  window.open(url.href, "_blank", "noopener,noreferrer")
+}
+
 /** Any CSS color (oklch, color-mix…) as rgba(), which xterm.js can parse. */
 function toRgba(ctx: CanvasRenderingContext2D, color: string, alpha = 1) {
   ctx.clearRect(0, 0, 1, 1)
@@ -152,10 +168,11 @@ function Terminal({
         cursorBlink: true,
         scrollback: 5000,
         allowProposedApi: false,
+        linkHandler: { activate: openLink, allowNonHttpProtocols: false },
       })
       const fit = new FitAddon()
       term.loadAddon(fit)
-      term.loadAddon(new WebLinksAddon())
+      term.loadAddon(new WebLinksAddon(openLink))
       term.open(box)
       fit.fit()
       termRef.current = term
