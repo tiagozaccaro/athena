@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react"
 import {
   BoxIcon,
   CircleHelpIcon,
+  FolderIcon,
   LayoutDashboardIcon,
   LayoutGridIcon,
   PackageIcon,
@@ -53,6 +54,12 @@ export const navMain: NavItem[] = [
     // page can say why it can't be used.
     capability: "packages.*",
     showWhenUnavailable: true,
+  },
+  {
+    title: "Files",
+    url: "/files/",
+    icon: FolderIcon,
+    capability: "files",
   },
   {
     title: "Containers",
