@@ -12,3 +12,6 @@
 *.jpg binary
 *.ico binary
 *.woff2 binary
+
+# Recorded tool output: keep the exact bytes (CRLF, bare CRs from progress spinners).
+apps/server/tests/fixtures/** -text
