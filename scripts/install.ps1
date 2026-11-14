@@ -17,6 +17,9 @@
 
 .PARAMETER Version
     Install a specific version (default: latest release).
+.PARAMETER Wheel
+    Install this server wheel (a path or URL) instead of a release. For testing unreleased
+    code built with scripts/build-wheel.sh.
 .PARAMETER DryRun
     Print what would be done without changing anything.
 .PARAMETER Uninstall
@@ -30,6 +33,7 @@
 [CmdletBinding()]
 param(
     [string]$Version = '',
+    [string]$Wheel = '',
     [switch]$DryRun,
     [switch]$Uninstall,
     [switch]$Purge,
@@ -71,6 +75,19 @@ function Assert-Windows {
 }
 
 function Resolve-AthenaVersion {
+    if ($script:Wheel) {
+        $name = Split-Path $script:Wheel -Leaf
+        if ($name -notmatch '^athena_server-([^-]+)-.*\.whl$') {
+            throw '-Wheel must point to an athena_server-<version>-....whl file'
+        }
+        $script:Version = $Matches[1]
+        if ($script:Wheel -notmatch '^https?://') {
+            if (-not (Test-Path -PathType Leaf $script:Wheel)) { throw "Wheel not found: $($script:Wheel)" }
+            # Absolute, because uv runs from another directory.
+            $script:Wheel = (Resolve-Path $script:Wheel).Path
+        }
+        return
+    }
     if ($script:Version) { $script:Version = $script:Version.TrimStart('v'); return }
     Write-Step 'Looking up the latest Athena release'
     try {
@@ -133,16 +150,18 @@ function Use-UvEnvironment {
 }
 
 function Install-Athena {
-    $wheel = "athena_server-$Version-py3-none-any.whl"
-    $url = "https://github.com/$Repo/releases/download/v$Version/$wheel"
+    $source = if ($script:Wheel) { $script:Wheel } else {
+        "https://github.com/$Repo/releases/download/v$Version/athena_server-$Version-py3-none-any.whl"
+    }
+    if ($source -match '^https?://') { $source = "athena-server @ $source" }
     $athena = Join-Path $BinDir 'athena.exe'
     Write-Step "Installing Athena $Version"
     Use-UvEnvironment
     Invoke-Step "mkdir $BinDir, $DataDir" {
         New-Item -ItemType Directory -Force -Path $BinDir, $DataDir | Out-Null
     }
-    Invoke-Step "uv tool install --force --python 3.13 `"athena-server @ $url`"" {
-        & $script:Uv tool install --force --python 3.13 "athena-server @ $url"
+    Invoke-Step "uv tool install --force --python 3.13 `"$source`"" {
+        & $script:Uv tool install --force --python 3.13 $source
     }
     Write-Step 'Registering Athena to start at logon'
     Invoke-Step "athena service install --data-dir `"$DataDir`" --port $Port" {
@@ -175,7 +194,7 @@ function Uninstall-Athena([bool]$PurgeData) {
 
 if ($Help) {
     if ($PSCommandPath) { Get-Help $PSCommandPath -Detailed }
-    else { Write-Host 'Options: -Version <x.y.z>  -DryRun  -Uninstall  -Purge  -Help' }
+    else { Write-Host 'Options: -Version <x.y.z>  -Wheel <path|url>  -DryRun  -Uninstall  -Purge  -Help' }
     return
 }
 

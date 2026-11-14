@@ -54,6 +54,24 @@ Athena runs on Linux, macOS and Windows. Any change that touches the host (conta
 - be tested on every OS it claims to support, either in CI or manually. List the OSes in the PR;
 - use open-source dependencies only, recorded in [docs/mvp-design.md §9](docs/mvp-design.md#9-dependency--license-inventory).
 
+### Testing a real install on another OS
+
+- **CI:** the `E2E` workflow installs a wheel built from your branch with the real installers on Ubuntu, macOS and Windows, then drives the UI. It runs by itself on PRs that touch the installers or the service code. To run it on any branch: `gh workflow run e2e.yml --ref <branch>`.
+- **Linux on a Mac or Linux machine**, in a [Lima](https://lima-vm.io) VM with systemd:
+
+  ```bash
+  limactl start --name athena-ubuntu --tty=false template://ubuntu-24.04   # or template://fedora
+  scripts/build-wheel.sh                                                 # dist/athena_server-*.whl
+  limactl shell athena-ubuntu -- sudo bash "$PWD/scripts/install.sh" --wheel "$PWD"/dist/athena_server-*.whl
+  # Lima forwards the VM's :8420 to localhost:8420 (stop any local Athena on 8420 first).
+  uv run --with playwright==1.65.2 playwright install chromium               # once
+  uv run scripts/e2e/smoke.py --url http://localhost:8420 --out e2e-out --expect containers
+  limactl shell athena-ubuntu -- sudo bash "$PWD/scripts/install.sh" --uninstall --purge
+  limactl delete -f athena-ubuntu
+  ```
+
+- **Windows:** a Windows 11 VM (UTM or Parallels on a Mac) with OpenSSH Server turned on. Copy the wheel over and run `install.ps1 -Wheel <path>`. Docker in WSL2 needs nested virtualization, so on Apple Silicon test it on a real x64 PC.
+
 ## AI coding agents
 
 AI-assisted contributions are welcome. Agents must follow [AGENTS.md](AGENTS.md), which covers the same workflow plus the shared skills, MCP servers and handoff notes in `docs/STATUS.md`.

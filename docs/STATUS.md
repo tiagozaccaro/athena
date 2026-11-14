@@ -132,8 +132,11 @@ _Shared handoff log for every coding agent. Update it at the end of each session
 
 - Review and merge of M5 part B (terminal). M5 is complete once it merges.
 - Not yet verified for real: the Windows terminal (ConPTY plus PowerShell) beyond CI's pty tests, and the container shell through Docker in WSL.
-- Not yet verified for real: the Linux system managers' install/uninstall (only recorded reads and fakes) and every Windows manager (hand-written fixtures; CI runs choco/winget reads on Windows).
-- Not yet verified: a real `athena service install` on any OS (only dry runs), and real capability detection on Linux and Windows hosts (only CI and fakes).
+- Not yet verified for real: the other Linux system managers' install/uninstall (dnf, pacman, zypper, apk; apt is done, see below) and every Windows manager (hand-written fixtures; CI runs choco/winget reads on Windows).
+- E2E install testing (branch `ci/e2e-install`): the `E2E` workflow runs the real installers with a wheel built from the commit, on Ubuntu, macOS and Windows runners, then `scripts/e2e/smoke.py` (Playwright) and an uninstall check. New: `scripts/build-wheel.sh` (now also used by `release.yml`), and `--wheel` / `-Wheel` in the installers. Verified locally on 2026-11-14:
+  - macOS: the smoke test against the wheel on :8421 passes.
+  - Ubuntu 24.04 arm64 in a Lima VM: `sudo install.sh --wheel` installed Docker Engine (get.docker.com), uv, Python 3.13 and the systemd unit; the service ran as root; detection found docker-engine, apt, snap, terminal.host, files and webdav; the smoke test passed; apt install/uninstall of `sl` through the API worked (checked with dpkg); `--uninstall --purge` left no unit, data, `/opt/athena` or binary, and the port was closed.
+  - Not yet seen: the first CI run on the Windows and macOS runners (the first real `install.ps1 -Wheel`, Scheduled Task and launchd install).
 
 ## Next
 

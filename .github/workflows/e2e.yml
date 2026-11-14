@@ -1,0 +1,186 @@
+name: E2E
+
+# Installs Athena for real with the one-line installers (a wheel built from this commit,
+# not a release), checks the service starts, drives the UI in a browser
+# (scripts/e2e/smoke.py), then uninstalls and checks nothing is left running.
+#
+# Not part of `ci-ok`: it's slower and touches the runner's service manager. It runs on
+# pushes to main, on PRs that change the installers or the service code, and on demand
+# (Actions > E2E > Run workflow, or `gh workflow run e2e.yml --ref <branch>`).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - scripts/install.sh
+      - scripts/install.ps1
+      - scripts/build-wheel.sh
+      - scripts/e2e/**
+      - apps/server/src/athena/service/**
+      - apps/server/src/athena/cli.py
+      - .github/workflows/e2e.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PLAYWRIGHT: playwright==1.65.2
+
+jobs:
+  wheel:
+    name: build wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the server wheel
+        run: bash scripts/build-wheel.sh
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: wheel
+          path: dist/athena_server-*.whl
+          if-no-files-found: error
+
+  install:
+    name: install + smoke (${{ matrix.os }})
+    needs: wheel
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Docker Engine is preinstalled, so the root service should find it.
+          - os: ubuntu-latest
+            expect: containers terminal.host files
+          # Hosted macOS runners can't run Colima's VM: install without a runtime.
+          - os: macos-latest
+            expect: terminal.host files
+          # No WSL2 on hosted Windows runners: containers stay missing.
+          - os: windows-latest
+            expect: terminal.host files
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: wheel
+          path: dist
+
+      # The installers run before setup-uv, so they install uv themselves like on a
+      # user's machine.
+      - name: Install (Linux)
+        if: runner.os == 'Linux'
+        run: sudo bash scripts/install.sh --wheel "$(ls dist/athena_server-*.whl)"
+
+      - name: Install (macOS)
+        if: runner.os == 'macOS'
+        run: bash scripts/install.sh --no-runtime --wheel "$(ls dist/athena_server-*.whl)"
+
+      - name: Install (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/install.ps1 -Wheel (Get-Item dist/athena_server-*.whl).FullName
+
+      - name: Service status
+        shell: bash
+        run: |
+          case "$RUNNER_OS" in
+            Linux) sudo /usr/local/bin/athena service status ;;
+            macOS) "$HOME/.local/bin/athena" service status ;;
+            Windows) "$LOCALAPPDATA/Athena/app/bin/athena.exe" service status ;;
+          esac
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      - name: Install the browser
+        shell: bash
+        run: |
+          deps=()
+          if [ "$RUNNER_OS" = Linux ]; then deps=(--with-deps); fi
+          uv run --with "$PLAYWRIGHT" playwright install "${deps[@]}" chromium
+
+      - name: Browser smoke test
+        shell: bash
+        env:
+          EXPECT: ${{ matrix.expect }}
+        run: |
+          args=()
+          for id in $EXPECT; do args+=(--expect "$id"); done
+          uv run scripts/e2e/smoke.py --url http://localhost:8420 --out e2e-out "${args[@]}"
+
+      - name: Collect server logs
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p e2e-out
+          case "$RUNNER_OS" in
+            Linux)
+              sudo journalctl -u athena --no-pager | tee e2e-out/journal.log > /dev/null || true
+              sudo cp /var/lib/athena/logs/athena.log e2e-out/ || true ;;
+            macOS) cp "$HOME/Library/Application Support/Athena/logs/athena.log" e2e-out/ || true ;;
+            Windows) cp "$LOCALAPPDATA/Athena/data/logs/athena.log" e2e-out/ || true ;;
+          esac
+          sudo chmod -R a+r e2e-out 2>/dev/null || true
+
+      - name: Uninstall (Linux / macOS)
+        if: runner.os != 'Windows'
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then
+            sudo bash scripts/install.sh --uninstall --purge
+            data=/var/lib/athena
+          else
+            bash scripts/install.sh --uninstall --purge
+            data="$HOME/Library/Application Support/Athena"
+          fi
+          test ! -e "$data" || { echo "::error::data dir left behind: $data"; exit 1; }
+
+      - name: Uninstall (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./scripts/install.ps1 -Uninstall -Purge
+          $data = Join-Path $env:LOCALAPPDATA 'Athena\data'
+          if (Test-Path $data) { Write-Error "data dir left behind: $data" }
+          if (Get-ScheduledTask -TaskName Athena -ErrorAction SilentlyContinue) { Write-Error 'Scheduled Task left behind' }
+
+      - name: Nothing listens on 8420 after uninstall
+        shell: bash
+        run: |
+          for _ in $(seq 1 15); do
+            curl -sf -o /dev/null http://localhost:8420/api/health || exit 0
+            sleep 2
+          done
+          echo "::error::Athena still answers on :8420 after uninstall"
+          exit 1
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: e2e-${{ matrix.os }}
+          path: e2e-out
+          if-no-files-found: warn
