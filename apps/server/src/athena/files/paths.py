@@ -107,11 +107,16 @@ def entry(root: Path, rel: str) -> Path:
     if not parts:
         raise BadPath("This can't be done to the location itself")
     parent = str(resolve(root, "/".join(parts[:-1])))
-    # Normalize and check again: Windows drops trailing dots and spaces, so "..." or
-    # "a " would otherwise name the parent folder itself, or something else.
+    # Normalize and check again: Windows drops trailing dots and spaces, so "..." would
+    # name the parent folder itself and "a " the entry "a". Refuse any name that
+    # normalizing changes.
     candidate = os.path.abspath(os.path.join(parent, parts[-1]))
     prefix = parent if parent.endswith(os.sep) else parent + os.sep
-    if not candidate.startswith(prefix) or os.path.dirname(candidate) != parent:
+    if (
+        not candidate.startswith(prefix)
+        or os.path.dirname(candidate) != parent
+        or os.path.basename(candidate) != parts[-1]
+    ):
         raise BadPath(f"Invalid name: {parts[-1]!r}")
     return Path(candidate)
 
