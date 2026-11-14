@@ -6,6 +6,7 @@ import {
   PlayIcon,
   RotateCwIcon,
   ScrollTextIcon,
+  SquareTerminalIcon,
   SquareIcon,
   Trash2Icon,
 } from "lucide-react"
@@ -50,6 +51,8 @@ import {
 import { toast } from "@workspace/ui/components/toast"
 
 import { LogsSheet } from "@/components/containers/logs-sheet"
+import { ShellSheet } from "@/components/terminal/shell-sheet"
+import { useTerminalAccess } from "@/components/terminal/use-terminal-access"
 
 type Container = Schemas["ContainerOut"]
 type Action = "start" | "stop" | "restart"
@@ -89,6 +92,8 @@ export function ContainersTable() {
   const [error, setError] = React.useState<string | null>(null)
   const [busy, setBusy] = React.useState<string | null>(null)
   const [logsFor, setLogsFor] = React.useState<Container | null>(null)
+  const [shellFor, setShellFor] = React.useState<Container | null>(null)
+  const canShell = useTerminalAccess().state === "ready"
   const [removing, setRemoving] = React.useState<Container | null>(null)
 
   const load = React.useCallback(async () => {
@@ -247,6 +252,12 @@ export function ContainersTable() {
                               <ScrollTextIcon />
                               Logs
                             </DropdownMenuItem>
+                            {canShell && c.state === "running" && (
+                              <DropdownMenuItem onClick={() => setShellFor(c)}>
+                                <SquareTerminalIcon />
+                                Shell
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuGroup>
                           <DropdownMenuSeparator />
                           <DropdownMenuGroup>
@@ -294,6 +305,7 @@ export function ContainersTable() {
       </div>
 
       <LogsSheet container={logsFor} onClose={() => setLogsFor(null)} />
+      <ShellSheet container={shellFor} onClose={() => setShellFor(null)} />
 
       <AlertDialog
         open={removing !== null}

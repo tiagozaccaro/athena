@@ -8,6 +8,7 @@ import {
   RotateCwIcon,
   SaveIcon,
   ScrollTextIcon,
+  SquareTerminalIcon,
   SquareIcon,
   Trash2Icon,
 } from "lucide-react"
@@ -46,6 +47,8 @@ import {
 } from "@/components/apps/app-bits"
 import { useAppJobs } from "@/components/apps/use-app-jobs"
 import { LogsSheet } from "@/components/containers/logs-sheet"
+import { ShellSheet } from "@/components/terminal/shell-sheet"
+import { useTerminalAccess } from "@/components/terminal/use-terminal-access"
 
 type AppDetailOut = Schemas["AppDetail"]
 type Container = Schemas["ContainerOut"]
@@ -57,6 +60,8 @@ export function AppDetail({ name }: { name: string }) {
   const [draft, setDraft] = React.useState<string | null>(null)
   const [envDraft, setEnvDraft] = React.useState<string | null>(null)
   const [logsFor, setLogsFor] = React.useState<Container | null>(null)
+  const [shellFor, setShellFor] = React.useState<Container | null>(null)
+  const canShell = useTerminalAccess().state === "ready"
   const [removing, setRemoving] = React.useState(false)
   const removed = React.useRef(false)
 
@@ -224,6 +229,16 @@ export function AppDetail({ name }: { name: string }) {
                       <ScrollTextIcon data-icon="inline-start" />
                       Logs
                     </Button>
+                    {canShell && c.state === "running" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShellFor(c)}
+                      >
+                        <SquareTerminalIcon data-icon="inline-start" />
+                        Shell
+                      </Button>
+                    )}
                   </ItemActions>
                 </Item>
               ))}
@@ -288,6 +303,7 @@ export function AppDetail({ name }: { name: string }) {
       </Tabs>
 
       <LogsSheet container={logsFor} onClose={() => setLogsFor(null)} />
+      <ShellSheet container={shellFor} onClose={() => setShellFor(null)} />
       <DeleteAppDialog
         name={removing ? name : null}
         onCancel={() => setRemoving(false)}

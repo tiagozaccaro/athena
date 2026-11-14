@@ -664,6 +664,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/settings/system": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get System */
+        get: operations["getSystemSettings"];
+        /** Set System */
+        put: operations["setSystemSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/packages": {
         parameters: {
             query?: never;
@@ -1368,6 +1386,14 @@ export interface components {
             hostname: string;
             /** Python */
             python: string;
+        };
+        /** SystemSettings */
+        SystemSettings: {
+            /**
+             * Terminal Enabled
+             * @default true
+             */
+            terminal_enabled: boolean;
         };
         /** Temperature */
         Temperature: {
@@ -2584,6 +2610,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Appearance"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getSystemSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemSettings"];
+                };
+            };
+        };
+    };
+    setSystemSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SystemSettings"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemSettings"];
                 };
             };
             /** @description Validation Error */

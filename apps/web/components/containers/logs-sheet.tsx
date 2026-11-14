@@ -38,7 +38,10 @@ export function LogsSheet({
       open={container !== null}
       onOpenChange={(open) => !open && onClose()}
     >
-      <SheetContent side="right" className="w-full gap-0 sm:max-w-3xl">
+      <SheetContent
+        side="right"
+        className="w-full gap-0 data-[side=right]:sm:max-w-3xl"
+      >
         <SheetHeader>
           <SheetTitle>Logs · {container?.name}</SheetTitle>
           <SheetDescription>{state}</SheetDescription>

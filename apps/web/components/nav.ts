@@ -6,6 +6,7 @@ import {
   LayoutGridIcon,
   PackageIcon,
   Settings2Icon,
+  SquareTerminalIcon,
   StoreIcon,
 } from "lucide-react"
 
@@ -59,6 +60,12 @@ export const navMain: NavItem[] = [
     icon: BoxIcon,
     capability: "containers",
     showWhenUnavailable: true,
+  },
+  {
+    title: "Terminal",
+    url: "/terminal/",
+    icon: SquareTerminalIcon,
+    capability: "terminal.host",
   },
 ]
 

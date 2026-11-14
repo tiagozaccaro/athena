@@ -80,3 +80,12 @@ class Catalog(SQLModel, table=True):
     refreshed_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
     error: str | None = None
     created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
+
+
+class SystemSetting(SQLModel, table=True):
+    """Host-wide settings, one JSON value per key (see athena.system_settings)."""
+
+    __tablename__ = "system_settings"
+
+    key: str = Field(primary_key=True, max_length=64)
+    value: str

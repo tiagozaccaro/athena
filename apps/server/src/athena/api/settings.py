@@ -1,13 +1,16 @@
-"""Per-user settings. Appearance is the first; AI and system settings come later."""
+"""Settings: per-user appearance, and host-wide system settings (admins only)."""
 
 import json
 import logging
 from typing import Annotated, Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field, ValidationError
 
+from athena import audit, system_settings
+from athena.api.terminal import close_all as close_terminals
 from athena.auth.deps import Authed, DbSession
+from athena.system_settings import SystemSettings
 
 log = logging.getLogger(__name__)
 router = APIRouter(prefix="/settings", tags=["settings"])
@@ -48,4 +51,26 @@ def set_appearance(body: Appearance, user: Authed, db: DbSession) -> Appearance:
     user.user.appearance = json.dumps(body.model_dump(), separators=(",", ":"))
     db.add(user.user)
     db.commit()
+    return body
+
+
+@router.get("/system", operation_id="getSystemSettings")
+def get_system(db: DbSession) -> SystemSettings:
+    return system_settings.load(db)
+
+
+@router.put("/system", operation_id="setSystemSettings")
+def set_system(
+    body: SystemSettings, request: Request, user: Authed, db: DbSession
+) -> SystemSettings:
+    """Turning the terminal off also closes the terminals that are open."""
+    if not user.user.is_admin:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Only admins can change system settings")
+    before = system_settings.load(db)
+    system_settings.save(db, body)
+    if before.terminal_enabled != body.terminal_enabled:
+        state = "on" if body.terminal_enabled else "off"
+        audit.record(db, user.user.username, "settings.terminal", state)
+        if not body.terminal_enabled:
+            close_terminals(request.app)
     return body

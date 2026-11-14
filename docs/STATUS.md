@@ -2,7 +2,7 @@
 
 _Shared handoff log for every coding agent. Update it at the end of each session (see AGENTS.md → Handoff)._
 
-**Current milestone:** M5 (packages + terminal). M4 is done (#20, #21, #22). Part A, package managers, is in PR `feat/m5-packages`; part B (host terminal + container exec) is next.
+**Current milestone:** M5 (packages + terminal). M4 is done (#20, #21, #22). Part A, package managers, is in PR #23 (`feat/m5-packages`). Part B, the terminal, is in a PR from `feat/m5-terminal`, stacked on #23.
 
 ## Done
 
@@ -116,16 +116,30 @@ _Shared handoff log for every coding agent. Update it at the end of each session
   - Fixtures: real recordings for brew, apt, apk, dnf4/dnf5, zypper, pacman and flatpak search (throwaway containers, images removed afterwards) and winget list (Windows CI runner); hand-written for snap, scoop, choco and the rest of winget (README says which). CI's real reads: apt (Ubuntu), brew (macOS), choco and winget (Windows) all parse; the first Windows run showed winget ids can contain spaces, now handled. Read-only real-tool tests run where the tool exists (brew passes locally).
   - Web: Packages page (tab per manager; Installed with filter, inline update badges, uninstall; Updates with upgrade one/all; Search with install), confirm dialogs, job dialog, notes (pacman, choco). Nav item via `capability: "packages.*"`.
   - 238 server tests pass (49 new); the real-tool tests for apt, choco and winget skip on this Mac and run in CI on their OS. Verified in the browser on macOS with real Homebrew reads and a stub for changes (nothing installed or removed on the host): installed list (49) and updates (12) match `brew`, filter, search with descriptions, install (stub), a failing install (exit code and Homebrew's error in the dialog), upgrade all and uninstall with confirmations (cancel sends nothing), refresh, audit rows, phone width (fixed: row actions were pushed off-screen), dark mode, no console errors; a host without Homebrew hides the nav item and the page says so.
+- **M5 part B, terminal** (branch `feat/m5-terminal`, stacked on `feat/m5-packages`):
+  - `athena/terminal/`: `PtySession` (stdlib pty plus a `TIOCSCTTY` exec shim on POSIX instead of `pty.fork()`, which can deadlock a threaded server; pywinpty on Windows) and the host and container shells.
+  - `WS /api/terminal/ws?target=host|container:<id>`: cookie, then the CSRF token in the first frame, admin only, gated by `terminal.host` and the new system setting. Signing out closes open terminals within 60 s, and turning the terminal off closes them at once. A limit of 10 sessions. Every open and close is audited (with the exit code or reason, and the duration).
+  - System settings: `system_settings` table (migration 0007), `GET/PUT /api/settings/system` (`terminal_enabled`, admin-only PUT, audited).
+  - Web: `<Terminal>` (xterm.js 6, themed from CSS variables and re-themed live), `/terminal` page with status and New session, a Shell action on running containers (Containers page and app detail), Settings → System switch. Fixed in passing: the Logs sheet (and the new Shell sheet) were stuck at `max-w-sm` because the Sheet's own `data-[side=right]` class won over `sm:max-w-3xl`.
+  - 257 server tests (19 new). The pty tests also run on Windows CI through ConPTY.
+  - Verified in the browser on macOS (release build, fresh data dir):
+    - Host shell: zsh login shell, input and output, colors, fitted to the box (115 columns, and 39 at phone width after a resize), Ctrl+C interrupts `sleep`, `exit 3` shows "Exited (3)", New session.
+    - Turning the terminal off: closes the open session with its reason, and the page then says it's off with a link to Settings. The switch turns it back on, with a toast.
+    - Container shell: in a throwaway `athena-test-shell` (Alpine, which falls back to sh) at 90 columns (the size reaches the shell through `docker exec`). The container was removed afterwards.
+    - Dark mode, no console errors, audit rows. Fixed during verification: a session closed by the setting had no `terminal.close` row.
 
 ## In progress
 
-- M5 part A (packages) review and merge.
+- Review and merge of M5 part A (#23), then of part B. After #23 is squash-merged, rebase `feat/m5-terminal` onto main (`git rebase --onto origin/main feat/m5-packages feat/m5-terminal`).
+- Not yet verified for real: the Windows terminal (ConPTY plus PowerShell) beyond CI's pty tests, and the container shell through Docker in WSL.
 - Not yet verified for real: the Linux system managers' install/uninstall (only recorded reads and fakes) and every Windows manager (hand-written fixtures; CI runs choco/winget reads on Windows).
 - Not yet verified: a real `athena service install` on any OS (only dry runs), and real capability detection on Linux and Windows hosts (only CI and fakes).
 
 ## Next
 
-M5 part B, terminal (see `docs/mvp-design.md` §4.2, §7): host shell in the browser (xterm.js over a WebSocket; a pty on Linux/macOS, ConPTY on Windows) and container exec; admin-only, can be switched off, audited.
+M6: files, shares and cloud (`docs/mvp-design.md` §4.3, §4.4).
+
+Later: switches for package installs and the assistant's shell in system settings (§7), next to the terminal's. Proxying the terminal WebSocket in `next dev` hasn't been checked; use the release build to work on it.
 
 Later: a CI check that `themes.css` matches the registry (needs network; run `pnpm gen:theme` after shadcn upgrades for now), and switching shadcn styles at runtime (§5.4).
 

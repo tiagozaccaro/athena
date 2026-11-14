@@ -1575,6 +1575,66 @@
         }
       }
     },
+    "/api/settings/system": {
+      "get": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Get System",
+        "operationId": "getSystemSettings",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemSettings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Set System",
+        "operationId": "setSystemSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemSettings"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemSettings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/packages": {
       "get": {
         "tags": [
@@ -3625,6 +3685,17 @@
           "python"
         ],
         "title": "SystemInfo"
+      },
+      "SystemSettings": {
+        "properties": {
+          "terminal_enabled": {
+            "type": "boolean",
+            "title": "Terminal Enabled",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "SystemSettings"
       },
       "Temperature": {
         "properties": {
