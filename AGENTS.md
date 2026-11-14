@@ -7,8 +7,9 @@ This file is the single source of instructions for every coding agent working he
 ## Start here (every session, every agent)
 
 1. Read `docs/STATUS.md`: the current milestone, what's done, what's in progress, and what's next.
-2. Read the parts of `docs/mvp-design.md` that the task touches. It holds the design and the decisions log (§11).
-3. Before ending a session, update `docs/STATUS.md` (see [Handoff](#handoff)). The next agent may be a different tool with no memory of yours.
+2. Read `docs/AGENT-NOTES.md`: how the maintainer works, the command cheat sheet, patterns to copy, and the gotchas earlier sessions already hit (Windows CI, CodeQL, Base UI, wsgidav, …).
+3. Read the parts of `docs/mvp-design.md` that the task touches. It holds the design and the decisions log (§11).
+4. Before ending a session, update `docs/STATUS.md` (see [Handoff](#handoff)). The next agent may be a different tool with no memory of yours.
 
 ## Git workflow (mandatory)
 
@@ -71,6 +72,7 @@ Everything agent-related has one source of truth in the repo. Each agent reads i
 | Skills | `.agents/skills/` | `.claude/skills` → symlink | reads `.agents/skills` | reads `.agents/skills` after `hermes skills trust` |
 | MCP servers | `.mcp.json` | reads it | `opencode.json` (generated) | `~/.hermes/config.yaml` (snippet generated) |
 | Project state | `docs/STATUS.md` | ← | ← | ← |
+| Lessons, gotchas, commands | `docs/AGENT-NOTES.md` | ← | ← | ← |
 
 **MCP servers** (`.mcp.json`):
 - `shadcn`: browse, search and install registry items.
@@ -105,5 +107,7 @@ At the end of every session, update `docs/STATUS.md`:
 - Under **In progress**, say exactly where you stopped: files touched, what works, what's broken, and the next concrete step.
 - Add new **Open questions** or **Blockers**.
 - Keep it short. Detail belongs in the design doc, commits and code.
+
+If you learned something non-obvious, add it to `docs/AGENT-NOTES.md`. That covers a CI failure with a surprising cause, a tool quirk, a scanner false positive, or a pattern worth copying.
 
 Don't rely on agent-private memory (Claude memory, Hermes MEMORY.md, OpenCode sessions) for anything another agent needs.
