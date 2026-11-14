@@ -1,5 +1,9 @@
 {
-  "enabledMcpjsonServers": ["shadcn", "next-devtools", "playwright"],
+  "enabledMcpjsonServers": [
+    "shadcn",
+    "next-devtools",
+    "playwright"
+  ],
   "permissions": {
     "allow": [
       "mcp__shadcn",
@@ -14,7 +18,23 @@
       "Bash(uv sync*)",
       "Bash(uv run pytest*)",
       "Bash(uv run ruff*)",
-      "Bash(uv run pyright*)"
+      "Bash(uv run pyright*)",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_resize",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_network_requests",
+      "mcp__ccd_pr__get_status",
+      "Bash(actionlint)",
+      "Bash(actionlint -color)",
+      "Bash(node scripts/agents-sync.mjs --check)",
+      "Bash(shellcheck *)",
+      "Bash(hermes skills list)",
+      "Bash(opencode mcp list)",
+      "Bash(npm view *)",
+      "Bash(gh run watch *)",
+      "Bash(hermes mcp list)"
     ]
   }
 }
