@@ -17,7 +17,7 @@ Read this file once per session, after STATUS.
 - They move through the milestones in `docs/mvp-design.md` §10 in order, with short prompts like "next", "continue", "start M5", "check" or "yes". "Next" means: read STATUS, propose the next concrete step with a recommendation, and wait for a yes before starting a new milestone or part.
 - Big milestones are split into parts (M5 A/B, M6 A/B/C), with one branch and one PR per part.
 - When asked to "discuss questions first", list the open questions with a recommendation for each before writing code.
-- After opening a PR, they usually say "Yes, auto-merge". Turn it on with `gh pr merge <n> --squash --auto --delete-branch`. Auto-merge only waits for the required checks (`ci-ok`, `pr-title`), so also check that CodeQL is green before you call a PR done.
+- Every PR gets auto-merge as soon as it's opened, without asking (standing instruction since 2026-11-14): `gh pr merge <n> --squash --auto --delete-branch`. The exceptions are in AGENTS.md → Git workflow. Auto-merge only waits for the required checks (`ci-ok`, `pr-title`), so also check that CodeQL is green before you call a PR done.
 - "Check" / "check now" / "could you keep observing the PRs?" means: read the PR checks (`gh pr checks <n>`, `gh run view <id> --log-failed`), fix failures on the PR branch, and report what merged and what didn't. Never claim something merged without checking.
 - Fix CodeQL alerts in code rather than dismissing them. Dismissing changes the repo's security state, so it's the maintainer's call (see [CodeQL](#codeql)).
 - Report honestly: what was verified, what wasn't and why, and the bugs found along the way. Final reports list "Fixed along the way" and "Not tested yet".
