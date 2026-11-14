@@ -133,28 +133,32 @@ async def run(job: Job, rclone: Rclone, steps: list[Step]) -> None:
         )
 
 
-async def preview_sync(rclone: Rclone, src: str, dst: str) -> SyncPreview:
-    """What `sync src dst` would change, comparing sizes only (no hashing)."""
+async def _files(rclone: Rclone, fs: str) -> dict[str, int]:
+    """Every file under `fs` with its size; empty when the folder doesn't exist yet."""
     try:
         data = await rclone.call(
-            "operations/check",
+            "operations/list",
             {
-                "srcFs": src,
-                "dstFs": dst,
-                "missingOnSrc": True,
-                "missingOnDst": True,
-                "differ": True,
-                "_config": {"SizeOnly": True},
+                "fs": fs,
+                "remote": "",
+                "opt": {"recurse": True, "filesOnly": True, "noModTime": True, "noMimeType": True},
             },
         )
     except RcloneError as exc:
-        if exc.status != 404 and "directory not found" not in exc.message:
-            raise
-        # Nothing at the destination yet: everything is copied, nothing deleted.
-        data = await rclone.call("operations/size", {"fs": src})
-        return SyncPreview(copy_count=int(data.get("count") or 0), delete_count=0, deletes=[])
-    deletes = sorted(data.get("missingOnSrc") or [])
-    copies = len(data.get("missingOnDst") or []) + len(data.get("differ") or [])
+        if exc.status == 404 or "directory not found" in exc.message:
+            return {}
+        raise
+    return {str(i.get("Path")): int(i.get("Size", -1)) for i in data.get("list") or []}
+
+
+async def preview_sync(rclone: Rclone, src: str, dst: str) -> SyncPreview:
+    """What `sync src dst` would change. Both sides are listed and compared here rather
+    than with `operations/check`, whose file lists older rclone (1.60, Ubuntu's) leaves
+    empty. Deletes are exact; copies count new files and size changes (sync also copies
+    files whose time changed)."""
+    source, dest = await asyncio.gather(_files(rclone, src), _files(rclone, dst))
+    deletes = sorted(set(dest) - set(source))
+    copies = sum(1 for path, n in source.items() if dest.get(path) != n)
     return SyncPreview(
         copy_count=copies, delete_count=len(deletes), deletes=deletes[:PREVIEW_NAMES]
     )

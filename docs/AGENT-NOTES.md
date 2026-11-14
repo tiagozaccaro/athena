@@ -134,6 +134,7 @@ CodeQL runs on every PR and its alerts can block a merge.
 - In the non-interactive config flow, a refused answer (a bad OAuth token) comes back with the same `State`, an `Error` and no `Option`: ask the same question again. Athena returns it as `ConfigStep.error` with `question: null`.
 - rclone marks more than passwords as `Sensitive` (WebDAV `user`, S3 keys, OAuth client secrets). Treat both flags as secrets; the edit form shows them as "Unchanged".
 - `config/create` writes the section immediately, before its follow-up questions are answered, so a remote abandoned halfway stays in the config unless it's deleted (the dialog's Cancel does that).
+- Ubuntu's apt rclone is old (1.60 on the CI runner) and behaves differently. `operations/check` returns no file lists there, so a preview built on it said "nothing will be deleted" when sync would delete files: the preview lists both folders instead. 1.60 also doesn't mark WebDAV `user` as sensitive and words errors differently ("didn't find section in config file"). CI installs it on purpose; write tests that pass on both.
 - Newer rclone (1.76) asks about Google's retiring shared client id before the OAuth step; older ones don't. Tests loop over questions until `config_token` instead of hard-coding the order.
 
 ### Web (Next.js 16, shadcn on Base UI)

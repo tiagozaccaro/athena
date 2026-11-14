@@ -259,8 +259,10 @@ def test_providers_and_remote_lifecycle(cloud) -> None:
     assert res.json() == {"remote": "dav", "done": True, "question": None, "error": ""}
     detail = client.get("/api/cloud/remotes/dav").json()
     assert detail["values"]["url"] == "https://example.invalid/dav"
-    # Passwords and anything rclone calls sensitive (users, keys, tokens) stay hidden.
-    assert {"pass", "user"} <= set(detail["secrets"])
+    # Passwords and anything rclone calls sensitive (since 1.65 that includes users,
+    # keys and tokens) stay hidden.
+    assert "pass" in detail["secrets"]
+    assert "user" in detail["secrets"] or detail["values"]["user"] == "me"
     assert "pass" not in detail["values"]
     assert "s3cret" not in client.get("/api/cloud/remotes/dav").text
 
@@ -593,7 +595,8 @@ def test_rclone_restarts_after_it_dies(tmp_path: Path) -> None:
         assert rclone.call_sync("core/version")["version"].startswith("v")
         with pytest.raises(RcloneError) as err:
             rclone.call_sync("operations/list", {"fs": "nosuch:", "remote": ""})
-        assert "nosuch" in err.value.message
+        # Older rclone (1.60) doesn't name the remote in this message.
+        assert "nosuch" in err.value.message or "section" in err.value.message
     finally:
         rclone.stop()
     assert rclone._proc is None

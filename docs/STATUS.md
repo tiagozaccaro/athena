@@ -147,7 +147,7 @@ _Shared handoff log for every coding agent. Update it at the end of each session
 
 ## In progress
 
-- **M6 part C, cloud storage with rclone** (branch `feat/m6-cloud`, PR open). Design in `docs/mvp-design.md` §4.4.
+- **M6 part C, cloud storage with rclone** (#35, branch `feat/m6-cloud`). Design in `docs/mvp-design.md` §4.4.
   - Server: `athena/cloud/` (`rclone.py` sidecar: `rclone rcd --rc-serve` on 127.0.0.1, random port and password, Athena's own 0600 config, started on first use, restarted if it dies, stopped on shutdown; `remotes.py`; `transfers.py`) and `athena/api/cloud.py` (`/api/cloud/*`, gated by `cloud.rclone`). Jobs gained `progress`, `cancellable` and `POST /api/jobs/{id}/cancel`. No new dependencies (stdlib HTTP).
   - Web: `/cloud` (remotes, Add/Edit with rclone's questions, Sync folders with a preview of deletions, install steps without rclone), remotes in Files' picker and in Copy/Move, `FolderPicker`, the job dialog's progress bar and Cancel. shadcn `combobox` added.
   - 314 server tests (16 new in `tests/test_cloud.py`, most against a real rclone); CI now installs rclone on all three OSes (apt's older one on Ubuntu, on purpose).
