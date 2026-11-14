@@ -55,6 +55,7 @@ Full details are in `CONTRIBUTING.md`.
 - **shadcn first.** Search registries (shadcn MCP / `shadcn search`) before building a component, including the `@ai-elements` registry for chat UI. Only create a component when nothing fits.
 - **App shell** comes from the `dashboard-01` block without its demo data, demo page, or demo content components.
 - **Theming.** Use theme tokens only (no raw colors). Base color, theme, chart color, fonts and radius switch at runtime via data attributes. The shadcn style is fixed to preset `b0` for the MVP.
+  - `packages/ui/src/styles/themes.css` and `themes.json` are generated from the shadcn registry by `pnpm gen:theme` (`scripts/gen-theme-css.mjs`). Never edit them by hand; rerun after upgrading shadcn. Appearance logic is in `apps/web/lib/appearance.ts`, fonts in `apps/web/lib/fonts.ts`.
 - Run pnpm commands from the repo root; Python commands with `uv run` inside `apps/server`.
 - Decisions that change the design go in `docs/mvp-design.md` (update the section and add a row to §11 Decisions log), not only in chat or an agent's private memory.
 

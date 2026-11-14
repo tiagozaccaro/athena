@@ -4,6 +4,7 @@ import {
   CircleHelpIcon,
   LayoutDashboardIcon,
   LayoutGridIcon,
+  Settings2Icon,
   StoreIcon,
 } from "lucide-react"
 
@@ -58,6 +59,7 @@ export function isActive(item: NavItem, pathname: string): boolean {
 }
 
 export const navSecondary: NavItem[] = [
+  { title: "Settings", url: "/settings/", icon: Settings2Icon },
   {
     title: "Help",
     url: "https://github.com/tiagozaccaro/athena#readme",
@@ -68,6 +70,8 @@ export const navSecondary: NavItem[] = [
 
 /** Title for the header, from the nav item matching the current path. */
 export function titleForPath(pathname: string): string {
-  const match = navMain.find((item) => isActive(item, pathname))
+  const match = [...navMain, ...navSecondary].find(
+    (item) => !item.external && isActive(item, pathname)
+  )
   return match?.title ?? "Athena"
 }

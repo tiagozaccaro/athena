@@ -1,18 +1,12 @@
 import type { Metadata } from "next"
-import { Geist_Mono, Inter } from "next/font/google"
 
 import "@workspace/ui/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { APPEARANCE_SCRIPT, DEFAULT_ATTRIBUTES } from "@/lib/appearance"
+import { fontVariables } from "@/lib/fonts"
 import { Toaster } from "@workspace/ui/components/toast"
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
 import { cn } from "@workspace/ui/lib/utils"
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
-
-const fontMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-})
 
 export const metadata: Metadata = {
   title: { default: "Athena", template: "%s · Athena" },
@@ -28,13 +22,14 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn(
-        "antialiased",
-        fontMono.variable,
-        "font-sans",
-        inter.variable
-      )}
+      className={cn("font-sans antialiased", fontVariables)}
+      {...DEFAULT_ATTRIBUTES}
     >
+      <head>
+        {/* Applies the saved base color, theme, fonts and radius before first paint
+            (docs/mvp-design.md §5.4). next-themes injects its own script for dark mode. */}
+        <script dangerouslySetInnerHTML={{ __html: APPEARANCE_SCRIPT }} />
+      </head>
       <body>
         <ThemeProvider>
           <TooltipProvider>{children}</TooltipProvider>

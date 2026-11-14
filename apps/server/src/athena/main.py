@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from athena import __version__
 from athena.api import apps, auth, capabilities, containers, jobs, system
+from athena.api import settings as settings_api
 from athena.api import store as store_api
 from athena.auth.deps import require_user
 from athena.auth.service import LoginThrottle
@@ -71,6 +72,7 @@ def create_app(
     app.include_router(containers.router, prefix="/api", dependencies=[require_user])
     app.include_router(apps.router, prefix="/api", dependencies=[require_user])
     app.include_router(store_api.router, prefix="/api", dependencies=[require_user])
+    app.include_router(settings_api.router, prefix="/api", dependencies=[require_user])
 
     # Mounted last so /api routes win. In development the UI is served by `next dev`
     # instead, and this directory doesn't exist.

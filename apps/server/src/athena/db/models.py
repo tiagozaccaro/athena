@@ -19,6 +19,8 @@ class User(SQLModel, table=True):
     password_hash: str
     is_admin: bool = True
     created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
+    appearance: str | None = None
+    """The user's appearance settings as JSON (see athena.api.settings.Appearance)."""
 
 
 class AuthSession(SQLModel, table=True):

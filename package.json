@@ -9,7 +9,8 @@
     "format": "turbo format",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
-    "gen:api": "cd apps/server && uv run athena openapi --output ../../packages/api-client/openapi.json && cd ../.. && pnpm --filter @workspace/api-client generate"
+    "gen:api": "cd apps/server && uv run athena openapi --output ../../packages/api-client/openapi.json && cd ../.. && pnpm --filter @workspace/api-client generate",
+    "gen:theme": "node scripts/gen-theme-css.mjs"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",

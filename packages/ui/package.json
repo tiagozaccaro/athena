@@ -45,6 +45,7 @@
     "./lib/*": "./src/lib/*.ts",
     "./components/*": "./src/components/*.tsx",
     "./components/athena/*": "./src/components/athena/*.tsx",
-    "./hooks/*": "./src/hooks/*.ts"
+    "./hooks/*": "./src/hooks/*.ts",
+    "./themes.json": "./src/styles/themes.json"
   }
 }

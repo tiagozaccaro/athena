@@ -1,0 +1,324 @@
+{
+  "bases": [
+    {
+      "id": "neutral",
+      "swatch": "oklch(0.556 0 0)"
+    },
+    {
+      "id": "stone",
+      "swatch": "oklch(0.553 0.013 58.071)"
+    },
+    {
+      "id": "zinc",
+      "swatch": "oklch(0.552 0.016 285.938)"
+    },
+    {
+      "id": "mauve",
+      "swatch": "oklch(0.542 0.034 322.5)"
+    },
+    {
+      "id": "olive",
+      "swatch": "oklch(0.58 0.031 107.3)"
+    },
+    {
+      "id": "mist",
+      "swatch": "oklch(0.56 0.021 213.5)"
+    },
+    {
+      "id": "taupe",
+      "swatch": "oklch(0.547 0.021 43.1)"
+    }
+  ],
+  "themes": [
+    {
+      "id": "neutral",
+      "matchesBase": true,
+      "swatch": "oklch(0.205 0 0)"
+    },
+    {
+      "id": "stone",
+      "matchesBase": true,
+      "swatch": "oklch(0.216 0.006 56.043)"
+    },
+    {
+      "id": "zinc",
+      "matchesBase": true,
+      "swatch": "oklch(0.21 0.006 285.885)"
+    },
+    {
+      "id": "mauve",
+      "matchesBase": true,
+      "swatch": "oklch(0.212 0.019 322.12)"
+    },
+    {
+      "id": "olive",
+      "matchesBase": true,
+      "swatch": "oklch(0.228 0.013 107.4)"
+    },
+    {
+      "id": "mist",
+      "matchesBase": true,
+      "swatch": "oklch(0.218 0.008 223.9)"
+    },
+    {
+      "id": "taupe",
+      "matchesBase": true,
+      "swatch": "oklch(0.214 0.009 43.1)"
+    },
+    {
+      "id": "amber",
+      "matchesBase": false,
+      "swatch": "oklch(0.555 0.163 48.998)"
+    },
+    {
+      "id": "blue",
+      "matchesBase": false,
+      "swatch": "oklch(0.488 0.243 264.376)"
+    },
+    {
+      "id": "cyan",
+      "matchesBase": false,
+      "swatch": "oklch(0.52 0.105 223.128)"
+    },
+    {
+      "id": "emerald",
+      "matchesBase": false,
+      "swatch": "oklch(0.508 0.118 165.612)"
+    },
+    {
+      "id": "fuchsia",
+      "matchesBase": false,
+      "swatch": "oklch(0.518 0.253 323.949)"
+    },
+    {
+      "id": "green",
+      "matchesBase": false,
+      "swatch": "oklch(0.527 0.154 150.069)"
+    },
+    {
+      "id": "indigo",
+      "matchesBase": false,
+      "swatch": "oklch(0.457 0.24 277.023)"
+    },
+    {
+      "id": "lime",
+      "matchesBase": false,
+      "swatch": "oklch(0.841 0.238 128.85)"
+    },
+    {
+      "id": "orange",
+      "matchesBase": false,
+      "swatch": "oklch(0.553 0.195 38.402)"
+    },
+    {
+      "id": "pink",
+      "matchesBase": false,
+      "swatch": "oklch(0.525 0.223 3.958)"
+    },
+    {
+      "id": "purple",
+      "matchesBase": false,
+      "swatch": "oklch(0.496 0.265 301.924)"
+    },
+    {
+      "id": "red",
+      "matchesBase": false,
+      "swatch": "oklch(0.505 0.213 27.518)"
+    },
+    {
+      "id": "rose",
+      "matchesBase": false,
+      "swatch": "oklch(0.514 0.222 16.935)"
+    },
+    {
+      "id": "sky",
+      "matchesBase": false,
+      "swatch": "oklch(0.5 0.134 242.749)"
+    },
+    {
+      "id": "teal",
+      "matchesBase": false,
+      "swatch": "oklch(0.511 0.096 186.391)"
+    },
+    {
+      "id": "violet",
+      "matchesBase": false,
+      "swatch": "oklch(0.491 0.27 292.581)"
+    },
+    {
+      "id": "yellow",
+      "matchesBase": false,
+      "swatch": "oklch(0.852 0.199 91.936)"
+    }
+  ],
+  "charts": [
+    {
+      "id": "stone",
+      "matchesBase": true,
+      "swatch": "oklch(0.444 0.011 73.639)"
+    },
+    {
+      "id": "zinc",
+      "matchesBase": true,
+      "swatch": "oklch(0.442 0.017 285.786)"
+    },
+    {
+      "id": "amber",
+      "matchesBase": false,
+      "swatch": "oklch(0.666 0.179 58.318)"
+    },
+    {
+      "id": "blue",
+      "matchesBase": false,
+      "swatch": "oklch(0.546 0.245 262.881)"
+    },
+    {
+      "id": "cyan",
+      "matchesBase": false,
+      "swatch": "oklch(0.609 0.126 221.723)"
+    },
+    {
+      "id": "emerald",
+      "matchesBase": false,
+      "swatch": "oklch(0.596 0.145 163.225)"
+    },
+    {
+      "id": "fuchsia",
+      "matchesBase": false,
+      "swatch": "oklch(0.591 0.293 322.896)"
+    },
+    {
+      "id": "green",
+      "matchesBase": false,
+      "swatch": "oklch(0.627 0.194 149.214)"
+    },
+    {
+      "id": "indigo",
+      "matchesBase": false,
+      "swatch": "oklch(0.511 0.262 276.966)"
+    },
+    {
+      "id": "lime",
+      "matchesBase": false,
+      "swatch": "oklch(0.648 0.2 131.684)"
+    },
+    {
+      "id": "orange",
+      "matchesBase": false,
+      "swatch": "oklch(0.646 0.222 41.116)"
+    },
+    {
+      "id": "pink",
+      "matchesBase": false,
+      "swatch": "oklch(0.592 0.249 0.584)"
+    },
+    {
+      "id": "purple",
+      "matchesBase": false,
+      "swatch": "oklch(0.558 0.288 302.321)"
+    },
+    {
+      "id": "red",
+      "matchesBase": false,
+      "swatch": "oklch(0.577 0.245 27.325)"
+    },
+    {
+      "id": "rose",
+      "matchesBase": false,
+      "swatch": "oklch(0.586 0.253 17.585)"
+    },
+    {
+      "id": "sky",
+      "matchesBase": false,
+      "swatch": "oklch(0.588 0.158 241.966)"
+    },
+    {
+      "id": "teal",
+      "matchesBase": false,
+      "swatch": "oklch(0.6 0.118 184.704)"
+    },
+    {
+      "id": "violet",
+      "matchesBase": false,
+      "swatch": "oklch(0.541 0.281 293.009)"
+    },
+    {
+      "id": "yellow",
+      "matchesBase": false,
+      "swatch": "oklch(0.681 0.162 75.834)"
+    },
+    {
+      "id": "mauve",
+      "matchesBase": true,
+      "swatch": "oklch(0.435 0.029 321.78)"
+    },
+    {
+      "id": "olive",
+      "matchesBase": true,
+      "swatch": "oklch(0.466 0.025 107.3)"
+    },
+    {
+      "id": "mist",
+      "matchesBase": true,
+      "swatch": "oklch(0.45 0.017 213.2)"
+    },
+    {
+      "id": "taupe",
+      "matchesBase": true,
+      "swatch": "oklch(0.438 0.017 39.3)"
+    }
+  ],
+  "radii": [
+    {
+      "id": "default",
+      "value": "0.625rem"
+    },
+    {
+      "id": "none",
+      "value": "0"
+    },
+    {
+      "id": "small",
+      "value": "0.45rem"
+    },
+    {
+      "id": "medium",
+      "value": "0.625rem"
+    },
+    {
+      "id": "large",
+      "value": "0.875rem"
+    }
+  ],
+  "fonts": [
+    "inter",
+    "noto-sans",
+    "nunito-sans",
+    "figtree",
+    "roboto",
+    "raleway",
+    "dm-sans",
+    "public-sans",
+    "outfit",
+    "jetbrains-mono",
+    "geist",
+    "geist-mono",
+    "lora",
+    "merriweather",
+    "playfair-display",
+    "noto-serif",
+    "roboto-slab",
+    "oxanium",
+    "manrope",
+    "space-grotesk",
+    "montserrat",
+    "ibm-plex-sans",
+    "source-sans-3",
+    "instrument-sans",
+    "eb-garamond",
+    "instrument-serif"
+  ],
+  "skipped": [
+    "base gray: Invalid enum value. Expected 'neutral' | 'stone' | 'zinc' | 'mauve' | 'olive' | 'mist' | 'taupe', received 'gray'"
+  ]
+}

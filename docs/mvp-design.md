@@ -288,9 +288,13 @@ shadcn presets are applied at *init/build time* by the CLI. Athena needs them sw
 | Radius | `[data-radius]` → `--radius` |
 | Style (mira, luma, …) | **Spike needed.** See below |
 
-- The CSS blocks are **generated at build time** by a script (`scripts/gen-theme-css.ts`) that reads the shadcn registry's color and theme definitions. Nothing is hand-copied.
-- The preference is saved per user in the backend and applied before first paint by a tiny inline script that reads `localStorage` (refreshed from the API).
-- **Preset code import/export.** Settings can take a shadcn preset code (`b0…`) and fill in all fields, and show the current code. That needs the preset decoder: either call it from the `shadcn` package at runtime in the browser, or port it.
+- **Generated CSS (M4).** `scripts/gen-theme-css.mjs` (`pnpm gen:theme`) asks the registry's `/init` endpoint (what the shadcn CLI uses) for every base color, theme, chart color and radius, and writes `packages/ui/src/styles/themes.css` plus `themes.json` (the options and swatches the Settings page offers). Both are committed, so builds don't need the network; rerun after upgrading shadcn. Nothing is hand-copied.
+  - The registry's model, found by probing: a theme is a colored accent (17) or the base color's own name ("match base", valid only with that base); explicit chart colors work the same way, and `neutral` charts means "follow the theme" (sent as no `chartColor`). `gray` is in the preset lists but the registry refuses it, so it's skipped.
+  - Base blocks carry every variable; theme blocks carry what each theme actually sets, worked out per mode on two bases (most set primary, secondary, sidebar-primary and the charts; rose also sets the dark sidebar); chart blocks come last and override. The script verifies every colored theme on a third base, plus an explicit chart, against the registry and fails if they don't compose.
+  - Selectors are `:root[data-base=…]` and `:root.dark[data-base=…]` (and the same for theme, chart, radius), which beat the `:root`/`.dark` defaults in `globals.css` without `!important`.
+- **Fonts (M4).** All 26 preset fonts are self-hosted with `next/font` (`apps/web/lib/fonts.ts`) as `--font-<id>`; only Inter and Geist Mono are preloaded, so another font's files load the first time a page uses it. `[data-font]` sets `--font-sans`, `[data-font-heading]` sets `--app-font-heading`, and `globals.css` maps Tailwind's `font-heading` to it (Tailwind inlines `@theme inline` values, so the utility has to read a runtime variable). A `satisfies` check fails the build if shadcn adds a font.
+- **Persistence (M4).** Saved per user (`users.appearance`, JSON; `GET/PUT /api/settings/appearance`). The server only checks the id shape; the UI normalizes unknown ids to the defaults. An inline script in `<head>` (`APPEARANCE_SCRIPT`) copies the browser's last-known settings onto `<html>` before first paint (verified: the attributes are set when `<body>` starts parsing); signed in, the account's settings are fetched and win. Changes apply instantly and are saved 400 ms after the last one. Dark/light/system stays with `next-themes`.
+- **Preset codes (M4).** `shadcn/preset` (`encodePreset`/`decodePreset`, pure and browser-safe) runs in the browser. Export keeps b0's style, icons and menus; import applies colors, fonts and radius and reports what it skipped (another style, icon library, menu colors, or an option the registry doesn't serve).
 - **Style (decided: one style in the MVP).** Styles change component class names and spacing, not just variables, so the MVP ships the style from preset `b0` only. The Style field in Settings shows the current style as read-only, with a "coming later" note. Post-MVP option: generate a `packages/ui` build per style and swap them by attribute-scoped CSS.
 
 ### 5.5 Routes
@@ -359,7 +363,7 @@ GET/POST/DELETE /api/shares          /dav/…  (WebDAV)       /s/{token}
 GET/POST/DELETE /api/cloud/remotes   POST /api/cloud/jobs
 POST /api/assistant/chat (stream)    POST /api/assistant/approve/{call_id}
 GET  /api/jobs/{id}  GET /api/jobs/{id}/events (SSE)
-GET/PUT /api/settings/{appearance|ai|system}
+GET/PUT /api/settings/{appearance|ai|system}   POST /api/auth/password
 ```
 
 ---
@@ -398,6 +402,8 @@ GET/PUT /api/settings/{appearance|ai|system}
 | Next.js, React, shadcn/ui, Radix/Base UI, Tailwind, Recharts, TanStack Table | MIT |
 | AI Elements, Vercel AI SDK | Apache-2.0 |
 | xterm.js, CodeMirror 6, next-themes, openapi-typescript | MIT |
+| shadcn CLI package (`shadcn/preset` used at runtime) | MIT |
+| Preset fonts via `next/font/google` (Inter, Geist, Lora, Roboto and the other 22) | SIL OFL 1.1 / Apache-2.0 |
 | Base UI (`@base-ui/react`), `cn`, Turborepo, openapi-fetch, lucide-react, sonner, zod | MIT / ISC |
 | pydantic-settings, platformdirs, hatchling | MIT |
 | SQLModel, SQLAlchemy, Alembic, argon2-cffi | MIT |
@@ -456,6 +462,8 @@ M2–M4 can proceed in parallel once M1 lands, and so can M5 and M6. M7 depends 
 | Remote catalogs (M3) | Downloaded as an archive over HTTPS (no git): GitHub/Codeberg/GitLab repo URLs are turned into archive URLs; direct .tar.gz/.zip links work. Safe extraction (no traversal or links, 200 MB download, 50k files, 1 GB extracted). The folder holding `apps/` (Athena) or `Apps/` (CasaOS) is found up to 8 levels deep, normalized into `<data-dir>/catalogs/<id>/apps/*/compose.yaml`, and swapped in atomically; a failed refresh keeps the previous copy and records the error. Refresh runs as a job |
 | CasaOS import (M3) | `x-casaos` converted to `x-athena`: `/DATA/AppData/$AppID` becomes `${ATHENA_APP_DATA}`, `/DATA/<X>` becomes a path field, `port_map` becomes `WEB_PORT`, `$PUID/$PGID/$TZ` become default-token fields, and other variables become fields (secrets generated). Parsed with YAML 1.2 booleans like compose. The one-click source is the official CasaOS-AppStore release `main.zip` (182 apps, all pass `compose config`); the full repo is too large and the pruned `_appstore` mirror is unlicensed. Imported files keep upstream specifics (e.g. Raspberry Pi device mappings) |
 | Host stats (M4) | psutil sampled every 2 s into a 1 h ring buffer; JSON snapshot with history plus an SSE stream of `stats` events. No capability (psutil runs on all OSes); unavailable metrics are `null`. Disks are filtered and de-duplicated by (total, free) so APFS volumes show once |
+| Runtime appearance (M4) | Theme CSS generated from the shadcn registry's `/init` endpoint by `scripts/gen-theme-css.mjs` into committed `themes.css`/`themes.json`, verified against the registry when generated; data attributes on `<html>`, applied before paint by an inline script; saved per user in `users.appearance`; preset codes via `shadcn/preset` in the browser. Style, icons and menus stay b0's |
+| Password change (M4) | `POST /api/auth/password` needs the current password (wrong one is 400, not 401, so the UI doesn't sign out; failures count toward the login throttle), signs out the user's other sessions and keeps this one; audited as `auth.password` |
 | Server shutdown (M4) | `athena serve` sets uvicorn `timeout_graceful_shutdown` to 5 s. SSE streams never end on their own, so without it an open dashboard kept the server (and a service stop or restart) waiting forever |
 | Jobs (M2) | In-memory job runner (`athena.jobs`) with output lines streamed over SSE (`/api/jobs/{id}/events`); the last 100 finished jobs are kept. The durable record of privileged actions is the `audit_log` table |
 | Database (M1) | SQLite at `<data-dir>/athena.db` (WAL, foreign keys on), SQLModel models, Alembic migrations run on every start from code. A test fails if models and migrations drift |
