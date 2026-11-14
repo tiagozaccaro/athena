@@ -47,6 +47,7 @@ const DOCS = [
   "CLAUDE.md",
   "docs/AGENT-NOTES.md",
   "apps/web/AGENTS.md",
+  "apps/server/AGENTS.md",
   "catalog/README.md",
   ...projectSkills(),
 ].filter((f) => existsSync(f))
