@@ -1,7 +1,7 @@
 x-athena:
   title: Maybe
   description: Personal finance management application
-  category: utilities
+  category: finance
   icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/maybe.svg
   homepage: https://github.com/maybe-finance/maybe
   web_port: WEB_PORT

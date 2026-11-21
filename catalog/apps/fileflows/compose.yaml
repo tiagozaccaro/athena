@@ -4,7 +4,7 @@ x-athena:
   tagline: File processing automation.
   tags: [File Processing, Automation, Media]
   license: "MIT"
-  category: utilities
+  category: media
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/FileFlows/icon.svg
   homepage: https://fileflows.com

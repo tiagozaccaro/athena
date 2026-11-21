@@ -2,7 +2,7 @@
 x-athena:
   title: SiYuan Note
   description: Private personal knowledge management
-  category: productivity
+  category: notes
   icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/Siyuan-Note/icon.svg
   homepage: https://b3log.org/siyuan/
   web_port: WEB_PORT

@@ -8,7 +8,7 @@ x-athena:
   - Chat
   - LLM
   license: MIT
-  category: development
+  category: ai
   platforms:
   - linux/amd64
   - linux/arm64

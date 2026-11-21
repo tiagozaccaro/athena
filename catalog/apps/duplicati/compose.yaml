@@ -4,7 +4,7 @@ x-athena:
   tagline: Store securely encrypted backups in the cloud.
   tags: [Backup, Cloud, Encryption]
   license: "LGPL-2.1"
-  category: productivity
+  category: files
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/Duplicati/icon.svg
   homepage: https://duplicati.com/

@@ -17,7 +17,7 @@ from athena.catalog.loader import (
     load_catalog,
     resolve_values,
 )
-from athena.catalog.model import InvalidCatalogAppError, parse_app
+from athena.catalog.model import CATEGORY_LABELS, InvalidCatalogAppError, parse_app
 from athena.catalog.platforms import KNOWN_PLATFORMS, host_platform, support
 from athena.catalog.registry import CatalogRegistry
 
@@ -242,6 +242,8 @@ def test_store_lists_and_filters(api: TestClient) -> None:
     assert {"deluge", "qbittorrent", "transmission"} <= {a["id"] for a in tagged}
     cats = api.get("/api/store/categories").json()
     assert sum(c["count"] for c in cats) == len(apps)
+    # Every category has apps, so none is hidden from the filter by being empty.
+    assert [c["id"] for c in cats] == list(CATEGORY_LABELS)
 
 
 def test_store_detail_has_resolved_form(api: TestClient, tmp_path: Path) -> None:

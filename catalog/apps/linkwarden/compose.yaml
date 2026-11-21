@@ -4,7 +4,7 @@ x-athena:
   tagline: Collaborative bookmark manager.
   tags: [Bookmarks, Links, Productivity]
   license: "AGPL-3.0"
-  category: productivity
+  category: reading
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/Linkwarden/icon.svg
   homepage: https://linkwarden.app

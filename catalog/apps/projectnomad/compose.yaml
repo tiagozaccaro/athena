@@ -4,7 +4,7 @@ x-athena:
   tagline: Offline knowledge and education server.
   tags: [Offline, Knowledge, Education]
   license: "Apache-2.0"
-  category: productivity
+  category: notes
   platforms: [linux/amd64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/ProjectNOMAD/icon.png
   homepage: https://www.projectnomad.us

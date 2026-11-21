@@ -11,7 +11,7 @@ x-athena:
     - Single Go binary, SQLite storage
   screenshots:
     - https://raw.githubusercontent.com/usememos/.github/refs/heads/main/assets/previews/timeline-light.png
-  category: productivity
+  category: notes
   platforms: [linux/amd64, linux/arm64, linux/arm/v7]
   icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/memos.svg
   homepage: https://www.usememos.com

@@ -5,7 +5,7 @@ x-athena:
     text, images, videos, and time series with a simple and straightforward UI and export to various model
     formats. It can be used to prepare raw data or improve existing training data to get more accurate
     ML mod
-  category: utilities
+  category: ai
   icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/LabelStudio/icon.svg
   homepage: https://labelstud.io/
   web_port: WEB_PORT

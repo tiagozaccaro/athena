@@ -13,7 +13,7 @@ x-athena:
     - Full-text search across the archive
   screenshots:
     - https://raw.githubusercontent.com/paperless-ngx/paperless-ngx/main/docs/assets/screenshots/documents-smallcards.png
-  category: productivity
+  category: documents
   platforms: [linux/amd64, linux/arm64]
   icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/paperless-ngx.svg
   homepage: https://docs.paperless-ngx.com

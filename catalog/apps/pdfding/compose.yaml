@@ -2,7 +2,7 @@
 x-athena:
   title: PdfDing
   description: Selfhosted PDF manager, viewer and editor
-  category: productivity
+  category: documents
   icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/PdfDing/icon.svg
   homepage: https://www.pdfding.com
   web_port: WEB_PORT

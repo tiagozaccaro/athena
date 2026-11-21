@@ -4,7 +4,7 @@ x-athena:
   tagline: Collaborative documentation platform.
   tags: [Wiki, Documentation, Team]
   license: "MIT"
-  category: productivity
+  category: notes
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/Docmost/icon.svg
   homepage: https://docmost.com

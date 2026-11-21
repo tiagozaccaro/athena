@@ -2,7 +2,7 @@
 x-athena:
   title: Stable Diffusion
   description: An AI model used to generate images conditioned on text descriptions.
-  category: utilities
+  category: ai
   icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/StableDiffusionWebUI/icon.svg
   homepage: https://github.com/AUTOMATIC1111/stable-diffusion-webui
   web_port: WEB_PORT

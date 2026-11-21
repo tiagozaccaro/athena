@@ -2,7 +2,7 @@
 x-athena:
   title: DeepSeek OCR(Nvidia GPU)
   description: Powerful OCR powered by DeepSeek AI
-  category: utilities
+  category: ai
   icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/DeepSeek-OCR_Nvidia/icon.svg
   homepage: https://github.com/rdumasia303/deepseek_ocr_app
   web_port: WEB_PORT

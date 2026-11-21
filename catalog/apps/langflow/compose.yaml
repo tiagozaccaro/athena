@@ -1,7 +1,7 @@
 x-athena:
   title: Langflow
   description: Open-source UI for building and debugging multi-agent and RAG applications
-  category: utilities
+  category: ai
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/LangFlow/icon.svg
   homepage: https://www.langflow.org
   web_port: WEB_PORT

@@ -4,7 +4,7 @@ x-athena:
   tagline: File conversion tool.
   tags: [Conversion, Media, Documents]
   license: "MIT"
-  category: utilities
+  category: documents
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/ConvertX/icon.svg
   homepage: https://convertx.app

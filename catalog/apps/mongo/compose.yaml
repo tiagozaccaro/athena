@@ -3,7 +3,7 @@ x-athena:
   title: MongoDB
   description: A free and open-source cross-platform document-oriented database program. Classified as
     a NoSQL database program, MongoDB uses JSON-like documents with schemata.
-  category: development
+  category: databases
   icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/Mongo/icon.svg
   homepage: https://www.mongodb.com/
   web_port: null

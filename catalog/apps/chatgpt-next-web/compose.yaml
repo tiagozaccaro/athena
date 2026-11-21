@@ -2,7 +2,7 @@
 x-athena:
   title: ChatGPT Next Web
   description: A well-designed cross-platform ChatGPT UI.
-  category: utilities
+  category: ai
   icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/ChatGPT-Next-Web/icon.svg
   homepage: https://nextchat.club
   web_port: WEB_PORT

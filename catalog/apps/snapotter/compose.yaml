@@ -4,7 +4,7 @@ x-athena:
   tagline: Reddit archiving tool.
   tags: [Reddit, Archive, Social]
   license: "MIT"
-  category: utilities
+  category: reading
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/SnapOtter/icon.png
   homepage: https://snapotter.com

@@ -2,7 +2,7 @@
 x-athena:
   title: Alist-Sync
   description: An Alist storage synchronization tool based on the Web interface.
-  category: productivity
+  category: files
   icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/Alist-Sync/icon.svg
   homepage: https://github.com/xjxjin/alist-sync
   web_port: WEB_PORT

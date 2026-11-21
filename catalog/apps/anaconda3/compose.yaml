@@ -2,7 +2,7 @@
 x-athena:
   title: Anaconda3
   description: Your machine learning Env work with Jupyter Lab
-  category: utilities
+  category: ai
   icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/Anaconda3/icon.svg
   homepage: https://www.anaconda.com
   web_port: WEB_PORT

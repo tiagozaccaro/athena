@@ -12,7 +12,7 @@ x-athena:
     - The assistant in Athena can use it for free
   screenshots:
     - https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/Ollama/screenshot-1.png
-  category: development
+  category: ai
   platforms: [linux/amd64, linux/arm64]
   icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/ollama.svg
   homepage: https://ollama.com

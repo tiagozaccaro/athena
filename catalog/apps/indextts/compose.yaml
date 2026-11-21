@@ -8,7 +8,7 @@ x-athena:
   - AI
   - Audio
   license: MIT
-  category: development
+  category: ai
   platforms: [linux/amd64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/Index-TTS/icon.svg
   homepage: https://index-tts.com

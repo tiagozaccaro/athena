@@ -4,7 +4,7 @@ x-athena:
   tagline: Privacy-first finance app with envelope budgeting.
   tags: [Finance, Budgeting, Personal]
   license: "MIT"
-  category: productivity
+  category: finance
   platforms: [linux/amd64, linux/arm64, linux/arm/v7]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/ActualBudget/icon.svg
   homepage: https://actualbudget.org

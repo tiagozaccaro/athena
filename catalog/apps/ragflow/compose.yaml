@@ -4,7 +4,7 @@ x-athena:
   tagline: Open-source RAG engine.
   tags: [AI, RAG, Documents]
   license: "AGPL-3.0"
-  category: development
+  category: ai
   platforms: [linux/amd64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/RagFlow/icon.svg
   homepage: https://ragflow.io

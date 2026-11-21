@@ -4,7 +4,7 @@ x-athena:
   tagline: Archive the web pages you care about.
   tags: [Archive, Bookmarks, Web]
   license: "AGPL-3.0"
-  category: productivity
+  category: reading
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/ArchiveBox/icon.svg
   homepage: https://archivebox.io

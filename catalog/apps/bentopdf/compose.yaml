@@ -4,7 +4,7 @@ x-athena:
   tagline: PDF manipulation tool.
   tags: [PDF, Documents, Tools]
   license: "MIT"
-  category: utilities
+  category: documents
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/BentoPDF/icon.svg
   homepage: https://bentopdf.com

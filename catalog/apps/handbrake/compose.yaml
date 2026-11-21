@@ -4,7 +4,7 @@ x-athena:
   tagline: Video transcoder.
   tags: [Video, Transcoding]
   license: "GPL-2.0"
-  category: utilities
+  category: media
   platforms: [linux/amd64]
   smoke: skip
   smoke_note: amd64-only image that crashes under emulation on arm64

@@ -4,7 +4,7 @@ x-athena:
   tagline: Manage your Two-Factor Authentication (2FA) accounts and generate security codes.
   tags: [2FA, Security, Authentication]
   license: "MIT"
-  category: productivity
+  category: security
   platforms: [linux/amd64, linux/arm64, linux/arm/v7]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/2FAuth/icon.svg
   homepage: https://2fauth.app

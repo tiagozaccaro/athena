@@ -2,7 +2,7 @@
 x-athena:
   title: OpenClaw
   description: OpenClaw is a personal AI assistant you run on your own devices
-  category: utilities
+  category: ai
   icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/OpenClaw/icon.svg
   homepage: https://openclaw.ai
   web_port: WEB_PORT

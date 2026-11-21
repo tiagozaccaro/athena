@@ -4,7 +4,7 @@ x-athena:
   tagline: Open-source knowledge base.
   tags: [Notes, Knowledge, Writing]
   license: "AGPL-3.0"
-  category: productivity
+  category: notes
   platforms: [linux/amd64, linux/arm64, linux/arm/v7]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/Siyuan-Note/icon.svg
   homepage: https://siyuan-note.cn

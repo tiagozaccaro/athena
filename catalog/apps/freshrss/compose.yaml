@@ -11,7 +11,7 @@ x-athena:
     - Extensions for full-text search and scraping
   screenshots:
     - https://raw.githubusercontent.com/FreshRSS/FreshRSS/edge/docs/img/FreshRSS-screenshot.png
-  category: productivity
+  category: reading
   platforms: [linux/amd64, linux/arm64, linux/arm/v7]
   icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/freshrss.svg
   homepage: https://freshrss.org

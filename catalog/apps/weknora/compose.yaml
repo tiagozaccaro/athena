@@ -4,7 +4,7 @@ x-athena:
   tagline: AI-powered knowledge management.
   tags: [AI, Knowledge, Team]
   license: "AGPL-3.0"
-  category: productivity
+  category: ai
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/WeKnora/icon.svg
   homepage: https://weknora.com

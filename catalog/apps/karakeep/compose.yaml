@@ -4,7 +4,7 @@ x-athena:
   tagline: Self-hosted bookmark manager.
   tags: [Bookmarks, Links, Privacy]
   license: "MIT"
-  category: productivity
+  category: reading
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/Karakeep/icon.svg
   homepage: https://karakeep.app

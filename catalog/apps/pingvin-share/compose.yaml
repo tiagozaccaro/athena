@@ -2,7 +2,7 @@
 x-athena:
   title: Pingvin-Share
   description: Self-hosted file sharing with a modern web interface
-  category: productivity
+  category: files
   icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/Pingvin-Share/icon.svg
   homepage: https://stonith404.github.io/pingvin-share/
   web_port: WEB_PORT

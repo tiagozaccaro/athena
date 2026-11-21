@@ -4,7 +4,7 @@ x-athena:
   tagline: AI-powered card note-taking app.
   tags: [Notes, AI, Knowledge]
   license: "AGPL-3.0"
-  category: productivity
+  category: notes
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/Blinko/icon.svg
   homepage: https://blinko.space/

@@ -1,10 +1,10 @@
 x-athena:
   title: Sure
-  description: Open-source URL shortener and link management with analytics.
-  tagline: Open-source URL shortener.
-  tags: [URL Shortener, Links, Analytics]
+  description: Personal finance app for budgets, accounts and net worth, a community fork of Maybe.
+  tagline: Personal finance for everyone.
+  tags: [Finance, Budget, Net Worth]
   license: "AGPL-3.0"
-  category: utilities
+  category: finance
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/Sure/icon.svg
   homepage: https://sure.sh

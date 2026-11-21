@@ -4,7 +4,7 @@ x-athena:
   tagline: Web-based database manager.
   tags: [Database, Admin, SQL]
   license: "Apache-2.0"
-  category: development
+  category: databases
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/CloudBeaver/icon.svg
   homepage: https://cloudbeaver.com

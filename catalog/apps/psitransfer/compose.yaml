@@ -4,7 +4,7 @@ x-athena:
   tagline: Simple encrypted file sharing.
   tags: [File Sharing, Transfer, Privacy]
   license: "MIT"
-  category: utilities
+  category: files
   platforms: [linux/amd64, linux/arm64]
   icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/send.svg
   homepage: https://psitransfer.com

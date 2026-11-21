@@ -4,7 +4,7 @@ x-athena:
   tagline: "A simple bookmarks manager with offline copies."
   tags: [Bookmarks, Reading]
   license: "MIT"
-  category: productivity
+  category: reading
   platforms: [linux/amd64, linux/arm64, linux/arm/v7]
   screenshots:
     - https://raw.githubusercontent.com/go-shiori/shiori/master/docs/assets/screenshots/01-login.png

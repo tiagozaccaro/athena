@@ -4,7 +4,7 @@ x-athena:
   tagline: AI agent that grows with you.
   tags: [AI, Agent, LLM]
   license: "MIT"
-  category: productivity
+  category: ai
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/Hermes/icon.svg
   homepage: https://hermes-agent.nousresearch.com

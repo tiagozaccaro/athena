@@ -35,10 +35,16 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 
 FieldType = Literal["text", "password", "port", "path", "number", "boolean", "select"]
 Category = Literal[
+    "ai",
     "media",
     "files",
     "productivity",
+    "notes",
+    "documents",
+    "reading",
+    "finance",
     "development",
+    "databases",
     "home",
     "network",
     "security",
@@ -47,10 +53,16 @@ Category = Literal[
     "utilities",
 ]
 CATEGORY_LABELS: dict[str, str] = {
+    "ai": "AI",
     "media": "Media",
     "files": "Files & sync",
     "productivity": "Productivity",
+    "notes": "Notes & knowledge",
+    "documents": "Documents & PDF",
+    "reading": "Bookmarks & reading",
+    "finance": "Finance",
     "development": "Development",
+    "databases": "Databases",
     "home": "Home automation",
     "network": "Network",
     "security": "Security",

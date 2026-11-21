@@ -4,7 +4,7 @@ x-athena:
   tagline: Lightning wallet hub.
   tags: [Bitcoin, Lightning, Wallet]
   license: "MIT"
-  category: utilities
+  category: finance
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/AlbyHub/icon.svg
   homepage: https://getalby.com

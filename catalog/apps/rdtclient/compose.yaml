@@ -1,10 +1,10 @@
 x-athena:
   title: RDTClient
-  description: Remote desktop client for accessing and managing remote machines from your browser.
-  tagline: Remote desktop client.
-  tags: [Remote Desktop, Access]
-  license: "AGPL-3.0"
-  category: utilities
+  description: Real-Debrid, AllDebrid and Premiumize download client that acts like a qBittorrent server for Sonarr and Radarr.
+  tagline: Debrid download client.
+  tags: [Debrid, Torrent, Downloads]
+  license: "MIT"
+  category: downloads
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/RDTClient/icon.svg
   homepage: https://rdtclient.com

@@ -4,7 +4,7 @@ x-athena:
   tagline: AI chat platform for your documents.
   tags: [AI, LLM, Documents]
   license: "MIT"
-  category: development
+  category: ai
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/AnythingLLM/icon.svg
   homepage: https://useanything.com

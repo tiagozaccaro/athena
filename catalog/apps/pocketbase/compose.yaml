@@ -4,7 +4,7 @@ x-athena:
   tagline: Open-source backend in one file.
   tags: [Backend, Database, Auth]
   license: "MIT"
-  category: development
+  category: databases
   platforms: [linux/amd64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/PocketBase/icon.svg
   homepage: https://pocketbase.io

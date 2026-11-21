@@ -13,8 +13,9 @@ apps/<id>/compose.<slug>.yaml   # optional variants
 x-athena:
   title: Jellyfin
   description: Stream your movies, shows and music to any device.
-  category: media        # media, files, productivity, development, home, network,
-                         # security, monitoring, downloads, utilities
+  category: media        # ai, media, files, productivity, notes, documents, reading,
+                         # finance, development, databases, home, network, security,
+                         # monitoring, downloads, utilities
   icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/jellyfin.svg
   homepage: https://jellyfin.org
   web_port: WEB_PORT     # env key (or a number) that the "Open" button uses

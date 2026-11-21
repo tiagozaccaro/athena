@@ -4,7 +4,7 @@ x-athena:
   tagline: Self-hosted notes server.
   tags: [Notes, Knowledge, Sync]
   license: "MIT"
-  category: productivity
+  category: notes
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/Obsidian/icon.svg
   homepage: https://obsidian.md

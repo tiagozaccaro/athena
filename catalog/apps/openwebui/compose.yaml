@@ -4,7 +4,7 @@ x-athena:
   tagline: Self-hosted LLM web interface.
   tags: [AI, LLM, Chat]
   license: "MIT"
-  category: development
+  category: ai
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/OpenWebUI/icon.svg
   homepage: https://openwebui.com

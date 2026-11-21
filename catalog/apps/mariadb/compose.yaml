@@ -3,7 +3,7 @@ x-athena:
   title: MariaDB
   description: MariaDB Server is one of the most popular database servers in the world. It's made by the
     original developers of MySQL and guaranteed to stay open source.
-  category: development
+  category: databases
   icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/MariaDB/icon.svg
   homepage: https://mariadb.org/
   web_port: null

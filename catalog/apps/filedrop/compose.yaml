@@ -4,7 +4,7 @@ x-athena:
   tagline: Simple file drop page.
   tags: [File Sharing, Drop, Transfer]
   license: "MIT"
-  category: utilities
+  category: files
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/Filedrop/icon.svg
   homepage: https://filedrop.com

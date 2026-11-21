@@ -4,7 +4,7 @@ x-athena:
   tagline: ChatGPT-style web interface.
   tags: [AI, Chat, LLM]
   license: "MIT"
-  category: development
+  category: ai
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/ChatGPT-Next-Web/icon.svg
   homepage: https://chatgpt-next-web.vercel.app

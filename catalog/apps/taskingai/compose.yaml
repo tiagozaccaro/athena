@@ -3,7 +3,7 @@ x-athena:
   title: TaskingAI
   description: The developer-friendly cloud platform for building and running LLM agents for AI-native
     applications.
-  category: utilities
+  category: ai
   icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/TaskingAI/icon.svg
   homepage: https://docs.tasking.ai/
   web_port: 3080

@@ -8,7 +8,7 @@ x-athena:
   - LLM
   - Development
   license: Apache-2.0
-  category: development
+  category: ai
   platforms:
   - linux/amd64
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/Dify/icon.svg

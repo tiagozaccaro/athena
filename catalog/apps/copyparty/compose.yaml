@@ -4,7 +4,7 @@ x-athena:
   tagline: Resumable file upload server.
   tags: [File Upload, Sharing, Transfer]
   license: "Unlicense"
-  category: utilities
+  category: files
   platforms: [linux/amd64, linux/arm64, linux/arm/v7]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/CopyParty/icon.svg
   homepage: https://copyparty.readthedocs.io

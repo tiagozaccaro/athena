@@ -2,7 +2,7 @@
 x-athena:
   title: OpenHands
   description: Open-source AI-powered coding assistant
-  category: utilities
+  category: ai
   icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@main/Apps/OpenHands/icon.svg
   homepage: https://www.openhands.dev/
   web_port: WEB_PORT

@@ -4,7 +4,7 @@ x-athena:
   tagline: Low-code AI agent builder.
   tags: [AI, Low-code, Workflow]
   license: "MIT"
-  category: development
+  category: ai
   platforms: [linux/amd64, linux/arm64]
   icon: https://raw.githubusercontent.com/IceWhaleTech/CasaOS-AppStore/main/Apps/FlowiseAi/icon.svg
   homepage: https://flowiseai.com
