@@ -32,6 +32,11 @@ def _serve(args: argparse.Namespace) -> int:
     Path(args.data_dir).mkdir(parents=True, exist_ok=True)
     if not _settings_file_ok(Path(args.data_dir)):
         return 1
+    from athena.winstdio import fix_std_handles
+
+    # Under the Windows logon task (pythonw.exe) a child process that inherits stdin
+    # failed with WinError 6; see athena/winstdio.py.
+    fix_std_handles()
     uvicorn.run(
         "athena.main:create_app",
         factory=True,
