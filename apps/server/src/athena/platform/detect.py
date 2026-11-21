@@ -11,13 +11,14 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from urllib.parse import urlsplit
 
 from athena.platform.capabilities import Capability, CapabilityManifest
 from athena.platform.probe import Probe, os_version
 
 log = logging.getLogger(__name__)
 
-Detector = Callable[[Probe], Capability]
+Detector = Callable[[Probe], Capability | list[Capability]]
 
 CONTAINERS = "containers"
 CONTAINERS_LABEL = "Containers"
@@ -338,6 +339,126 @@ def detect_ollama(probe: Probe) -> Capability:
     )
 
 
+# ---------------------------------------------------------------- local AI servers
+
+
+@dataclass(frozen=True)
+class LocalAiServer:
+    """A local OpenAI-style server Athena can find at its documented default URL
+    (the kind's Base URL default in `assistant/kinds.py`)."""
+
+    kind: str
+    binaries: tuple[str, ...] = ()
+    """On PATH means installed: "stopped" when nothing answers."""
+    fingerprint: str | None = None
+    """A path under the URL's root that only this server answers with a JSON object;
+    needed where servers share a default port."""
+
+
+LOCAL_AI_SERVERS: tuple[LocalAiServer, ...] = (
+    LocalAiServer("llama-cpp", ("llama-server",), fingerprint="/props"),
+    LocalAiServer("localai", ("local-ai",), fingerprint="/.well-known/localai.json"),
+    LocalAiServer("llamafile", ("llamafile",)),
+    LocalAiServer("mlx-lm", ("mlx_lm.server",)),
+    LocalAiServer("vllm", ("vllm",), fingerprint="/version"),
+    LocalAiServer("sglang"),
+    LocalAiServer("jan"),
+    LocalAiServer("gpt4all"),
+    LocalAiServer("koboldcpp", ("koboldcpp",)),
+    LocalAiServer("text-generation-webui", fingerprint="/v1/internal/model/info"),
+    LocalAiServer("tabbyapi"),
+    LocalAiServer("docker-model-runner"),
+    LocalAiServer("lemonade", ("lemonade-server",)),
+    LocalAiServer("xinference", ("xinference", "xinference-local")),
+)
+
+
+def _kind_url(kind: str) -> tuple[str, str]:
+    from athena.assistant.kinds import BY_ID
+
+    spec = BY_ID[kind]
+    url = next(f.default for f in spec.fields if f.key == "base_url")
+    return spec.label, url or ""
+
+
+def _root(url: str) -> str:
+    """http://host:port of a base URL."""
+    parts = urlsplit(url)
+    return f"{parts.scheme}://{parts.netloc}"
+
+
+def _serves_models(probe: Probe, url: str) -> bool:
+    answer = probe.http_json(f"{url}/models")
+    return isinstance(answer, dict) and isinstance(answer.get("data"), list)
+
+
+def _pick(probe: Probe, servers: list[LocalAiServer], url: str) -> LocalAiServer | None:
+    """Which of the servers sharing `url` answers there, or None when it can't be told."""
+    for server in servers:
+        if server.fingerprint and isinstance(
+            probe.http_json(_root(url) + server.fingerprint), dict
+        ):
+            return server
+    plain = [s for s in servers if not s.fingerprint]
+    installed = [s for s in plain if any(probe.which(b) for b in s.binaries)]
+    if len(installed) == 1:
+        return installed[0]
+    if len(servers) == 1 and not servers[0].fingerprint:
+        return servers[0]
+    return None
+
+
+def detect_local_ai(probe: Probe) -> list[Capability]:
+    """Local AI servers answering at their default URL (`ai.local.<kind>`), or installed
+    and not answering. Ones that are neither are left out, so the manifest stays short.
+    A server answering where Athena can't tell which one it is shows up as a generic
+    OpenAI-compatible server (`ai.local.port-<port>`)."""
+    by_url: dict[str, list[LocalAiServer]] = {}
+    for server in LOCAL_AI_SERVERS:
+        by_url.setdefault(_kind_url(server.kind)[1], []).append(server)
+    found: list[Capability] = []
+    for url, servers in by_url.items():
+        answering = _serves_models(probe, url)
+        picked = _pick(probe, servers, url) if answering else None
+        if answering and picked is None:
+            port = urlsplit(url).port
+            found.append(
+                Capability(
+                    id=f"ai.local.port-{port}",
+                    label=f"OpenAI-compatible server on port {port}",
+                    status="ready",
+                    provider="openai-compatible",
+                    detail=f"An OpenAI-compatible API answers at {url}",
+                    endpoint=url,
+                )
+            )
+        for server in servers:
+            label, _ = _kind_url(server.kind)
+            if server is picked:
+                found.append(
+                    Capability(
+                        id=f"ai.local.{server.kind}",
+                        label=label,
+                        status="ready",
+                        provider=server.kind,
+                        detail=f"{label} answers at {url}",
+                        endpoint=url,
+                    )
+                )
+            elif any(probe.which(b) for b in server.binaries):
+                found.append(
+                    Capability(
+                        id=f"ai.local.{server.kind}",
+                        label=label,
+                        status="stopped",
+                        provider=server.kind,
+                        detail=f"{label} is installed but not answering at {url}",
+                        endpoint=url,
+                    )
+                )
+    return found
+
+
 def detect_tunnel_cloudflare(probe: Probe) -> Capability:
     path = probe.which("cloudflared")
     if not path:
@@ -452,18 +573,20 @@ def detectors_for(probe: Probe) -> list[Detector]:
         detect_rclone,
         detect_smb,
         detect_ollama,
+        detect_local_ai,
         detect_tunnel_cloudflare,
         detect_tunnel_tailscale,
         detect_tunnel_ngrok,
     ]
 
 
-def _safe(detector: Detector, probe: Probe) -> Capability | None:
+def _safe(detector: Detector, probe: Probe) -> list[Capability]:
     try:
-        return detector(probe)
+        found = detector(probe)
     except Exception:  # a detector bug must not break the whole manifest
         log.exception("capability detector %s failed", getattr(detector, "__name__", detector))
-        return None
+        return []
+    return found if isinstance(found, list) else [found]
 
 
 def detect(probe: Probe | None = None) -> CapabilityManifest:
@@ -471,7 +594,7 @@ def detect(probe: Probe | None = None) -> CapabilityManifest:
     detectors = detectors_for(probe)
     with ThreadPoolExecutor(max_workers=8) as pool:
         results = list(pool.map(lambda d: _safe(d, probe), detectors))
-    capabilities = [c for c in results if c is not None] + detect_builtin(probe)
+    capabilities = [c for found in results for c in found] + detect_builtin(probe)
     return CapabilityManifest(
         os=probe.os,
         os_version=os_version(probe.os),

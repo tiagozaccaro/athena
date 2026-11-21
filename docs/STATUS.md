@@ -28,7 +28,6 @@ Finished work is in `docs/HISTORY.md` (read it only when needed). When you finis
 
 - models.dev providers left out because pydantic-ai needs their own SDK: Google Vertex (service-account form for `GoogleProvider(vertexai=True)`), watsonx, GitLab, SAP AI Core and a few gateways. Vertex is the one worth adding.
 
-- Only Ollama is detected on the host; other local AI servers (vLLM, llama.cpp...) are picked by hand. A detector per port, like `ai.ollama`, could offer "Use vLLM on this server".
 
 ## Next
 

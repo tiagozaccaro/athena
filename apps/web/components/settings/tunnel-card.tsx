@@ -437,7 +437,9 @@ export function TunnelCard() {
   async function changeAutoStart(enabled: boolean) {
     const saved = await save(
       { tunnel_auto_start: enabled },
-      enabled ? "Remote access starts on boot" : "Remote access no longer starts on boot"
+      enabled
+        ? "Remote access starts on boot"
+        : "Remote access no longer starts on boot"
     )
     if (!saved) return
     await runJob(
@@ -481,7 +483,9 @@ export function TunnelCard() {
                 onCheckedChange={(checked) =>
                   void save(
                     { tunnel_enabled: checked },
-                    checked ? "Remote access turned on" : "Remote access turned off"
+                    checked
+                      ? "Remote access turned on"
+                      : "Remote access turned off"
                   )
                 }
               />
@@ -579,7 +583,9 @@ export function TunnelCard() {
                   <Switch
                     id="tunnel-auto-start"
                     // Nothing can start on boot before the tool is installed.
-                    checked={!needsInstall && (settings.tunnel_auto_start ?? false)}
+                    checked={
+                      !needsInstall && (settings.tunnel_auto_start ?? false)
+                    }
                     disabled={!canEdit || needsInstall}
                     onCheckedChange={(checked) => void changeAutoStart(checked)}
                   />
@@ -631,7 +637,10 @@ export function TunnelCard() {
               variant="destructive"
               disabled={!canEdit}
               onClick={() =>
-                void runJob(api.POST("/api/tunnel/stop"), "Couldn't stop the tunnel")
+                void runJob(
+                  api.POST("/api/tunnel/stop"),
+                  "Couldn't stop the tunnel"
+                )
               }
             >
               <SquareIcon data-icon="inline-start" />
@@ -642,7 +651,10 @@ export function TunnelCard() {
               disabled={!canEdit || dirty}
               title={dirty ? "Save your changes first" : undefined}
               onClick={() =>
-                void runJob(api.POST("/api/tunnel/start"), "Couldn't start the tunnel")
+                void runJob(
+                  api.POST("/api/tunnel/start"),
+                  "Couldn't start the tunnel"
+                )
               }
             >
               <PlayIcon data-icon="inline-start" />

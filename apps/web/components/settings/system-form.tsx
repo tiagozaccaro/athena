@@ -78,24 +78,24 @@ export function SystemForm() {
         {settings === null ? (
           <Skeleton className="h-12 w-full" />
         ) : (
-            <Field orientation="horizontal">
-              <FieldContent>
-                <FieldLabel htmlFor="terminal-enabled">Web terminal</FieldLabel>
-                <FieldDescription>
-                  A shell on this server and in containers, from the browser.
-                  Turning it off also closes open sessions.
-                  {!user.is_admin && " Only admins can change this."}
-                </FieldDescription>
-              </FieldContent>
-              <Switch
-                id="terminal-enabled"
-                checked={settings.terminal_enabled}
-                disabled={saving || !user.is_admin}
-                onCheckedChange={(checked) =>
-                  update({ ...settings, terminal_enabled: checked })
-                }
-              />
-            </Field>
+          <Field orientation="horizontal">
+            <FieldContent>
+              <FieldLabel htmlFor="terminal-enabled">Web terminal</FieldLabel>
+              <FieldDescription>
+                A shell on this server and in containers, from the browser.
+                Turning it off also closes open sessions.
+                {!user.is_admin && " Only admins can change this."}
+              </FieldDescription>
+            </FieldContent>
+            <Switch
+              id="terminal-enabled"
+              checked={settings.terminal_enabled}
+              disabled={saving || !user.is_admin}
+              onCheckedChange={(checked) =>
+                update({ ...settings, terminal_enabled: checked })
+              }
+            />
+          </Field>
         )}
       </CardContent>
     </Card>

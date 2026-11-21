@@ -84,6 +84,12 @@ import {
   type ProviderEditing,
   type ProviderKind,
 } from "@/components/settings/ai-provider-dialog"
+import {
+  editingFor,
+  LocalServerButtons,
+  localServersSentence,
+  useLocalAiServers,
+} from "@/components/settings/local-ai-servers"
 
 type AiSettings = Schemas["AiSettings"]
 type Integration = Schemas["IntegrationOut"]
@@ -157,7 +163,6 @@ export function AddMenu({
 }
 
 function ProvidersCard({ onChanged }: { onChanged: () => void }) {
-  const ollama = useCapability("ai.ollama")
   const [kinds, setKinds] = React.useState<ProviderKind[]>([])
   const [providers, setProviders] = React.useState<Provider[] | null>(null)
   const [editing, setEditing] = React.useState<ProviderEditing>(null)
@@ -177,7 +182,7 @@ function ProvidersCard({ onChanged }: { onChanged: () => void }) {
   }, [load])
 
   const kindOf = (id: string) => kinds.find((k) => k.id === id)
-  const ollamaKind = kindOf("ollama")
+  const local = useLocalAiServers(kinds)
 
   async function test(p: Provider) {
     setTesting(p.id)
@@ -226,11 +231,6 @@ function ProvidersCard({ onChanged }: { onChanged: () => void }) {
     if (added) void test(p)
   }
 
-  function useOllama() {
-    if (!ollamaKind || !ollama?.endpoint) return
-    setEditing({ kind: ollamaKind, values: { base_url: ollama.endpoint } })
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -251,30 +251,24 @@ function ProvidersCard({ onChanged }: { onChanged: () => void }) {
           <Empty className="border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                {ollama?.available ? <CpuIcon /> : <CloudIcon />}
+                {local.length ? <CpuIcon /> : <CloudIcon />}
               </EmptyMedia>
               <EmptyTitle>No providers yet</EmptyTitle>
               <EmptyDescription>
-                {ollama?.available
-                  ? `${ollama.detail ?? "Ollama"} is running on this server. Its models run on your own hardware and nothing leaves the server.`
-                  : "Add a cloud provider with an API key, or install Ollama on this server to run models locally."}
+                {local.length
+                  ? localServersSentence(local)
+                  : "Add a cloud provider with an API key, or run Ollama, llama.cpp or another local AI server on this server to run models locally."}
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent className="flex-row flex-wrap justify-center">
-              {ollama?.available && ollamaKind ? (
-                <Button onClick={useOllama}>
-                  <CpuIcon />
-                  Use Ollama on this server
-                </Button>
-              ) : null}
+              <LocalServerButtons
+                servers={local}
+                onUse={(server) => setEditing(editingFor(server))}
+              />
               <AddMenu
                 kinds={kinds}
                 onPick={(kind) => setEditing({ kind })}
-                label={
-                  ollama?.available
-                    ? "Another provider"
-                    : "Add a cloud provider"
-                }
+                label={local.length ? "Another provider" : "Add a provider"}
               />
             </EmptyContent>
           </Empty>

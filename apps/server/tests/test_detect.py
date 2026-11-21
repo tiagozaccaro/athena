@@ -217,3 +217,101 @@ def test_installed_tunnels_are_detected() -> None:
     assert (tailscale.status, tailscale.detail) == ("ready", "Logged in to t.ts.net")
     stopped = FakeProbe(binaries={"tailscale": "/usr/bin/tailscale"})
     assert detect_tunnel_tailscale(stopped).status == "stopped"
+
+
+# ---------------------------------------------------------------- local AI servers
+
+MODELS = {"object": "list", "data": [{"id": "m1"}]}
+
+
+def _local(probe: FakeProbe) -> dict[str, tuple[str, str | None, str | None]]:
+    from athena.platform.detect import detect_local_ai
+
+    return {c.id: (c.status, c.provider, c.endpoint) for c in detect_local_ai(probe)}
+
+
+def test_nothing_running_or_installed_adds_nothing():
+    assert _local(FakeProbe()) == {}
+
+
+def test_servers_on_their_own_port_are_found():
+    probe = FakeProbe(
+        http={
+            "http://127.0.0.1:5001/v1/models": MODELS,
+            "http://127.0.0.1:13305/api/v1/models": MODELS,
+            "http://127.0.0.1:12434/engines/v1/models": MODELS,
+        }
+    )
+    assert _local(probe) == {
+        "ai.local.koboldcpp": ("ready", "koboldcpp", "http://127.0.0.1:5001/v1"),
+        "ai.local.lemonade": ("ready", "lemonade", "http://127.0.0.1:13305/api/v1"),
+        "ai.local.docker-model-runner": (
+            "ready",
+            "docker-model-runner",
+            "http://127.0.0.1:12434/engines/v1",
+        ),
+    }
+
+
+def test_a_shared_port_is_told_apart_by_fingerprint():
+    llama = FakeProbe(
+        http={"http://127.0.0.1:8080/v1/models": MODELS, "http://127.0.0.1:8080/props": {}}
+    )
+    assert _local(llama) == {
+        "ai.local.llama-cpp": ("ready", "llama-cpp", "http://127.0.0.1:8080/v1")
+    }
+    local_ai = FakeProbe(
+        http={
+            "http://127.0.0.1:8080/v1/models": MODELS,
+            "http://127.0.0.1:8080/.well-known/localai.json": {"version": "v3"},
+        }
+    )
+    assert list(_local(local_ai)) == ["ai.local.localai"]
+    textgen = FakeProbe(
+        http={
+            "http://127.0.0.1:5000/v1/models": MODELS,
+            "http://127.0.0.1:5000/v1/internal/model/info": {"model_name": "x"},
+        }
+    )
+    assert list(_local(textgen)) == ["ai.local.text-generation-webui"]
+
+
+def test_a_shared_port_without_fingerprint_uses_the_installed_binary():
+    probe = FakeProbe(
+        binaries={"mlx_lm.server": "/opt/homebrew/bin/mlx_lm.server"},
+        http={"http://127.0.0.1:8080/v1/models": MODELS},
+    )
+    assert list(_local(probe)) == ["ai.local.mlx-lm"]
+
+
+def test_an_unknown_server_is_a_generic_openai_compatible_one():
+    # Something answers on 8000, but not vLLM's /version: don't call it vLLM.
+    probe = FakeProbe(http={"http://127.0.0.1:8000/v1/models": MODELS})
+    assert _local(probe) == {
+        "ai.local.port-8000": ("ready", "openai-compatible", "http://127.0.0.1:8000/v1")
+    }
+
+
+def test_installed_but_not_answering_is_stopped():
+    probe = FakeProbe(binaries={"llama-server": "/usr/bin/llama-server", "vllm": "/usr/bin/vllm"})
+    assert _local(probe) == {
+        "ai.local.llama-cpp": ("stopped", "llama-cpp", "http://127.0.0.1:8080/v1"),
+        "ai.local.vllm": ("stopped", "vllm", "http://127.0.0.1:8000/v1"),
+    }
+
+
+def test_an_html_page_or_error_is_not_a_server():
+    probe = FakeProbe(http={"http://127.0.0.1:8080/v1/models": {"error": "nope"}})
+    assert _local(probe) == {}
+
+
+def test_every_local_server_is_a_kind_with_a_default_url():
+    from athena.assistant.kinds import LOCAL_KINDS
+    from athena.platform.detect import LOCAL_AI_SERVERS, _kind_url
+
+    kinds = {k.id for k in LOCAL_KINDS}
+    for server in LOCAL_AI_SERVERS:
+        assert server.kind in kinds
+        assert _kind_url(server.kind)[1].startswith("http://127.0.0.1:")
+    # Every local kind but Ollama (which has ai.ollama) is detected.
+    assert kinds - {s.kind for s in LOCAL_AI_SERVERS} == {"ollama"}

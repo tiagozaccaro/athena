@@ -61,12 +61,14 @@ export function IntegrationDialog({
   if (!editing) return null
   const { integration: existing, kinds } = editing
   const isHttp = React.useMemo(
-    () => (existing?.transport as { type: string } | undefined)?.type === "http",
+    () =>
+      (existing?.transport as { type: string } | undefined)?.type === "http",
     [existing]
   )
-  const [selectedKind, setSelectedKind] = React.useState<IntegrationKind | null>(
-    existing ? kinds.find((k) => k.id === existing.kind) ?? null : null
-  )
+  const [selectedKind, setSelectedKind] =
+    React.useState<IntegrationKind | null>(
+      existing ? (kinds.find((k) => k.id === existing.kind) ?? null) : null
+    )
   // When editing, the kind is fixed; when adding, the user picks it.
   const kindFixed = !!existing
   const [name, setName] = React.useState(existing?.name ?? "")
@@ -93,7 +95,9 @@ export function IntegrationDialog({
     setCommand(transport?.command ?? "")
     setArgs(Array.isArray(transport?.args) ? transport.args.join(", ") : "")
     setUrl(transport?.url ?? "")
-    setTokenTarget(isHttp ? (existing?.token_header ?? "") : (existing?.token_env ?? ""))
+    setTokenTarget(
+      isHttp ? (existing?.token_header ?? "") : (existing?.token_env ?? "")
+    )
     setToken("")
     setError(null)
   }, [existing, kinds, isHttp])
@@ -112,7 +116,10 @@ export function IntegrationDialog({
       transport = {
         type: "stdio",
         command: command.trim(),
-        args: args.split(",").map((a) => a.trim()).filter(Boolean),
+        args: args
+          .split(",")
+          .map((a) => a.trim())
+          .filter(Boolean),
       }
       token_env = tokenTarget.trim() || undefined
     } else {
@@ -170,7 +177,9 @@ export function IntegrationDialog({
         </FieldDescription>
       </Field>
       <Field>
-        <FieldLabel htmlFor="integration-token-env">Token environment variable</FieldLabel>
+        <FieldLabel htmlFor="integration-token-env">
+          Token environment variable
+        </FieldLabel>
         <Input
           id="integration-token-env"
           value={tokenTarget}
@@ -195,7 +204,9 @@ export function IntegrationDialog({
           placeholder="e.g. https://slack.example.com/mcp"
           required
         />
-        <FieldDescription>The server's streamable-HTTP MCP endpoint.</FieldDescription>
+        <FieldDescription>
+          The server's streamable-HTTP MCP endpoint.
+        </FieldDescription>
       </Field>
       <Field>
         <FieldLabel htmlFor="integration-token-header">Token header</FieldLabel>
@@ -221,8 +232,9 @@ export function IntegrationDialog({
               {existing ? `Edit ${existing.name}` : "Add integration"}
             </DialogTitle>
             <DialogDescription>
-              The token is stored encrypted on this server and never sent back to the
-              browser. Leave the token empty when editing to keep the stored value.
+              The token is stored encrypted on this server and never sent back
+              to the browser. Leave the token empty when editing to keep the
+              stored value.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup>
@@ -241,7 +253,7 @@ export function IntegrationDialog({
                   <SelectValue
                     placeholder={
                       kindFixed
-                        ? selectedKind?.label ?? ""
+                        ? (selectedKind?.label ?? "")
                         : "Pick an integration"
                     }
                   />
@@ -256,8 +268,8 @@ export function IntegrationDialog({
               </Select>
               {kindFixed ? (
                 <FieldDescription>
-                  The kind can't be changed after creation; remove and re-add to pick
-                  another.
+                  The kind can't be changed after creation; remove and re-add to
+                  pick another.
                 </FieldDescription>
               ) : null}
             </Field>
@@ -271,10 +283,14 @@ export function IntegrationDialog({
                 maxLength={64}
                 required
               />
-              <FieldDescription>Shown when the integration is listed.</FieldDescription>
+              <FieldDescription>
+                Shown when the integration is listed.
+              </FieldDescription>
             </Field>
             <Field>
-              <FieldLabel htmlFor="integration-transport-type">Transport</FieldLabel>
+              <FieldLabel htmlFor="integration-transport-type">
+                Transport
+              </FieldLabel>
               <div className="flex gap-2">
                 <Button
                   role="radio"

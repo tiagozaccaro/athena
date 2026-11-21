@@ -31,8 +31,15 @@ export type ProviderEditing =
       kind: ProviderKind
       provider?: undefined
       values?: Record<string, string>
+      /** A name to start from instead of the kind's label. */
+      name?: string
     }
-  | { kind: ProviderKind; provider: Provider; values?: undefined }
+  | {
+      kind: ProviderKind
+      provider: Provider
+      values?: undefined
+      name?: undefined
+    }
   | null
 
 /** Add or edit an AI provider. Saved keys are never shown; empty keeps them. */
@@ -54,7 +61,7 @@ export function ProviderDialog({
 
   React.useEffect(() => {
     if (!editing) return
-    setName(editing.provider?.name ?? editing.kind.label)
+    setName(editing.provider?.name ?? editing.name ?? editing.kind.label)
     setValues({
       ...(editing.provider?.values ?? {}),
       ...(editing.values ?? {}),

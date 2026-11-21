@@ -30,7 +30,6 @@ import { Spinner } from "@workspace/ui/components/spinner"
 
 import { ModelPicker } from "@/components/assistant/model-picker"
 import { useModels, type ModelRef } from "@/components/assistant/use-models"
-import { useCapability } from "@/components/capabilities-provider"
 import {
   ProviderDialog,
   type Provider,
@@ -38,6 +37,12 @@ import {
   type ProviderKind,
 } from "@/components/settings/ai-provider-dialog"
 import { AddMenu } from "@/components/settings/ai-settings"
+import {
+  editingFor,
+  LocalServerButtons,
+  localServersSentence,
+  useLocalAiServers,
+} from "@/components/settings/local-ai-servers"
 
 type Test = { ok: boolean; message: string } | "testing" | null
 
@@ -48,7 +53,6 @@ type Test = { ok: boolean; message: string } | "testing" | null
  * Needs a `CapabilitiesProvider` and a signed-in admin.
  */
 export function AiSetupStep({ onDone }: { onDone: () => void }) {
-  const ollama = useCapability("ai.ollama")
   const [kinds, setKinds] = React.useState<ProviderKind[]>([])
   const [editing, setEditing] = React.useState<ProviderEditing>(null)
   const [provider, setProvider] = React.useState<Provider | null>(null)
@@ -64,7 +68,7 @@ export function AiSetupStep({ onDone }: { onDone: () => void }) {
       .then(({ data }) => setKinds(data ?? []))
   }, [])
 
-  const ollamaKind = kinds.find((k) => k.id === "ollama")
+  const local = useLocalAiServers(kinds)
   const kindOf = (id: string) => kinds.find((k) => k.id === id)
 
   async function check(p: Provider) {
@@ -121,39 +125,26 @@ export function AiSetupStep({ onDone }: { onDone: () => void }) {
       <CardContent>
         {!provider ? (
           <div className="flex flex-col gap-3">
-            {ollama?.available && ollamaKind ? (
+            {local.length ? (
               <>
                 <p className="text-sm text-muted-foreground">
-                  {ollama.detail ?? "Ollama"} is running on this server. Its
-                  models run on your own hardware and nothing leaves the
-                  server.
+                  {localServersSentence(local)}
                 </p>
-                <Button
-                  onClick={() =>
-                    setEditing({
-                      kind: ollamaKind,
-                      values: ollama.endpoint
-                        ? { base_url: ollama.endpoint }
-                        : undefined,
-                    })
-                  }
-                >
-                  <CpuIcon />
-                  Use Ollama on this server
-                </Button>
+                <LocalServerButtons
+                  servers={local}
+                  onUse={(server) => setEditing(editingFor(server))}
+                />
               </>
             ) : (
               <p className="text-sm text-muted-foreground">
                 Add a cloud provider with an API key, or a local one such as
-                Ollama or LM Studio.
+                Ollama, LM Studio or llama.cpp.
               </p>
             )}
             <AddMenu
               kinds={kinds}
               onPick={(kind) => setEditing({ kind })}
-              label={
-                ollama?.available ? "Another provider" : "Add a provider"
-              }
+              label={local.length ? "Another provider" : "Add a provider"}
             />
           </div>
         ) : (
