@@ -149,7 +149,7 @@ wheels = [
 
 [[package]]
 name = "athena-server"
-version = "0.1.0rc2"
+version = "0.1.0-rc.3"
 source = { editable = "." }
 dependencies = [
     { name = "a2wsgi" },

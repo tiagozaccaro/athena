@@ -1,6 +1,6 @@
 [project]
 name = "athena-server"
-version = "0.1.0-rc.2"
+version = "0.1.0-rc.3"
 description = "Athena: self-hosted home server dashboard for Linux, macOS and Windows"
 readme = "README.md"
 license = "Apache-2.0"
