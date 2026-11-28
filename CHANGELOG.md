@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.1.0-rc.3](https://github.com/Promethean-Works/athena/compare/v0.1.0-rc.2...v0.1.0-rc.3) (2026-11-28)
+
+
+### Features
+
+* **auth:** add multi-user support with admin and user roles ([#324](https://github.com/Promethean-Works/athena/issues/324)) ([c4cf92f](https://github.com/Promethean-Works/athena/commit/c4cf92ff90e019e83b4633f7db140ac7d3893487))
+* **catalog:** add 23 apps, mostly AI ([#310](https://github.com/Promethean-Works/athena/issues/310)) ([ce318e4](https://github.com/Promethean-Works/athena/commit/ce318e466065d7ba346c85d7e557b89059072915))
+* **catalog:** app files, optional parts (profiles) and Docker-access flag ([#314](https://github.com/Promethean-Works/athena/issues/314)) ([d6ce8ed](https://github.com/Promethean-Works/athena/commit/d6ce8ed33e05773e1482bbb2ab0a61b11cb5591f))
+* **dashboard:** list folders, cloud remotes and network shares on the storage card ([#301](https://github.com/Promethean-Works/athena/issues/301)) ([3958201](https://github.com/Promethean-Works/athena/commit/3958201bb4ac1277b17971fef25a5203d7d0e582))
+* **files:** per-user folders and per-location access for plain users ([#341](https://github.com/Promethean-Works/athena/issues/341)) ([b647d75](https://github.com/Promethean-Works/athena/commit/b647d75452bcb0047d268ded0bf670996c90e0d3))
+* **onboarding:** setup wizard on the web and in the CLI, with runtime install ([#325](https://github.com/Promethean-Works/athena/issues/325)) ([7f1c719](https://github.com/Promethean-Works/athena/commit/7f1c7199119577872b3f4bc7ae3367244a6e07f7))
+* **packages:** full package manager UI (search, details, icons, add a manager) ([#327](https://github.com/Promethean-Works/athena/issues/327)) ([270ea66](https://github.com/Promethean-Works/athena/commit/270ea66534def0e40ddebd11a9f0ff34bb71ea13))
+* **shares:** add a Network shares page with SMB and NFS tabs ([#312](https://github.com/Promethean-Works/athena/issues/312)) ([647a225](https://github.com/Promethean-Works/athena/commit/647a225ae61982527329b440b9a7d83a04604f52))
+* **shares:** check the host password before the action runs ([#332](https://github.com/Promethean-Works/athena/issues/332)) ([4c4bbbe](https://github.com/Promethean-Works/athena/commit/4c4bbbe5beff83fe50fcafccc4f91b202031232f))
+* **shares:** export locations over NFS and roll back failed share reloads ([#304](https://github.com/Promethean-Works/athena/issues/304)) ([7aaf39c](https://github.com/Promethean-Works/athena/commit/7aaf39c55c4abde291b2e900c176b76ab54760ca))
+* **shares:** share a sub-folder of a location over SMB or NFS ([#323](https://github.com/Promethean-Works/athena/issues/323)) ([39bb978](https://github.com/Promethean-Works/athena/commit/39bb978d6095a85544cb01bb1d3a9d24fd010ee1))
+* **shares:** share folders over SMB and NFS on macOS ([#307](https://github.com/Promethean-Works/athena/issues/307)) ([a44c88a](https://github.com/Promethean-Works/athena/commit/a44c88ada6186993b3986ba6b1dd16581703956e))
+* **shares:** share folders over SMB on Windows ([#309](https://github.com/Promethean-Works/athena/issues/309)) ([10855a0](https://github.com/Promethean-Works/athena/commit/10855a0aae85afdec3e90d90ad9012243f2519bb))
+* **shares:** share from the file explorer and ask for the password ([#317](https://github.com/Promethean-Works/athena/issues/317)) ([c8afd3d](https://github.com/Promethean-Works/athena/commit/c8afd3d6f80def80e7fd1de648b330a4df19a1cc))
+* **site:** star on GitHub button with live star count ([#342](https://github.com/Promethean-Works/athena/issues/342)) ([52340d9](https://github.com/Promethean-Works/athena/commit/52340d92582dd03f71b4cd6c9284626db5fb4134))
+* **web:** add i18n with 22 languages ([#313](https://github.com/Promethean-Works/athena/issues/313)) ([acea80d](https://github.com/Promethean-Works/athena/commit/acea80d214d41adeb3efd551a7176c83e59611de))
+* **web:** add the Athena logo to the dashboard and website ([#318](https://github.com/Promethean-Works/athena/issues/318)) ([3a79de9](https://github.com/Promethean-Works/athena/commit/3a79de9564b286067b601f105dee311e8ae9a01a))
+* **web:** redraw the logo as a temple ([#319](https://github.com/Promethean-Works/athena/issues/319)) ([318a913](https://github.com/Promethean-Works/athena/commit/318a913675b9649fcafc988c8ef97cc4457405b1))
+
+
+### Bug Fixes
+
+* **files:** close Athena's data folder and app definitions to plain users ([#340](https://github.com/Promethean-Works/athena/issues/340)) ([9dc6f98](https://github.com/Promethean-Works/athena/commit/9dc6f98554cd1cefd0566777ad806d9f05bd0abd))
+* **packages:** no border on icons, descriptions in search, cap the version column ([#328](https://github.com/Promethean-Works/athena/issues/328)) ([6cfea2e](https://github.com/Promethean-Works/athena/commit/6cfea2ee1cf6f25821aa91650d5940773f6c390f))
+* **security:** audit fixes for auth, shares, jobs, downloads and the assistant ([#339](https://github.com/Promethean-Works/athena/issues/339)) ([d081c6b](https://github.com/Promethean-Works/athena/commit/d081c6b79e30dce708954871e46701f099a0c841))
+* **shares:** ask for the host password on the Network shares page ([#329](https://github.com/Promethean-Works/athena/issues/329)) ([5d780a5](https://github.com/Promethean-Works/athena/commit/5d780a57b84e4c8057bd36ba5f779903b98a6ff4))
+* **shares:** ask for the host password when removing a share ([#330](https://github.com/Promethean-Works/athena/issues/330)) ([eb863f5](https://github.com/Promethean-Works/athena/commit/eb863f50c7a92c57c6b742d41f16755b67993d5f))
+
 ## [0.1.0-rc.2](https://github.com/Promethean-Works/athena/compare/v0.1.0-rc.1...v0.1.0-rc.2) (2026-11-26)
 
 
